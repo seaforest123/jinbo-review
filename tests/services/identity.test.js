@@ -113,10 +113,21 @@ test('rejects caller-supplied platform identifiers without reading or persisting
 
 test('does not cache or return malformed and raw platform identifiers from bootstrap', async () => {
   const { createIdentityService } = require(identityModulePath);
+  const hiddenPlatformIdentifier = { anonymousId: VALID_ANONYMOUS_ID };
+  Object.defineProperty(hiddenPlatformIdentifier, '_openid', {
+    value: 'fictional-openid-must-be-rejected',
+    enumerable: false,
+  });
 
   for (const response of [
     { anonymousId: 'not-opaque' },
     { anonymousId: VALID_ANONYMOUS_ID, openid: 'fictional-openid-must-be-rejected' },
+    { anonymousId: VALID_ANONYMOUS_ID, _openid: 'fictional-openid-must-be-rejected' },
+    { anonymousId: VALID_ANONYMOUS_ID, open_id: 'fictional-openid-must-be-rejected' },
+    { anonymousId: VALID_ANONYMOUS_ID, email: 'nobody@example.invalid' },
+    { anonymousId: VALID_ANONYMOUS_ID, phone: '000-0000-0000' },
+    { anonymousId: VALID_ANONYMOUS_ID, requestId: 'fictional-extra-field' },
+    hiddenPlatformIdentifier,
     {
       anonymousId: VALID_ANONYMOUS_ID,
       platform: { unionid: 'fictional-unionid-must-be-rejected' },
@@ -138,7 +149,7 @@ test('does not cache or return malformed and raw platform identifiers from boots
 
 test('creates a fresh session-prefixed ID for every experience', () => {
   const { createIdentityService } = require(identityModulePath);
-  const generated = ['first', 'second'];
+  const generated = ['abcdef0123456789', '0123456789abcdef'];
   const service = createIdentityService({
     storage: createStorage(VALID_ANONYMOUS_ID).storage,
     cloudCall: () => {
@@ -147,6 +158,31 @@ test('creates a fresh session-prefixed ID for every experience', () => {
     idFactory: () => generated.shift(),
   });
 
-  assert.equal(service.createSessionId(), 'session_first');
-  assert.equal(service.createSessionId(), 'session_second');
+  assert.equal(service.createSessionId(), 'session_abcdef0123456789');
+  assert.equal(service.createSessionId(), 'session_0123456789abcdef');
+});
+
+test('rejects invalid and duplicate raw session ID factory values', () => {
+  const { createIdentityService } = require(identityModulePath);
+
+  for (const rawId of ['', undefined, 'undefined', 'short', 'ABCDEF0123456789', 'a'.repeat(65)]) {
+    const service = createIdentityService({
+      storage: createStorage(VALID_ANONYMOUS_ID).storage,
+      cloudCall: () => {
+        throw new Error('unused');
+      },
+      idFactory: () => rawId,
+    });
+    assert.throws(() => service.createSessionId(), /invalid session id/);
+  }
+
+  const service = createIdentityService({
+    storage: createStorage(VALID_ANONYMOUS_ID).storage,
+    cloudCall: () => {
+      throw new Error('unused');
+    },
+    idFactory: () => 'abcdef0123456789',
+  });
+  assert.equal(service.createSessionId(), 'session_abcdef0123456789');
+  assert.throws(() => service.createSessionId(), /duplicate session id/);
 });

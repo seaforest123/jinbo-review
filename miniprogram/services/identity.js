@@ -1,30 +1,23 @@
 const ANONYMOUS_ID_KEY = 'goldFoilAnonymousId';
 const ANONYMOUS_ID_PATTERN = /^anon_[a-f0-9]{32}$/;
+const RAW_ID_PATTERN = /^[a-f0-9]{16,64}$/;
 
 function isAnonymousId(value) {
   return typeof value === 'string' && ANONYMOUS_ID_PATTERN.test(value);
 }
 
-function hasRawPlatformIdentifier(value, visited = new Set()) {
-  if (!value || typeof value !== 'object') return false;
-  if (visited.has(value)) return false;
-  visited.add(value);
-  return Object.entries(value).some(([key, child]) => {
-    const normalizedKey = key.toLowerCase();
-    return (
-      normalizedKey === 'openid'
-      || normalizedKey === 'unionid'
-      || hasRawPlatformIdentifier(child, visited)
-    );
-  });
+function isPlainObject(value) {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return false;
+  const prototype = Object.getPrototypeOf(value);
+  return prototype === Object.prototype || prototype === null;
 }
 
 function readAnonymousId(response) {
+  const keys = isPlainObject(response) ? Reflect.ownKeys(response) : [];
   if (
-    !response
-    || typeof response !== 'object'
-    || Array.isArray(response)
-    || hasRawPlatformIdentifier(response)
+    !isPlainObject(response)
+    || keys.length !== 1
+    || keys[0] !== 'anonymousId'
     || !isAnonymousId(response.anonymousId)
   ) {
     throw new TypeError('invalid anonymous identity response');
@@ -34,6 +27,7 @@ function readAnonymousId(response) {
 
 function createIdentityService({ storage, cloudCall, idFactory }) {
   let pendingBootstrap;
+  const generatedSessionIds = new Set();
 
   async function bootstrapAnonymousId() {
     const response = await cloudCall('bootstrapAnonymousId');
@@ -60,7 +54,15 @@ function createIdentityService({ storage, cloudCall, idFactory }) {
     },
 
     createSessionId() {
-      return `session_${idFactory()}`;
+      const rawId = idFactory();
+      if (typeof rawId !== 'string' || !RAW_ID_PATTERN.test(rawId)) {
+        throw new TypeError('invalid session id');
+      }
+      if (generatedSessionIds.has(rawId)) {
+        throw new Error('duplicate session id');
+      }
+      generatedSessionIds.add(rawId);
+      return `session_${rawId}`;
     },
   };
 }
