@@ -4,8 +4,10 @@ const test = require('node:test');
 const assert = require('node:assert/strict');
 
 const trackerModulePath = '../../miniprogram/services/event-tracker';
+const runtimeConfig = require('../../miniprogram/config/runtime-config');
 const ANONYMOUS_ID = `anon_${'b'.repeat(32)}`;
 const OCCURRED_AT = '2026-07-20T01:02:03.000Z';
+let uniqueEventIdCounter = 0;
 const ALLOWED_EVENT_NAMES = [
   'home_cta_click',
   'experience_start',
@@ -20,8 +22,13 @@ const ALLOWED_EVENT_NAMES = [
   'result_action',
 ];
 
-function createStorage(initialQueue, { asynchronous = false } = {}) {
-  const values = new Map();
+function nextUniqueRawEventId() {
+  uniqueEventIdCounter += 1;
+  return uniqueEventIdCounter.toString(16).padStart(16, '0');
+}
+
+function createStorage(initialQueue, { asynchronous = false, backing } = {}) {
+  const values = backing || new Map();
   const writes = [];
   if (initialQueue !== undefined) values.set('goldFoilEventQueue', initialQueue);
 
@@ -36,6 +43,7 @@ function createStorage(initialQueue, { asynchronous = false } = {}) {
       },
     },
     writes,
+    backing: values,
     readQueue: () => values.get('goldFoilEventQueue'),
   };
 }
@@ -44,8 +52,8 @@ function createContext(overrides = {}) {
   return {
     anonymousId: ANONYMOUS_ID,
     sessionId: 'session_abcdef0123456789',
-    routeId: 'route_gold-foil-1',
-    appVersion: '0.1.0-trial',
+    routeId: 'foil_making_candidate',
+    appVersion: runtimeConfig.appVersion,
     deviceCapabilities: { xrFrame: false, continuousDrag: true, networkType: 'wifi' },
     testAccountTag: 'team',
     environment: 'test',
@@ -62,16 +70,20 @@ function createTrackerFixture({
   idFactory,
 } = {}) {
   const fixture = storageFixture || createStorage(initialQueue, { asynchronous: storageAsynchronous });
-  let nextId = 0;
+  const generatedIds = [];
   const { createEventTracker } = require(trackerModulePath);
   const tracker = createEventTracker({
     storage: fixture.storage,
     transport,
     clock: () => new Date(OCCURRED_AT),
-    idFactory: idFactory || (() => String(++nextId).padStart(16, '0')),
+    idFactory: idFactory || (() => {
+      const rawId = nextUniqueRawEventId();
+      generatedIds.push(rawId);
+      return rawId;
+    }),
     context,
   });
-  return { tracker, fixture };
+  return { tracker, fixture, generatedIds };
 }
 
 function createQueuedEvent(index) {
@@ -79,8 +91,8 @@ function createQueuedEvent(index) {
     eventId: `event_${String(index).padStart(16, '0')}`,
     anonymousId: ANONYMOUS_ID,
     sessionId: 'session_abcdef0123456789',
-    routeId: 'route_gold-foil-1',
-    appVersion: '0.1.0-trial',
+    routeId: 'foil_making_candidate',
+    appVersion: runtimeConfig.appVersion,
     deviceCapabilities: { xrFrame: false, continuousDrag: true, networkType: 'wifi' },
     testAccountTag: 'team',
     environment: 'test',
@@ -96,7 +108,7 @@ test('creates a complete immutable event record from test context', async () => 
   const sent = [];
   const context = createContext();
   const properties = { stepId: 'step-1', elapsedMs: 1250, hintCount: 0 };
-  const { tracker } = createTrackerFixture({
+  const { tracker, generatedIds } = createTrackerFixture({
     context,
     transport: (event) => sent.push(event),
   });
@@ -107,11 +119,11 @@ test('creates a complete immutable event record from test context', async () => 
   const event = await tracked;
 
   assert.deepEqual(event, {
-    eventId: 'event_0000000000000001',
+    eventId: `event_${generatedIds[0]}`,
     anonymousId: ANONYMOUS_ID,
     sessionId: 'session_abcdef0123456789',
-    routeId: 'route_gold-foil-1',
-    appVersion: '0.1.0-trial',
+    routeId: 'foil_making_candidate',
+    appVersion: runtimeConfig.appVersion,
     deviceCapabilities: { xrFrame: false, continuousDrag: true, networkType: 'wifi' },
     testAccountTag: 'team',
     environment: 'test',
@@ -159,8 +171,10 @@ test('enforces a closed schema for every context field', () => {
     createContext({ anonymousId: 'anon_not-opaque' }),
     createContext({ sessionId: 'session_undefined' }),
     createContext({ routeId: 'Fictional Person Address' }),
+    createContext({ routeId: 'route_13800138000' }),
     createContext({ appVersion: '0.1.0' }),
     createContext({ appVersion: '0.1.0-production' }),
+    createContext({ appVersion: '138.1.38000-trial' }),
     createContext({ environment: 'production' }),
     createContext({ testAccountTag: 'administrator' }),
     createContext({ deviceCapabilities: { xrFrame: 'false', continuousDrag: true } }),
@@ -172,6 +186,29 @@ test('enforces a closed schema for every context field', () => {
   for (const context of invalidContexts) {
     assert.throws(() => createTrackerFixture({ context }), /invalid event context|invalid device capabilities/);
   }
+});
+
+test('accepts only the two current P0 route IDs and the configured app version', () => {
+  for (const routeId of ['foil_making_candidate', 'foil_application_candidate']) {
+    assert.doesNotThrow(() => createTrackerFixture({ context: createContext({ routeId }) }));
+  }
+  assert.doesNotThrow(() => createTrackerFixture({
+    context: createContext({ appVersion: runtimeConfig.appVersion }),
+  }));
+});
+
+test('rejects a phone-number-shaped generic route ID', () => {
+  assert.throws(
+    () => createTrackerFixture({ context: createContext({ routeId: 'route_13800138000' }) }),
+    /invalid event context/,
+  );
+});
+
+test('rejects a phone-number-shaped trial version not supplied by runtime config', () => {
+  assert.throws(
+    () => createTrackerFixture({ context: createContext({ appVersion: '138.1.38000-trial' }) }),
+    /invalid event context/,
+  );
 });
 
 test('rejects non-enumerable fields that bypass ordinary key enumeration', async () => {
@@ -227,6 +264,49 @@ test('rejects invalid and duplicate raw event IDs before transport', async () =>
   assert.equal((await tracker.track('home_cta_click', {})).eventId, 'event_abcdef0123456789');
   await assert.rejects(tracker.track('home_cta_click', {}), /duplicate event id/);
   assert.equal(transportCalls, 1);
+});
+
+test('rejects a duplicate event ID across tracker instances before transport or enqueue', async () => {
+  const fixture = createStorage();
+  const rawEventId = 'e100000000000001';
+  const first = createTrackerFixture({
+    storageFixture: fixture,
+    idFactory: () => rawEventId,
+    transport: () => false,
+  }).tracker;
+  let secondTransportCalls = 0;
+  const second = createTrackerFixture({
+    storageFixture: fixture,
+    idFactory: () => rawEventId,
+    transport: () => {
+      secondTransportCalls += 1;
+      return false;
+    },
+  }).tracker;
+
+  const firstEvent = await first.track('home_cta_click', {});
+  await assert.rejects(second.track('video_play', {}), /duplicate event id/);
+
+  assert.equal(secondTransportCalls, 0);
+  assert.deepEqual(fixture.readQueue(), [firstEvent]);
+});
+
+test('rejects an event ID already present in the persisted queue', async () => {
+  const rawEventId = 'e200000000000001';
+  const existing = { ...createQueuedEvent(1), eventId: `event_${rawEventId}` };
+  let transportCalls = 0;
+  const { tracker, fixture } = createTrackerFixture({
+    initialQueue: [existing],
+    idFactory: () => rawEventId,
+    transport: () => {
+      transportCalls += 1;
+      return true;
+    },
+  });
+
+  await assert.rejects(tracker.track('home_cta_click', {}), /duplicate event id/);
+  assert.equal(transportCalls, 0);
+  assert.deepEqual(fixture.readQueue(), [existing]);
 });
 
 test('accepts only explicit scalar property keys', async () => {
@@ -500,6 +580,35 @@ test('coordinates failed writes across tracker instances sharing one storage', a
   assert.deepEqual(fixture.readQueue(), events);
 });
 
+test('coordinates different storage wrappers that share the same backing queue', async () => {
+  const backing = new Map();
+  const firstFixture = createStorage(undefined, { asynchronous: true, backing });
+  const secondFixture = createStorage(undefined, { asynchronous: true, backing });
+  const first = createTrackerFixture({
+    storageFixture: firstFixture,
+    idFactory: () => 'a100000000000001',
+    transport: async () => {
+      await Promise.resolve();
+      throw new Error('offline');
+    },
+  }).tracker;
+  const second = createTrackerFixture({
+    storageFixture: secondFixture,
+    idFactory: () => 'b100000000000001',
+    transport: async () => {
+      await Promise.resolve();
+      throw new Error('offline');
+    },
+  }).tracker;
+
+  const events = await Promise.all([
+    first.track('step_hint', { stepId: 'observe' }),
+    second.track('step_retry', { stepId: 'observe' }),
+  ]);
+
+  assert.deepEqual(backing.get('goldFoilEventQueue'), events);
+});
+
 test('does not let a flush snapshot delete an event queued by another tracker instance', async () => {
   const fixture = createStorage([createQueuedEvent(1)]);
   let releaseTransport;
@@ -551,6 +660,30 @@ test('flushes at most fifty queued events in FIFO order', async () => {
   assert.deepEqual(fixture.readQueue(), queued.slice(50));
 });
 
+test('does not validate or alter queue entries after the first fifty valid records', async () => {
+  const firstFifty = Array.from({ length: 50 }, (_, index) => createQueuedEvent(index + 1));
+  const tail = createQueuedEvent(51);
+  const tailEventId = tail.eventId;
+  let tailEventIdReads = 0;
+  Object.defineProperty(tail, 'eventId', {
+    configurable: true,
+    enumerable: true,
+    get() {
+      tailEventIdReads += 1;
+      return tailEventId;
+    },
+  });
+  const { tracker, fixture } = createTrackerFixture({
+    initialQueue: [...firstFifty, tail],
+    transport: () => true,
+  });
+
+  assert.equal(await tracker.flush(), 50);
+  assert.equal(tailEventIdReads, 0);
+  assert.equal(fixture.readQueue().length, 1);
+  assert.equal(fixture.readQueue()[0], tail);
+});
+
 test('isolates corrupt records while flushing the first fifty valid events and preserving the tail', async () => {
   const valid = Array.from({ length: 52 }, (_, index) => createQueuedEvent(index + 1));
   const corrupted = { openid: 'fictional-openid-must-be-rejected' };
@@ -567,6 +700,33 @@ test('isolates corrupt records while flushing the first fifty valid events and p
   assert.equal(await tracker.flush(), 50);
   assert.deepEqual(sentIds, valid.slice(0, 50).map((event) => event.eventId));
   assert.deepEqual(fixture.readQueue(), valid.slice(50));
+});
+
+test('isolates a corrupt queued accessor without invoking it or blocking valid records', async () => {
+  const first = createQueuedEvent(1);
+  const second = createQueuedEvent(2);
+  const corruptAccessor = { ...createQueuedEvent(3) };
+  let getterReads = 0;
+  Object.defineProperty(corruptAccessor, 'eventId', {
+    enumerable: true,
+    get() {
+      getterReads += 1;
+      throw new Error('corrupt accessor must not run');
+    },
+  });
+  const sentIds = [];
+  const { tracker, fixture } = createTrackerFixture({
+    initialQueue: [first, corruptAccessor, second],
+    transport: (event) => {
+      sentIds.push(event.eventId);
+      return true;
+    },
+  });
+
+  assert.equal(await tracker.flush(), 2);
+  assert.equal(getterReads, 0);
+  assert.deepEqual(sentIds, [first.eventId, second.eventId]);
+  assert.deepEqual(fixture.readQueue(), []);
 });
 
 test('failed enqueue removes only corrupt records and preserves existing valid events', async () => {

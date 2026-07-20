@@ -1,6 +1,7 @@
 const ANONYMOUS_ID_KEY = 'goldFoilAnonymousId';
 const ANONYMOUS_ID_PATTERN = /^anon_[a-f0-9]{32}$/;
 const RAW_ID_PATTERN = /^[a-f0-9]{16,64}$/;
+const GENERATED_SESSION_IDS = new Set();
 
 function isAnonymousId(value) {
   return typeof value === 'string' && ANONYMOUS_ID_PATTERN.test(value);
@@ -14,20 +15,25 @@ function isPlainObject(value) {
 
 function readAnonymousId(response) {
   const keys = isPlainObject(response) ? Reflect.ownKeys(response) : [];
+  const descriptor = isPlainObject(response)
+    ? Object.getOwnPropertyDescriptor(response, 'anonymousId')
+    : undefined;
   if (
     !isPlainObject(response)
     || keys.length !== 1
     || keys[0] !== 'anonymousId'
-    || !isAnonymousId(response.anonymousId)
+    || !descriptor
+    || !Object.hasOwn(descriptor, 'value')
+    || !isAnonymousId(descriptor.value)
   ) {
     throw new TypeError('invalid anonymous identity response');
   }
-  return response.anonymousId;
+  const anonymousId = descriptor.value;
+  return anonymousId;
 }
 
 function createIdentityService({ storage, cloudCall, idFactory }) {
   let pendingBootstrap;
-  const generatedSessionIds = new Set();
 
   async function bootstrapAnonymousId() {
     const response = await cloudCall('bootstrapAnonymousId');
@@ -58,10 +64,10 @@ function createIdentityService({ storage, cloudCall, idFactory }) {
       if (typeof rawId !== 'string' || !RAW_ID_PATTERN.test(rawId)) {
         throw new TypeError('invalid session id');
       }
-      if (generatedSessionIds.has(rawId)) {
+      if (GENERATED_SESSION_IDS.has(rawId)) {
         throw new Error('duplicate session id');
       }
-      generatedSessionIds.add(rawId);
+      GENERATED_SESSION_IDS.add(rawId);
       return `session_${rawId}`;
     },
   };

@@ -1,5 +1,7 @@
 'use strict';
 
+const runtimeConfig = require('../config/runtime-config');
+
 const EVENT_QUEUE_KEY = 'goldFoilEventQueue';
 const DELIVERY_SEMANTICS = 'at-least-once';
 const MAX_FLUSH_SIZE = 50;
@@ -9,10 +11,9 @@ const ANONYMOUS_ID_PATTERN = /^anon_[a-f0-9]{32}$/;
 const RAW_ID_PATTERN = /^[a-f0-9]{16,64}$/;
 const EVENT_ID_PATTERN = /^event_[a-f0-9]{16,64}$/;
 const SESSION_ID_PATTERN = /^session_[a-f0-9]{16,64}$/;
-const ROUTE_ID_PATTERN = /^(?:foil_(?:making|application)_candidate|route_[a-z0-9]+(?:-[a-z0-9]+){0,5})$/;
 const STEP_ID_PATTERN = /^(?:observe|motion|inspect|step-[1-9][0-9]{0,2})$/;
-const TRIAL_VERSION_PATTERN = /^(?:0|[1-9]\d*)\.(?:0|[1-9]\d*)\.(?:0|[1-9]\d*)-trial$/;
 
+const ALLOWED_ROUTE_IDS = new Set(['foil_making_candidate', 'foil_application_candidate']);
 const ALLOWED_ENVIRONMENTS = new Set(['trial', 'test']);
 const ALLOWED_TEST_ACCOUNT_TAGS = new Set(['team', 'teacher', 'invitee', null]);
 const ALLOWED_NETWORK_TYPES = new Set(['wifi', '2g', '3g', '4g', '5g', 'none', 'unknown']);
@@ -25,7 +26,11 @@ const ALLOWED_REASONS = new Set([
   'timeout',
 ]);
 const ALLOWED_ACTIONS = new Set(['retry', 'home', 'archive', 'activity', 'share']);
-const STORAGE_COORDINATORS = new WeakMap();
+const EVENT_QUEUE_COORDINATOR = {
+  operations: Promise.resolve(),
+  acknowledgedEventIds: new Set(),
+  reservedEventIds: new Set(),
+};
 
 const ALLOWED_EVENT_NAMES = new Set([
   'home_cta_click',
@@ -83,47 +88,64 @@ function hasExactKeys(value, allowedKeys) {
   return keys.length === allowedKeys.length && allowedKeys.every((key) => Object.hasOwn(value, key));
 }
 
+function readExactDataProperties(value, allowedKeys) {
+  if (!isPlainObject(value) || !hasExactKeys(value, allowedKeys)) return null;
+  const snapshot = {};
+  for (const key of allowedKeys) {
+    const descriptor = Object.getOwnPropertyDescriptor(value, key);
+    if (!descriptor || !Object.hasOwn(descriptor, 'value')) return null;
+    snapshot[key] = descriptor.value;
+  }
+  return snapshot;
+}
+
+function readDataProperty(value, key) {
+  if (!isPlainObject(value)) return undefined;
+  const descriptor = Object.getOwnPropertyDescriptor(value, key);
+  return descriptor && Object.hasOwn(descriptor, 'value') ? descriptor.value : undefined;
+}
+
 function copyDeviceCapabilities(value) {
   const allowedKeys = ['xrFrame', 'continuousDrag', 'networkType'];
+  const snapshot = readExactDataProperties(value, allowedKeys);
   if (
-    !isPlainObject(value)
-    || !hasExactKeys(value, allowedKeys)
-    || typeof value.xrFrame !== 'boolean'
-    || typeof value.continuousDrag !== 'boolean'
-    || !ALLOWED_NETWORK_TYPES.has(value.networkType)
+    !snapshot
+    || typeof snapshot.xrFrame !== 'boolean'
+    || typeof snapshot.continuousDrag !== 'boolean'
+    || !ALLOWED_NETWORK_TYPES.has(snapshot.networkType)
   ) {
     throw new TypeError('invalid device capabilities');
   }
   return {
-    xrFrame: value.xrFrame,
-    continuousDrag: value.continuousDrag,
-    networkType: value.networkType,
+    xrFrame: snapshot.xrFrame,
+    continuousDrag: snapshot.continuousDrag,
+    networkType: snapshot.networkType,
   };
 }
 
 function validateContext(context) {
-  if (!isPlainObject(context)) throw new TypeError('invalid event context');
+  const snapshot = readExactDataProperties(context, INPUT_CONTEXT_KEYS);
   if (
-    !hasExactKeys(context, INPUT_CONTEXT_KEYS)
-    || !ANONYMOUS_ID_PATTERN.test(context.anonymousId)
-    || !SESSION_ID_PATTERN.test(context.sessionId)
-    || !ROUTE_ID_PATTERN.test(context.routeId)
-    || !TRIAL_VERSION_PATTERN.test(context.appVersion)
-    || !ALLOWED_TEST_ACCOUNT_TAGS.has(context.testAccountTag)
-    || !ALLOWED_ENVIRONMENTS.has(context.environment)
+    !snapshot
+    || !ANONYMOUS_ID_PATTERN.test(snapshot.anonymousId)
+    || !SESSION_ID_PATTERN.test(snapshot.sessionId)
+    || !ALLOWED_ROUTE_IDS.has(snapshot.routeId)
+    || snapshot.appVersion !== runtimeConfig.appVersion
+    || !ALLOWED_TEST_ACCOUNT_TAGS.has(snapshot.testAccountTag)
+    || !ALLOWED_ENVIRONMENTS.has(snapshot.environment)
   ) {
     throw new TypeError('invalid event context');
   }
 
   return {
-    anonymousId: context.anonymousId,
-    sessionId: context.sessionId,
-    routeId: context.routeId,
-    appVersion: context.appVersion,
-    deviceCapabilities: copyDeviceCapabilities(context.deviceCapabilities),
-    testAccountTag: context.testAccountTag,
-    environment: context.environment,
-    source: context.environment === 'test' ? 'test' : 'internal_trial',
+    anonymousId: snapshot.anonymousId,
+    sessionId: snapshot.sessionId,
+    routeId: snapshot.routeId,
+    appVersion: snapshot.appVersion,
+    deviceCapabilities: copyDeviceCapabilities(snapshot.deviceCapabilities),
+    testAccountTag: snapshot.testAccountTag,
+    environment: snapshot.environment,
+    source: snapshot.environment === 'test' ? 'test' : 'internal_trial',
   };
 }
 
@@ -145,7 +167,10 @@ function validateProperties(properties) {
   if (!isPlainObject(properties)) throw new TypeError('invalid event properties');
   const copy = {};
   for (const key of Reflect.ownKeys(properties)) {
-    const value = properties[key];
+    const descriptor = Object.getOwnPropertyDescriptor(properties, key);
+    const value = descriptor && Object.hasOwn(descriptor, 'value')
+      ? descriptor.value
+      : undefined;
     if (!ALLOWED_PROPERTY_KEYS.has(key) || !PROPERTY_VALIDATORS[key](value)) {
       throw new TypeError('invalid event properties');
     }
@@ -168,25 +193,22 @@ function isIsoTimestamp(value) {
 }
 
 function isValidQueuedEvent(event) {
-  if (!isPlainObject(event)) return false;
-  const keys = Reflect.ownKeys(event);
-  if (
-    keys.length !== EVENT_KEYS.size
-    || !keys.every((key) => EVENT_KEYS.has(key))
-    || !EVENT_ID_PATTERN.test(event.eventId)
-    || event.delivery !== DELIVERY_SEMANTICS
-    || !ALLOWED_EVENT_NAMES.has(event.name)
-    || !isIsoTimestamp(event.occurredAt)
-  ) {
-    return false;
-  }
-
   try {
+    const record = readExactDataProperties(event, [...EVENT_KEYS]);
+    if (
+      !record
+      || !EVENT_ID_PATTERN.test(record.eventId)
+      || record.delivery !== DELIVERY_SEMANTICS
+      || !ALLOWED_EVENT_NAMES.has(record.name)
+      || !isIsoTimestamp(record.occurredAt)
+    ) {
+      return false;
+    }
     const context = {};
-    for (const key of INPUT_CONTEXT_KEYS) context[key] = event[key];
+    for (const key of INPUT_CONTEXT_KEYS) context[key] = record[key];
     const safeContext = validateContext(context);
-    if (safeContext.source !== event.source) return false;
-    validateProperties(event.properties);
+    if (safeContext.source !== record.source) return false;
+    validateProperties(record.properties);
     return true;
   } catch (error) {
     return false;
@@ -194,13 +216,12 @@ function isValidQueuedEvent(event) {
 }
 
 function isAcknowledged(result) {
+  const snapshot = isPlainObject(result)
+    ? readExactDataProperties(result, ['acknowledged'])
+    : null;
   return (
     result === true
-    || (
-      isPlainObject(result)
-      && hasExactKeys(result, ['acknowledged'])
-      && result.acknowledged === true
-    )
+    || (snapshot && snapshot.acknowledged === true)
   );
 }
 
@@ -208,21 +229,12 @@ function getStorageCoordinator(storage) {
   if (!storage || (typeof storage !== 'object' && typeof storage !== 'function')) {
     throw new TypeError('storage must be an object');
   }
-  let coordinator = STORAGE_COORDINATORS.get(storage);
-  if (!coordinator) {
-    coordinator = {
-      operations: Promise.resolve(),
-      acknowledgedEventIds: new Set(),
-    };
-    STORAGE_COORDINATORS.set(storage, coordinator);
-  }
-  return coordinator;
+  return EVENT_QUEUE_COORDINATOR;
 }
 
 function createEventTracker({ storage, transport, clock, idFactory, context }) {
   const safeContext = validateContext(context);
   const coordinator = getStorageCoordinator(storage);
-  const generatedEventIds = new Set();
 
   function serialize(operation) {
     const result = coordinator.operations.then(operation, operation);
@@ -230,21 +242,61 @@ function createEventTracker({ storage, transport, clock, idFactory, context }) {
     return result;
   }
 
-  async function readQueue() {
-    const stored = await storage.get(EVENT_QUEUE_KEY);
+  function inspectQueueWindow(stored) {
     if (stored === undefined || stored === null) {
-      return { queue: [], changed: false };
+      return { validPrefix: [], tail: [], changed: false };
     }
     if (!Array.isArray(stored)) {
-      return { queue: [], changed: true };
+      return { validPrefix: [], tail: [], changed: true };
     }
-    const queue = stored.filter(isValidQueuedEvent);
-    return { queue, changed: queue.length !== stored.length };
+
+    const validPrefix = [];
+    const seenEventIds = new Set();
+    let changed = false;
+    let index = 0;
+    while (index < stored.length && validPrefix.length < MAX_FLUSH_SIZE) {
+      const event = stored[index];
+      index += 1;
+      if (
+        !isValidQueuedEvent(event)
+        || seenEventIds.has(readDataProperty(event, 'eventId'))
+      ) {
+        changed = true;
+        continue;
+      }
+      seenEventIds.add(readDataProperty(event, 'eventId'));
+      validPrefix.push(event);
+    }
+
+    return {
+      validPrefix,
+      tail: stored.slice(index),
+      changed,
+    };
   }
 
-  async function appendToQueue(event) {
-    const { queue } = await readQueue();
-    await storage.set(EVENT_QUEUE_KEY, [...queue, event]);
+  function queueContainsEventId(stored, eventId) {
+    if (!Array.isArray(stored)) return false;
+    return stored.some((event) => {
+      if (!isPlainObject(event)) return false;
+      return readDataProperty(event, 'eventId') === eventId;
+    });
+  }
+
+  async function rewriteQueue({ removeEventIds = new Set(), appendEvent } = {}) {
+    const stored = await storage.get(EVENT_QUEUE_KEY);
+    const inspected = inspectQueueWindow(stored);
+    const retainedPrefix = inspected.validPrefix.filter(
+      (event) => !removeEventIds.has(readDataProperty(event, 'eventId')),
+    );
+    const queue = [...retainedPrefix, ...inspected.tail];
+    if (appendEvent) queue.push(appendEvent);
+
+    const removedCount = inspected.validPrefix.length - retainedPrefix.length;
+    if (inspected.changed || removedCount > 0 || appendEvent) {
+      await storage.set(EVENT_QUEUE_KEY, queue);
+    }
+    return { queue, removedCount };
   }
 
   return {
@@ -257,52 +309,60 @@ function createEventTracker({ storage, transport, clock, idFactory, context }) {
       const occurredAtIso = occurredAt instanceof Date
         ? occurredAt.toISOString()
         : new Date(occurredAt).toISOString();
-      const rawEventId = idFactory();
-      if (typeof rawEventId !== 'string' || !RAW_ID_PATTERN.test(rawEventId)) {
-        throw new TypeError('invalid event id');
-      }
-      if (generatedEventIds.has(rawEventId)) {
-        throw new Error('duplicate event id');
-      }
-      generatedEventIds.add(rawEventId);
-      const event = freezeRecord({
-        eventId: `event_${rawEventId}`,
-        ...safeContext,
-        deviceCapabilities: { ...safeContext.deviceCapabilities },
-        delivery: DELIVERY_SEMANTICS,
-        name,
-        occurredAt: occurredAtIso,
-        properties: safeProperties,
-      });
-      if (!isValidQueuedEvent(event)) {
-        throw new TypeError('invalid event record');
-      }
 
       return serialize(async () => {
+        const rawEventId = idFactory();
+        if (typeof rawEventId !== 'string' || !RAW_ID_PATTERN.test(rawEventId)) {
+          throw new TypeError('invalid event id');
+        }
+        const eventId = `event_${rawEventId}`;
+        const stored = await storage.get(EVENT_QUEUE_KEY);
+        if (
+          coordinator.reservedEventIds.has(eventId)
+          || queueContainsEventId(stored, eventId)
+        ) {
+          throw new Error('duplicate event id');
+        }
+
+        const event = freezeRecord({
+          eventId,
+          ...safeContext,
+          deviceCapabilities: { ...safeContext.deviceCapabilities },
+          delivery: DELIVERY_SEMANTICS,
+          name,
+          occurredAt: occurredAtIso,
+          properties: safeProperties,
+        });
+        if (!isValidQueuedEvent(event)) {
+          throw new TypeError('invalid event record');
+        }
+        coordinator.reservedEventIds.add(eventId);
+
         let acknowledged = false;
         try {
           acknowledged = isAcknowledged(await transport(event));
         } catch (error) {
           acknowledged = false;
         }
-        if (!acknowledged) await appendToQueue(event);
+        if (!acknowledged) await rewriteQueue({ appendEvent: event });
         return event;
       });
     },
 
     flush() {
       return serialize(async () => {
-        const { queue, changed } = await readQueue();
+        const stored = await storage.get(EVENT_QUEUE_KEY);
+        const inspected = inspectQueueWindow(stored);
+        const batch = inspected.validPrefix;
 
         const acknowledgedPrefixIds = new Set();
-        for (const event of queue.slice(0, MAX_FLUSH_SIZE)) {
-          if (!coordinator.acknowledgedEventIds.has(event.eventId)) break;
-          acknowledgedPrefixIds.add(event.eventId);
+        for (const event of batch) {
+          const eventId = readDataProperty(event, 'eventId');
+          if (!coordinator.acknowledgedEventIds.has(eventId)) break;
+          acknowledgedPrefixIds.add(eventId);
         }
         if (acknowledgedPrefixIds.size > 0) {
-          const latest = await readQueue();
-          const remaining = latest.queue.filter((event) => !acknowledgedPrefixIds.has(event.eventId));
-          await storage.set(EVENT_QUEUE_KEY, remaining);
+          await rewriteQueue({ removeEventIds: acknowledgedPrefixIds });
           for (const eventId of acknowledgedPrefixIds) {
             coordinator.acknowledgedEventIds.delete(eventId);
           }
@@ -311,22 +371,20 @@ function createEventTracker({ storage, transport, clock, idFactory, context }) {
 
         let acknowledgedCount = 0;
         const acknowledgedIds = new Set();
-        const batch = queue.slice(0, MAX_FLUSH_SIZE);
         for (const event of batch) {
+          const eventId = readDataProperty(event, 'eventId');
           try {
             if (!isAcknowledged(await transport(event))) break;
             acknowledgedCount += 1;
-            acknowledgedIds.add(event.eventId);
-            coordinator.acknowledgedEventIds.add(event.eventId);
+            acknowledgedIds.add(eventId);
+            coordinator.acknowledgedEventIds.add(eventId);
           } catch (error) {
             break;
           }
         }
 
-        if (acknowledgedCount > 0 || changed) {
-          const latest = await readQueue();
-          const remaining = latest.queue.filter((event) => !acknowledgedIds.has(event.eventId));
-          await storage.set(EVENT_QUEUE_KEY, remaining);
+        if (acknowledgedCount > 0 || inspected.changed) {
+          await rewriteQueue({ removeEventIds: acknowledgedIds });
           for (const eventId of acknowledgedIds) {
             coordinator.acknowledgedEventIds.delete(eventId);
           }
