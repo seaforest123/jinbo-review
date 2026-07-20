@@ -94,6 +94,14 @@ test('provides compilable files for every registered page', () => {
   }
 });
 
+test('labels home and experience screens as unconfirmed candidate illustrations', () => {
+  const requiredNotice = '候选示意，尚未经专业确认';
+  for (const page of ['home', 'experience']) {
+    const wxml = fs.readFileSync(path.join(root, 'miniprogram/pages', page, 'index.wxml'), 'utf8');
+    assert.ok(wxml.includes(requiredNotice), `${page} page should display the candidate notice`);
+  }
+});
+
 test('exports the exact frozen trial runtime configuration', () => {
   const runtimeConfig = require(runtimeConfigPath);
   assert.deepEqual(runtimeConfig, {
