@@ -56,3 +56,46 @@ test('accepts equal primary and secondary distances and clamps progress', () => 
     primaryDistance: 150,
   });
 });
+
+test('rejects invalid required distances by type or range', () => {
+  const input = {
+    start: { x: 0, y: 0 },
+    current: { x: 50, y: 0 },
+    targetDirection: 'horizontal',
+  };
+
+  for (const requiredDistance of [0, -1]) {
+    assert.throws(() => calculateDragFeedback({ ...input, requiredDistance }), RangeError);
+  }
+  for (const requiredDistance of [NaN, Infinity, -Infinity, '100', null]) {
+    assert.throws(() => calculateDragFeedback({ ...input, requiredDistance }), TypeError);
+  }
+});
+
+test('rejects non-finite or non-number coordinate values', () => {
+  const input = {
+    start: { x: 0, y: 0 },
+    current: { x: 50, y: 0 },
+    targetDirection: 'horizontal',
+    requiredDistance: 100,
+  };
+  const invalidInputs = [
+    { ...input, start: { x: NaN, y: 0 } },
+    { ...input, start: { x: 0, y: Infinity } },
+    { ...input, current: { x: -Infinity, y: 0 } },
+    { ...input, current: { x: 50, y: '0' } },
+  ];
+
+  for (const invalidInput of invalidInputs) {
+    assert.throws(() => calculateDragFeedback(invalidInput), TypeError);
+  }
+});
+
+test('rejects unknown target directions', () => {
+  assert.throws(() => calculateDragFeedback({
+    start: { x: 0, y: 0 },
+    current: { x: 50, y: 0 },
+    targetDirection: 'diagonal',
+    requiredDistance: 100,
+  }), TypeError);
+});
