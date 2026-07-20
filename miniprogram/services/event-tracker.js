@@ -56,6 +56,28 @@ const ALLOWED_PROPERTY_KEYS = new Set([
   'retryCount',
 ]);
 
+const EVENT_CONTRACT = Object.freeze({
+  appVersion: runtimeConfig.appVersion,
+  deliverySemantics: DELIVERY_SEMANTICS,
+  routeIds: Object.freeze([...ALLOWED_ROUTE_IDS]),
+  environments: Object.freeze([...ALLOWED_ENVIRONMENTS]),
+  testAccountTags: Object.freeze([...ALLOWED_TEST_ACCOUNT_TAGS]),
+  networkTypes: Object.freeze([...ALLOWED_NETWORK_TYPES]),
+  adapters: Object.freeze([...ALLOWED_ADAPTERS]),
+  reasons: Object.freeze([...ALLOWED_REASONS]),
+  actions: Object.freeze([...ALLOWED_ACTIONS]),
+  eventNames: Object.freeze([...ALLOWED_EVENT_NAMES]),
+  propertyKeys: Object.freeze([...ALLOWED_PROPERTY_KEYS]),
+  maxElapsedMs: MAX_ELAPSED_MS,
+  maxCounter: MAX_COUNTER,
+  patterns: Object.freeze({
+    anonymousId: ANONYMOUS_ID_PATTERN.source,
+    eventId: EVENT_ID_PATTERN.source,
+    sessionId: SESSION_ID_PATTERN.source,
+    stepId: STEP_ID_PATTERN.source,
+  }),
+});
+
 const INPUT_CONTEXT_KEYS = [
   'anonymousId',
   'sessionId',
@@ -424,4 +446,4 @@ function createEventTracker({ storage, transport, clock, idFactory, context }) {
   };
 }
 
-module.exports = { createEventTracker, DELIVERY_SEMANTICS };
+module.exports = { createEventTracker, DELIVERY_SEMANTICS, EVENT_CONTRACT };
