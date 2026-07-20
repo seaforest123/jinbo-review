@@ -168,7 +168,9 @@ function validateEventEnvelope(value) {
     !event
     || typeof event.eventId !== 'string'
     || !EVENT_ID_PATTERN.test(event.eventId)
+    || typeof event.anonymousId !== 'string'
     || !ANONYMOUS_ID_PATTERN.test(event.anonymousId)
+    || typeof event.sessionId !== 'string'
     || !SESSION_ID_PATTERN.test(event.sessionId)
     || !ALLOWED_ROUTE_IDS.has(event.routeId)
     || event.appVersion !== APP_VERSION

@@ -123,6 +123,24 @@ test('rejects a non-string eventId without invoking coercion hooks', () => {
   assert.equal(coercions, 0);
 });
 
+test('rejects non-string anonymousId and sessionId without invoking coercion hooks', () => {
+  for (const field of ['anonymousId', 'sessionId']) {
+    let coercions = 0;
+    const coercibleId = {
+      toString() {
+        coercions += 1;
+        return field === 'anonymousId' ? ANONYMOUS_ID : 'session_abcdef0123456789';
+      },
+    };
+
+    assert.throws(
+      () => validateEventEnvelope(validEvent({ [field]: coercibleId })),
+      /invalid event/i,
+    );
+    assert.equal(coercions, 0, field);
+  }
+});
+
 test('accepts every Task 6 event name while preserving exact source semantics', () => {
   for (const name of serverContract.eventNames) {
     assert.equal(validateEventEnvelope(validEvent({ name })).name, name);

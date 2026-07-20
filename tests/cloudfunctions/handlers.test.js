@@ -6,6 +6,8 @@ const assert = require('node:assert/strict');
 const { createBootstrapAnonymousIdHandler } = require('../../cloudfunctions/bootstrapAnonymousId/lib/handler');
 const { createConfirmRouteHandler } = require('../../cloudfunctions/confirmRoute/lib/handler');
 const { createSubmitBehaviorEventHandler } = require('../../cloudfunctions/submitBehaviorEvent/lib/handler');
+const { validateRoute } = require('../../miniprogram/domain/route-config');
+const { createContentRepository } = require('../../miniprogram/services/content-repository');
 
 const ANONYMOUS_ID = `anon_${'a'.repeat(32)}`;
 const OTHER_ANONYMOUS_ID = `anon_${'b'.repeat(32)}`;
@@ -37,6 +39,25 @@ function reviewedContent(overrides = {}) {
   };
 }
 
+function candidateRoute(overrides = {}) {
+  return {
+    _id: 'foil_making_candidate',
+    id: 'foil_making_candidate',
+    displayName: '制箔候选路线',
+    status: 'internal_placeholder',
+    reviewStatus: 'internal_approved',
+    allowedEnvironment: 'trial',
+    allowedEnvironments: ['development', 'trial'],
+    banner: '候选示意，尚未经专业确认',
+    steps: [
+      { id: 'observe', order: 1, adapter: 'select', title: '认识材料与目标（候选示意）' },
+      { id: 'motion', order: 2, adapter: 'continuous-drag', title: '模拟关键动作（候选示意）' },
+      { id: 'inspect', order: 3, adapter: 'inspect', title: '检查数字结果（候选示意）' },
+    ],
+    ...overrides,
+  };
+}
+
 function validEvent(overrides = {}) {
   return {
     eventId: 'event_abcdef0123456789',
@@ -56,12 +77,18 @@ function validEvent(overrides = {}) {
   };
 }
 
-function createConfirmDatabase({ contentItem = reviewedContent(), rejectCommit = false } = {}) {
+function createConfirmDatabase({
+  contentItem = reviewedContent(),
+  routeDocument = candidateRoute(),
+  rejectCommit = false,
+} = {}) {
   const committed = new Map();
+  if (routeDocument) committed.set(routeDocument._id || routeDocument.id, routeDocument);
   const calls = {
     directCollections: 0,
     transactions: 0,
     contentReads: 0,
+    routeReads: 0,
     stagedWrites: 0,
     commits: 0,
     order: [],
@@ -90,6 +117,11 @@ function createConfirmDatabase({ contentItem = reviewedContent(), rejectCommit =
                 };
               }
               return {
+                async get() {
+                  calls.routeReads += 1;
+                  calls.order.push('config:read');
+                  return { data: staged.get(id) || null };
+                },
                 async set({ data }) {
                   calls.stagedWrites += 1;
                   calls.order.push('config:write');
@@ -150,12 +182,22 @@ test('confirmRoute re-reads and writes versioned auditable config in one transac
     routeId: 'foil_making_candidate',
     contentItemId: 'content-foil-making',
   }), { confirmed: true });
-  assert.deepEqual(fixture.committed.get('foil_making_candidate'), {
-    routeId: 'foil_making_candidate',
+  const storedRoute = fixture.committed.get('foil_making_candidate');
+  assert.deepEqual(storedRoute, {
+    id: 'foil_making_candidate',
+    displayName: '制箔候选路线',
+    status: 'confirmed',
+    reviewStatus: 'internal_approved',
+    allowedEnvironment: 'trial',
+    allowedEnvironments: ['development', 'trial'],
+    banner: '候选示意，尚未经专业确认',
+    steps: [
+      { id: 'observe', order: 1, adapter: 'select', title: '认识材料与目标（候选示意）' },
+      { id: 'motion', order: 2, adapter: 'continuous-drag', title: '模拟关键动作（候选示意）' },
+      { id: 'inspect', order: 3, adapter: 'inspect', title: '检查数字结果（候选示意）' },
+    ],
     contentItemId: 'content-foil-making',
     contentVersion: 'content-v2',
-    allowedEnvironment: 'trial',
-    reviewStatus: 'reviewed',
     approvalAudit: {
       reviewerAnonymousId: ANONYMOUS_ID,
       approvedAt: SERVER_DATE,
@@ -163,9 +205,30 @@ test('confirmRoute re-reads and writes versioned auditable config in one transac
       contentVersion: 'content-v2',
     },
   });
+  assert.equal(validateRoute(storedRoute).status, 'confirmed');
+  const repository = createContentRepository({
+    database: {
+      command: { in: (values) => ({ in: values }) },
+      collection(name) {
+        assert.equal(name, 'app_config');
+        return {
+          where(query) {
+            assert.deepEqual(query, {
+              allowedEnvironment: 'trial',
+              reviewStatus: { in: ['internal_approved'] },
+            });
+            return { get: async () => ({ data: [storedRoute] }) };
+          },
+        };
+      },
+    },
+    localRoutes: [],
+  });
+  assert.deepEqual(await repository.loadRoutes('trial'), [storedRoute]);
   assert.deepEqual(fixture.calls.order, [
     'transaction:start',
     'content:read',
+    'config:read',
     'server:date',
     'config:write',
     'transaction:commit',
@@ -174,6 +237,7 @@ test('confirmRoute re-reads and writes versioned auditable config in one transac
   assert.equal(fixture.calls.directCollections, 0);
   assert.equal(fixture.calls.transactions, 1);
   assert.equal(fixture.calls.contentReads, 1);
+  assert.equal(fixture.calls.routeReads, 1);
   assert.equal(fixture.calls.commits, 1);
 });
 
@@ -182,13 +246,20 @@ test('confirmRoute ignores a stale outside snapshot and uses the transactional c
   const committed = new Map();
   const stale = reviewedContent({ contentVersion: 'content-v1' });
   const current = reviewedContent({ contentVersion: 'content-v2' });
+  const staleRoute = candidateRoute({ displayName: '事务外旧路线' });
+  const currentRoute = candidateRoute({ displayName: '事务内当前路线' });
   const database = {
     collection(name) {
       directCollections += 1;
       if (name === 'content_items') {
         return { doc: () => ({ get: async () => ({ data: stale }) }) };
       }
-      return { doc: (id) => ({ set: async ({ data }) => committed.set(id, data) }) };
+      return {
+        doc: (id) => ({
+          get: async () => ({ data: staleRoute }),
+          set: async ({ data }) => committed.set(id, data),
+        }),
+      };
     },
     async runTransaction(operation) {
       const transaction = {
@@ -198,7 +269,10 @@ test('confirmRoute ignores a stale outside snapshot and uses the transactional c
               if (name === 'content_items') {
                 return { get: async () => ({ data: id === current._id ? current : null }) };
               }
-              return { set: async ({ data }) => committed.set(id, data) };
+              return {
+                get: async () => ({ data: id === currentRoute._id ? currentRoute : null }),
+                set: async ({ data }) => committed.set(id, data),
+              };
             },
           };
         },
@@ -216,6 +290,7 @@ test('confirmRoute ignores a stale outside snapshot and uses the transactional c
 
   await handler({ routeId: 'foil_making_candidate', contentItemId: 'content-foil-making' });
   assert.equal(directCollections, 0);
+  assert.equal(committed.get('foil_making_candidate').displayName, '事务内当前路线');
   assert.equal(committed.get('foil_making_candidate').contentVersion, 'content-v2');
   assert.equal(
     committed.get('foil_making_candidate').approvalAudit.contentVersion,
@@ -239,7 +314,37 @@ test('confirmRoute rolls back route and embedded audit when transaction commit f
   }), /commit conflict/i);
   assert.equal(fixture.calls.stagedWrites, 1);
   assert.equal(fixture.calls.commits, 0);
-  assert.equal(fixture.committed.size, 0);
+  assert.deepEqual(fixture.committed.get('foil_making_candidate'), candidateRoute());
+});
+
+test('confirmRoute fails closed and rolls back for missing, malformed, or wrong route config', async () => {
+  const badRoutes = [
+    null,
+    candidateRoute({ _id: 'foil_application_candidate' }),
+    candidateRoute({ id: 'foil_application_candidate' }),
+    candidateRoute({ status: 'confirmed' }),
+    candidateRoute({ steps: [] }),
+  ];
+
+  for (const routeDocument of badRoutes) {
+    const fixture = createConfirmDatabase({ routeDocument });
+    const handler = createConfirmRouteHandler({
+      getWXContext: () => trustedContext(),
+      environment: environment(),
+      hashIdentity: () => ANONYMOUS_ID,
+      database: fixture.database,
+      serverDate: () => SERVER_DATE,
+    });
+
+    await assert.rejects(
+      handler({ routeId: 'foil_making_candidate', contentItemId: 'content-foil-making' }),
+      /route|config|placeholder/i,
+    );
+    assert.equal(fixture.calls.contentReads, 1);
+    assert.equal(fixture.calls.routeReads, 1);
+    assert.equal(fixture.calls.stagedWrites, 0);
+    assert.equal(fixture.calls.commits, 0);
+  }
 });
 
 test('confirmRoute fails closed before a transaction for open, unauthorized, or invalid requests', async () => {

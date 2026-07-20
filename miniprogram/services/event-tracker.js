@@ -149,7 +149,9 @@ function validateContext(context) {
   const snapshot = readExactDataProperties(context, INPUT_CONTEXT_KEYS);
   if (
     !snapshot
+    || typeof snapshot.anonymousId !== 'string'
     || !ANONYMOUS_ID_PATTERN.test(snapshot.anonymousId)
+    || typeof snapshot.sessionId !== 'string'
     || !SESSION_ID_PATTERN.test(snapshot.sessionId)
     || !ALLOWED_ROUTE_IDS.has(snapshot.routeId)
     || snapshot.appVersion !== runtimeConfig.appVersion

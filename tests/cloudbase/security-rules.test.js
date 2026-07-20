@@ -31,7 +31,7 @@ test('keeps exactly the four approved database collection rule files', () => {
 });
 
 test('deploys default-deny function invoke rules with only the three explicit client entries', () => {
-  const authenticatedInvoke = "auth != null && auth.loginType != 'ANONYMOUS'";
+  const authenticatedInvoke = "auth.loginType != 'ANONYMOUS' && auth != null";
   assert.deepEqual(JSON.parse(fs.readFileSync(functionRulesPath, 'utf8')), {
     '*': { invoke: false },
     bootstrapAnonymousId: { invoke: authenticatedInvoke },
@@ -77,12 +77,19 @@ test('documents offline provisioning, deployment, and secret environment variabl
     '数据库触发器',
     '管理 API',
     '真实 CloudBase 并发',
+    '专用 CloudBase 环境',
+    'Web SDK',
+    '其他客户端',
+    '陈旧上下文',
     'https://docs.cloudbase.net/',
   ]) {
     assert.match(readme, new RegExp(required));
   }
   assert.match(readme, /Option A|方案 A/);
   assert.match(readme, /APPID.*WECHAT_APP_ID|WECHAT_APP_ID.*APPID/);
+  assert.match(readme, /APPID.*不能.*消除.*陈旧上下文|APPID.*无法.*消除.*陈旧上下文/);
+  assert.match(readme, /不得.*Web SDK|禁止.*Web SDK/);
+  assert.match(readme, /auth\.loginType != 'ANONYMOUS' && auth != null/);
   assert.match(readme, /至少 32|>=\s*32/);
   assert.match(readme, /不能|无法.*区分.*微信小程序|无法.*识别.*微信小程序/);
   assert.doesNotMatch(readme, /anon_[a-f0-9]{32}|\b[a-f0-9]{32,}\b/i);

@@ -35,15 +35,20 @@ function createConfirmRouteHandler({
         .collection('content_items')
         .doc(candidate.contentItemId)
         .get();
+      const routeResult = await transaction
+        .collection('app_config')
+        .doc(candidate.routeId)
+        .get();
       const approvedAt = serverDate();
       const confirmedRoute = buildConfirmedRoute(
         candidate,
         contentResult && contentResult.data,
+        routeResult && routeResult.data,
         { reviewerAnonymousId: anonymousId, approvedAt },
       );
       await transaction
         .collection('app_config')
-        .doc(confirmedRoute.routeId)
+        .doc(candidate.routeId)
         .set({ data: confirmedRoute });
     });
     return { confirmed: true };

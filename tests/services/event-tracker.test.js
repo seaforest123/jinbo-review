@@ -188,6 +188,35 @@ test('enforces a closed schema for every context field', () => {
   }
 });
 
+test('rejects coercible anonymous and session context IDs without invoking hooks or queueing', () => {
+  for (const field of ['anonymousId', 'sessionId']) {
+    const fixture = createStorage();
+    let transportCalls = 0;
+    let coercions = 0;
+    const coercibleId = {
+      toString() {
+        coercions += 1;
+        return field === 'anonymousId' ? ANONYMOUS_ID : 'session_abcdef0123456789';
+      },
+    };
+
+    assert.throws(
+      () => createTrackerFixture({
+        storageFixture: fixture,
+        context: createContext({ [field]: coercibleId }),
+        transport: () => {
+          transportCalls += 1;
+          return true;
+        },
+      }),
+      /invalid event context/,
+    );
+    assert.equal(coercions, 0, field);
+    assert.equal(transportCalls, 0, field);
+    assert.equal(fixture.readQueue(), undefined, field);
+  }
+});
+
 test('accepts only the two current P0 route IDs and the configured app version', () => {
   for (const routeId of ['foil_making_candidate', 'foil_application_candidate']) {
     assert.doesNotThrow(() => createTrackerFixture({ context: createContext({ routeId }) }));
@@ -333,6 +362,34 @@ test('drops a queued non-string eventId without invoking coercion hooks', async 
   assert.equal(coercions, 0);
   assert.equal(transportCalls, 0);
   assert.deepEqual(fixture.readQueue(), []);
+});
+
+test('drops queued non-string anonymous and session IDs without invoking coercion hooks', async () => {
+  for (const field of ['anonymousId', 'sessionId']) {
+    let coercions = 0;
+    let transportCalls = 0;
+    const corrupted = {
+      ...createQueuedEvent(1),
+      [field]: {
+        toString() {
+          coercions += 1;
+          return field === 'anonymousId' ? ANONYMOUS_ID : 'session_abcdef0123456789';
+        },
+      },
+    };
+    const { tracker, fixture } = createTrackerFixture({
+      initialQueue: [corrupted],
+      transport: () => {
+        transportCalls += 1;
+        return true;
+      },
+    });
+
+    assert.equal(await tracker.flush(), 0);
+    assert.equal(coercions, 0, field);
+    assert.equal(transportCalls, 0, field);
+    assert.deepEqual(fixture.readQueue(), [], field);
+  }
 });
 
 test('accepts only explicit scalar property keys', async () => {

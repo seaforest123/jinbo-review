@@ -190,6 +190,31 @@ test('creates the first event once under its eventId with only envelope and payl
   assert.equal(fixture.calls.directCollections, 0);
 });
 
+test('rejects coercible anonymous and session IDs before starting a persistence transaction', async () => {
+  for (const field of ['anonymousId', 'sessionId']) {
+    const fixture = createTransactionalDatabase();
+    const store = createBehaviorEventStore({
+      database: fixture.database,
+      validateEventEnvelope,
+    });
+    let coercions = 0;
+    const coercibleId = {
+      toString() {
+        coercions += 1;
+        return field === 'anonymousId'
+          ? `anon_${'a'.repeat(32)}`
+          : 'session_abcdef0123456789';
+      },
+    };
+
+    await assert.rejects(store.submit(validEvent({ [field]: coercibleId })), /invalid event/i);
+    assert.equal(coercions, 0, field);
+    assert.equal(fixture.calls.transactions, 0, field);
+    assert.equal(fixture.calls.writes, 0, field);
+    assert.equal(fixture.records.size, 0, field);
+  }
+});
+
 test('acknowledges a cross-restart replay of the same canonical payload without another write', async () => {
   const fixture = createTransactionalDatabase();
   const firstStore = createBehaviorEventStore({
