@@ -28,6 +28,19 @@ function trustedContext(overrides = {}) {
   return { OPENID: 'trusted-openid', APPID: APP_ID, ...overrides };
 }
 
+function confirmedRouteReplacement(overrides = {}) {
+  return {
+    displayName: '制箔工艺路线',
+    banner: '专业审核通过的制箔数字体验',
+    steps: [
+      { id: 'observe', order: 1, adapter: 'select', title: '认识制箔材料与工具' },
+      { id: 'motion', order: 2, adapter: 'continuous-drag', title: '体验关键制箔动作' },
+      { id: 'inspect', order: 3, adapter: 'inspect', title: '观察并检查金箔效果' },
+    ],
+    ...overrides,
+  };
+}
+
 function reviewedContent(overrides = {}) {
   return {
     _id: 'content-foil-making',
@@ -35,6 +48,7 @@ function reviewedContent(overrides = {}) {
     contentVersion: 'content-v2',
     allowedEnvironment: 'trial',
     reviewStatus: 'reviewed',
+    confirmedRoute: confirmedRouteReplacement(),
     ...overrides,
   };
 }
@@ -185,16 +199,16 @@ test('confirmRoute re-reads and writes versioned auditable config in one transac
   const storedRoute = fixture.committed.get('foil_making_candidate');
   assert.deepEqual(storedRoute, {
     id: 'foil_making_candidate',
-    displayName: '制箔候选路线',
+    displayName: '制箔工艺路线',
     status: 'confirmed',
     reviewStatus: 'internal_approved',
     allowedEnvironment: 'trial',
     allowedEnvironments: ['development', 'trial'],
-    banner: '候选示意，尚未经专业确认',
+    banner: '专业审核通过的制箔数字体验',
     steps: [
-      { id: 'observe', order: 1, adapter: 'select', title: '认识材料与目标（候选示意）' },
-      { id: 'motion', order: 2, adapter: 'continuous-drag', title: '模拟关键动作（候选示意）' },
-      { id: 'inspect', order: 3, adapter: 'inspect', title: '检查数字结果（候选示意）' },
+      { id: 'observe', order: 1, adapter: 'select', title: '认识制箔材料与工具' },
+      { id: 'motion', order: 2, adapter: 'continuous-drag', title: '体验关键制箔动作' },
+      { id: 'inspect', order: 3, adapter: 'inspect', title: '观察并检查金箔效果' },
     ],
     contentItemId: 'content-foil-making',
     contentVersion: 'content-v2',
@@ -206,6 +220,10 @@ test('confirmRoute re-reads and writes versioned auditable config in one transac
     },
   });
   assert.equal(validateRoute(storedRoute).status, 'confirmed');
+  assert.doesNotMatch(
+    JSON.stringify(storedRoute),
+    /候选示意|尚未经专业确认|待专业确认|内部测试|internal_placeholder/i,
+  );
   const repository = createContentRepository({
     database: {
       command: { in: (values) => ({ in: values }) },
@@ -241,13 +259,19 @@ test('confirmRoute re-reads and writes versioned auditable config in one transac
   assert.equal(fixture.calls.commits, 1);
 });
 
-test('confirmRoute ignores a stale outside snapshot and uses the transactional content version', async () => {
+test('confirmRoute ignores stale snapshots and uses transactional replacement plus route policy', async () => {
   let directCollections = 0;
   const committed = new Map();
-  const stale = reviewedContent({ contentVersion: 'content-v1' });
-  const current = reviewedContent({ contentVersion: 'content-v2' });
-  const staleRoute = candidateRoute({ displayName: '事务外旧路线' });
-  const currentRoute = candidateRoute({ displayName: '事务内当前路线' });
+  const stale = reviewedContent({
+    contentVersion: 'content-v1',
+    confirmedRoute: confirmedRouteReplacement({ displayName: '事务外旧内容' }),
+  });
+  const current = reviewedContent({
+    contentVersion: 'content-v2',
+    confirmedRoute: confirmedRouteReplacement({ displayName: '事务内审核内容' }),
+  });
+  const staleRoute = candidateRoute({ allowedEnvironments: ['trial'] });
+  const currentRoute = candidateRoute({ allowedEnvironments: ['development', 'trial'] });
   const database = {
     collection(name) {
       directCollections += 1;
@@ -290,7 +314,11 @@ test('confirmRoute ignores a stale outside snapshot and uses the transactional c
 
   await handler({ routeId: 'foil_making_candidate', contentItemId: 'content-foil-making' });
   assert.equal(directCollections, 0);
-  assert.equal(committed.get('foil_making_candidate').displayName, '事务内当前路线');
+  assert.equal(committed.get('foil_making_candidate').displayName, '事务内审核内容');
+  assert.deepEqual(
+    committed.get('foil_making_candidate').allowedEnvironments,
+    ['development', 'trial'],
+  );
   assert.equal(committed.get('foil_making_candidate').contentVersion, 'content-v2');
   assert.equal(
     committed.get('foil_making_candidate').approvalAudit.contentVersion,
@@ -345,6 +373,48 @@ test('confirmRoute fails closed and rolls back for missing, malformed, or wrong 
     assert.equal(fixture.calls.stagedWrites, 0);
     assert.equal(fixture.calls.commits, 0);
   }
+});
+
+test('confirmRoute rejects missing, malformed, or placeholder replacements without writing', async () => {
+  const accessorReplacement = confirmedRouteReplacement();
+  let getterReads = 0;
+  Object.defineProperty(accessorReplacement, 'banner', {
+    enumerable: true,
+    get() {
+      getterReads += 1;
+      return '不得读取';
+    },
+  });
+  const invalidContentItems = [
+    reviewedContent({ confirmedRoute: undefined }),
+    reviewedContent({ confirmedRoute: null }),
+    reviewedContent({ confirmedRoute: { ...confirmedRouteReplacement(), extra: true } }),
+    reviewedContent({ confirmedRoute: accessorReplacement }),
+    reviewedContent({
+      confirmedRoute: confirmedRouteReplacement({ banner: '候选示意，尚未经专业确认' }),
+    }),
+  ];
+
+  for (const contentItem of invalidContentItems) {
+    const fixture = createConfirmDatabase({ contentItem });
+    const handler = createConfirmRouteHandler({
+      getWXContext: () => trustedContext(),
+      environment: environment(),
+      hashIdentity: () => ANONYMOUS_ID,
+      database: fixture.database,
+      serverDate: () => SERVER_DATE,
+    });
+
+    await assert.rejects(
+      handler({ routeId: 'foil_making_candidate', contentItemId: 'content-foil-making' }),
+      /confirmed route|replacement|placeholder|marker/i,
+    );
+    assert.equal(fixture.calls.contentReads, 1);
+    assert.equal(fixture.calls.routeReads, 1);
+    assert.equal(fixture.calls.stagedWrites, 0);
+    assert.equal(fixture.calls.commits, 0);
+  }
+  assert.equal(getterReads, 0);
 });
 
 test('confirmRoute fails closed before a transaction for open, unauthorized, or invalid requests', async () => {

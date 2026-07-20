@@ -9,6 +9,18 @@ const ALLOWED_ADAPTERS = new Set(['select', 'continuous-drag', 'inspect', 'xr-fr
 const CANDIDATE_KEYS = ['routeId', 'contentItemId'];
 const AUDIT_KEYS = ['reviewerAnonymousId', 'approvedAt'];
 const STEP_KEYS = ['id', 'order', 'adapter', 'title'];
+const CONFIRMED_ROUTE_KEYS = ['displayName', 'banner', 'steps'];
+const STEP_ID_PATTERN = /^[a-z0-9][a-z0-9_-]{0,63}$/;
+const MAX_DISPLAY_NAME_LENGTH = 80;
+const MAX_BANNER_LENGTH = 200;
+const MAX_STEP_TITLE_LENGTH = 120;
+const FORBIDDEN_COPY_MARKERS = [
+  '候选示意',
+  '尚未经专业确认',
+  '待专业确认',
+  '内部测试',
+];
+const INTERNAL_PLACEHOLDER_MARKER = /(?:^|[^a-z0-9_])internal_placeholder(?:$|[^a-z0-9_])/i;
 const REQUIRED_ROUTE_KEYS = [
   'id',
   'displayName',
@@ -53,6 +65,50 @@ function readDataProperty(value, key) {
 
 function hasText(value) {
   return typeof value === 'string' && Boolean(value.trim());
+}
+
+function hasBoundedText(value, maximumLength) {
+  return (
+    typeof value === 'string'
+    && value.length > 0
+    && value.length <= maximumLength
+    && value === value.trim()
+  );
+}
+
+function hasForbiddenCopyMarker(value) {
+  return (
+    FORBIDDEN_COPY_MARKERS.some((marker) => value.includes(marker))
+    || INTERNAL_PLACEHOLDER_MARKER.test(value)
+  );
+}
+
+function readExactDataArray(value, expectedLength) {
+  if (
+    !Array.isArray(value)
+    || Object.getPrototypeOf(value) !== Array.prototype
+    || value.length !== expectedLength
+  ) {
+    return null;
+  }
+  const expectedKeys = [
+    ...Array.from({ length: expectedLength }, (_, index) => String(index)),
+    'length',
+  ];
+  const ownKeys = Reflect.ownKeys(value);
+  if (
+    ownKeys.length !== expectedKeys.length
+    || !expectedKeys.every((key) => Object.hasOwn(value, key))
+  ) {
+    return null;
+  }
+  const copy = [];
+  for (let index = 0; index < expectedLength; index += 1) {
+    const descriptor = Object.getOwnPropertyDescriptor(value, String(index));
+    if (!descriptor || !Object.hasOwn(descriptor, 'value')) return null;
+    copy.push(descriptor.value);
+  }
+  return copy;
 }
 
 function isAuthorizedReviewer(anonymousId, reviewerIds) {
@@ -131,6 +187,54 @@ function copyAndValidateSteps(steps) {
   return Object.freeze(copied);
 }
 
+function validateConfirmedRouteReplacement(contentItem) {
+  const replacement = readExactDataProperties(
+    readDataProperty(contentItem, 'confirmedRoute'),
+    CONFIRMED_ROUTE_KEYS,
+  );
+  if (!replacement) throw new TypeError('invalid confirmed route replacement');
+  if (
+    !hasBoundedText(replacement.displayName, MAX_DISPLAY_NAME_LENGTH)
+    || hasForbiddenCopyMarker(replacement.displayName)
+  ) {
+    throw new TypeError('invalid confirmed route displayName');
+  }
+  if (
+    !hasBoundedText(replacement.banner, MAX_BANNER_LENGTH)
+    || hasForbiddenCopyMarker(replacement.banner)
+  ) {
+    throw new TypeError('invalid confirmed route banner');
+  }
+  const steps = readExactDataArray(replacement.steps, 3);
+  if (!steps) throw new TypeError('invalid confirmed route steps');
+  const copiedSteps = steps.map((step) => {
+    const snapshot = readExactDataProperties(step, STEP_KEYS);
+    if (
+      !snapshot
+      || typeof snapshot.id !== 'string'
+      || !STEP_ID_PATTERN.test(snapshot.id)
+      || !Number.isInteger(snapshot.order)
+      || !ALLOWED_ADAPTERS.has(snapshot.adapter)
+      || !hasBoundedText(snapshot.title, MAX_STEP_TITLE_LENGTH)
+      || hasForbiddenCopyMarker(snapshot.title)
+    ) {
+      throw new TypeError('invalid confirmed route step');
+    }
+    return Object.freeze({ ...snapshot });
+  });
+  if (copiedSteps.map(({ order }) => order).join(',') !== '1,2,3') {
+    throw new TypeError('invalid confirmed route step order');
+  }
+  if (new Set(copiedSteps.map(({ id }) => id)).size !== 3) {
+    throw new TypeError('invalid confirmed route step ids');
+  }
+  return Object.freeze({
+    displayName: replacement.displayName,
+    banner: replacement.banner,
+    steps: Object.freeze(copiedSteps),
+  });
+}
+
 function validateExistingRoute(existingRoute, routeId) {
   const route = readRouteDataProperties(existingRoute);
   if (
@@ -162,15 +266,12 @@ function validateExistingRoute(existingRoute, routeId) {
   ) {
     throw new TypeError('invalid route environment or display config');
   }
+  copyAndValidateSteps(route.steps);
   return Object.freeze({
     id: route.id,
-    displayName: route.displayName,
-    status: route.status,
     reviewStatus: route.reviewStatus,
     allowedEnvironment: route.allowedEnvironment,
     allowedEnvironments: Object.freeze([...route.allowedEnvironments]),
-    banner: route.banner,
-    steps: copyAndValidateSteps(route.steps),
   });
 }
 
@@ -211,6 +312,7 @@ function buildConfirmedRoute(candidate, contentItem, existingRoute, audit) {
   ) {
     throw new TypeError('invalid content version');
   }
+  const confirmedRoute = validateConfirmedRouteReplacement(contentItem);
   const approvalAudit = Object.freeze({
     reviewerAnonymousId: auditInput.reviewerAnonymousId,
     approvedAt: auditInput.approvedAt,
@@ -219,13 +321,13 @@ function buildConfirmedRoute(candidate, contentItem, existingRoute, audit) {
   });
   return Object.freeze({
     id: route.id,
-    displayName: route.displayName,
+    displayName: confirmedRoute.displayName,
     status: 'confirmed',
     reviewStatus: route.reviewStatus,
     allowedEnvironment: route.allowedEnvironment,
     allowedEnvironments: route.allowedEnvironments,
-    banner: route.banner,
-    steps: route.steps,
+    banner: confirmedRoute.banner,
+    steps: confirmedRoute.steps,
     contentItemId: request.contentItemId,
     contentVersion,
     approvalAudit,
@@ -236,5 +338,6 @@ module.exports = {
   isAuthorizedReviewer,
   validateRouteCandidate,
   validateExistingRoute,
+  validateConfirmedRouteReplacement,
   buildConfirmedRoute,
 };

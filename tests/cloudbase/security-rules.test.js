@@ -81,6 +81,10 @@ test('documents offline provisioning, deployment, and secret environment variabl
     'Web SDK',
     '其他客户端',
     '陈旧上下文',
+    'confirmedRoute',
+    'displayName',
+    'banner',
+    'steps',
     'https://docs.cloudbase.net/',
   ]) {
     assert.match(readme, new RegExp(required));
@@ -90,6 +94,9 @@ test('documents offline provisioning, deployment, and secret environment variabl
   assert.match(readme, /APPID.*不能.*消除.*陈旧上下文|APPID.*无法.*消除.*陈旧上下文/);
   assert.match(readme, /不得.*Web SDK|禁止.*Web SDK/);
   assert.match(readme, /auth\.loginType != 'ANONYMOUS' && auth != null/);
+  assert.match(readme, /confirmedRoute.*content_items|content_items.*confirmedRoute/s);
+  assert.match(readme, /同一.*事务|原子/);
+  assert.match(readme, /不得.*候选示意|禁止.*候选示意/);
   assert.match(readme, /至少 32|>=\s*32/);
   assert.match(readme, /不能|无法.*区分.*微信小程序|无法.*识别.*微信小程序/);
   assert.doesNotMatch(readme, /anon_[a-f0-9]{32}|\b[a-f0-9]{32,}\b/i);
