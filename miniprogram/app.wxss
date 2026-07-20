@@ -1,0 +1,35 @@
+page {
+  --gold: #b88a2a;
+  --deep-brown: #3b2a1f;
+  --warm-white: #fffaf0;
+  --muted-gold: #e8d7ad;
+  --page-gutter: 32rpx;
+  --card-radius: 20rpx;
+  box-sizing: border-box;
+  min-height: 100%;
+  padding: var(--page-gutter);
+  background: var(--warm-white);
+  color: var(--deep-brown);
+  font-size: 28rpx;
+  line-height: 1.6;
+}
+
+text,
+button,
+input,
+textarea {
+  font-size: 28rpx;
+}
+
+button:focus,
+.focusable:focus {
+  outline: 4rpx solid var(--gold);
+  outline-offset: 4rpx;
+}
+
+button:active,
+.focusable:active {
+  background-color: var(--muted-gold);
+  opacity: 0.85;
+  transform: scale(0.98);
+}
