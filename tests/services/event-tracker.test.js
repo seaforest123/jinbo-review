@@ -660,7 +660,7 @@ test('flushes at most fifty queued events in FIFO order', async () => {
   assert.deepEqual(fixture.readQueue(), queued.slice(50));
 });
 
-test('does not validate or alter queue entries after the first fifty valid records', async () => {
+test('does not validate or alter queue entries after the first fifty slots', async () => {
   const firstFifty = Array.from({ length: 50 }, (_, index) => createQueuedEvent(index + 1));
   const tail = createQueuedEvent(51);
   const tailEventId = tail.eventId;
@@ -684,7 +684,7 @@ test('does not validate or alter queue entries after the first fifty valid recor
   assert.equal(fixture.readQueue()[0], tail);
 });
 
-test('isolates corrupt records while flushing the first fifty valid events and preserving the tail', async () => {
+test('counts corrupt records toward the first fifty queue slots and preserves the tail', async () => {
   const valid = Array.from({ length: 52 }, (_, index) => createQueuedEvent(index + 1));
   const corrupted = { openid: 'fictional-openid-must-be-rejected' };
   const initialQueue = [...valid.slice(0, 10), corrupted, ...valid.slice(10)];
@@ -697,9 +697,74 @@ test('isolates corrupt records while flushing the first fifty valid events and p
     },
   });
 
-  assert.equal(await tracker.flush(), 50);
-  assert.deepEqual(sentIds, valid.slice(0, 50).map((event) => event.eventId));
-  assert.deepEqual(fixture.readQueue(), valid.slice(50));
+  assert.equal(await tracker.flush(), 49);
+  assert.deepEqual(sentIds, valid.slice(0, 49).map((event) => event.eventId));
+  assert.deepEqual(fixture.readQueue(), valid.slice(49));
+});
+
+test('checks at most fifty corrupt array slots and defers the fifty-first accessor slot', async () => {
+  const queue = Array.from(
+    { length: 51 },
+    (_, index) => ({ corruptSlot: index }),
+  );
+  let tailGetterReads = 0;
+  Object.defineProperty(queue, '50', {
+    configurable: true,
+    enumerable: true,
+    get() {
+      tailGetterReads += 1;
+      throw new Error('the fifty-first slot must be deferred');
+    },
+  });
+  let transportCalls = 0;
+  const { tracker, fixture } = createTrackerFixture({
+    initialQueue: queue,
+    transport: () => {
+      transportCalls += 1;
+      return true;
+    },
+  });
+
+  assert.equal(await tracker.flush(), 0);
+  assert.equal(tailGetterReads, 0);
+  assert.equal(transportCalls, 0);
+  const deferredQueue = fixture.readQueue();
+  assert.equal(deferredQueue.length, 1);
+  const deferredDescriptor = Object.getOwnPropertyDescriptor(deferredQueue, '0');
+  assert.equal(typeof deferredDescriptor.get, 'function');
+
+  assert.equal(await tracker.flush(), 0);
+  assert.equal(tailGetterReads, 0);
+  assert.equal(transportCalls, 0);
+  assert.deepEqual(fixture.readQueue(), []);
+});
+
+test('isolates an accessor array slot inside the window without invoking it', async () => {
+  const first = createQueuedEvent(1);
+  const second = createQueuedEvent(2);
+  const queue = [first, null, second];
+  let slotGetterReads = 0;
+  Object.defineProperty(queue, '1', {
+    configurable: true,
+    enumerable: true,
+    get() {
+      slotGetterReads += 1;
+      throw new Error('array slot accessor must not run');
+    },
+  });
+  const sentIds = [];
+  const { tracker, fixture } = createTrackerFixture({
+    initialQueue: queue,
+    transport: (event) => {
+      sentIds.push(event.eventId);
+      return true;
+    },
+  });
+
+  assert.equal(await tracker.flush(), 2);
+  assert.equal(slotGetterReads, 0);
+  assert.deepEqual(sentIds, [first.eventId, second.eventId]);
+  assert.deepEqual(fixture.readQueue(), []);
 });
 
 test('isolates a corrupt queued accessor without invoking it or blocking valid records', async () => {

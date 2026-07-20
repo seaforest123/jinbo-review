@@ -192,7 +192,7 @@ function isIsoTimestamp(value) {
   return !Number.isNaN(parsed.valueOf()) && parsed.toISOString() === value;
 }
 
-function isValidQueuedEvent(event) {
+function readValidQueuedEvent(event) {
   try {
     const record = readExactDataProperties(event, [...EVENT_KEYS]);
     if (
@@ -202,17 +202,21 @@ function isValidQueuedEvent(event) {
       || !ALLOWED_EVENT_NAMES.has(record.name)
       || !isIsoTimestamp(record.occurredAt)
     ) {
-      return false;
+      return null;
     }
     const context = {};
     for (const key of INPUT_CONTEXT_KEYS) context[key] = record[key];
     const safeContext = validateContext(context);
-    if (safeContext.source !== record.source) return false;
+    if (safeContext.source !== record.source) return null;
     validateProperties(record.properties);
-    return true;
+    return record;
   } catch (error) {
-    return false;
+    return null;
   }
+}
+
+function isValidQueuedEvent(event) {
+  return readValidQueuedEvent(event) !== null;
 }
 
 function isAcknowledged(result) {
@@ -244,55 +248,82 @@ function createEventTracker({ storage, transport, clock, idFactory, context }) {
 
   function inspectQueueWindow(stored) {
     if (stored === undefined || stored === null) {
-      return { validPrefix: [], tail: [], changed: false };
+      return { validPrefix: [], stored: [], inspectedSlotCount: 0, changed: false };
     }
     if (!Array.isArray(stored)) {
-      return { validPrefix: [], tail: [], changed: true };
+      return { validPrefix: [], stored: [], inspectedSlotCount: 0, changed: true };
     }
 
     const validPrefix = [];
     const seenEventIds = new Set();
     let changed = false;
-    let index = 0;
-    while (index < stored.length && validPrefix.length < MAX_FLUSH_SIZE) {
-      const event = stored[index];
-      index += 1;
+    const inspectedSlotCount = Math.min(stored.length, MAX_FLUSH_SIZE);
+    for (let index = 0; index < inspectedSlotCount; index += 1) {
+      const slotDescriptor = Object.getOwnPropertyDescriptor(stored, String(index));
+      if (!slotDescriptor || !Object.hasOwn(slotDescriptor, 'value')) {
+        changed = true;
+        continue;
+      }
+      const event = slotDescriptor.value;
+      const record = readValidQueuedEvent(event);
       if (
-        !isValidQueuedEvent(event)
-        || seenEventIds.has(readDataProperty(event, 'eventId'))
+        !record
+        || seenEventIds.has(record.eventId)
       ) {
         changed = true;
         continue;
       }
-      seenEventIds.add(readDataProperty(event, 'eventId'));
-      validPrefix.push(event);
+      seenEventIds.add(record.eventId);
+      validPrefix.push({ event, eventId: record.eventId });
     }
 
     return {
       validPrefix,
-      tail: stored.slice(index),
+      stored,
+      inspectedSlotCount,
       changed,
     };
   }
 
   function queueContainsEventId(stored, eventId) {
     if (!Array.isArray(stored)) return false;
-    return stored.some((event) => {
-      if (!isPlainObject(event)) return false;
-      return readDataProperty(event, 'eventId') === eventId;
-    });
+    for (let index = 0; index < stored.length; index += 1) {
+      const slotDescriptor = Object.getOwnPropertyDescriptor(stored, String(index));
+      if (!slotDescriptor || !Object.hasOwn(slotDescriptor, 'value')) continue;
+      const event = slotDescriptor.value;
+      if (!isPlainObject(event)) continue;
+      if (readDataProperty(event, 'eventId') === eventId) return true;
+    }
+    return false;
+  }
+
+  function appendUncheckedTail(target, stored, startIndex) {
+    const targetStart = target.length;
+    const tailSlotCount = stored.length - startIndex;
+    target.length = targetStart + tailSlotCount;
+    for (let sourceIndex = startIndex; sourceIndex < stored.length; sourceIndex += 1) {
+      const descriptor = Object.getOwnPropertyDescriptor(stored, String(sourceIndex));
+      if (!descriptor) continue;
+      const targetIndex = targetStart + sourceIndex - startIndex;
+      Object.defineProperty(target, String(targetIndex), descriptor);
+    }
   }
 
   async function rewriteQueue({ removeEventIds = new Set(), appendEvent } = {}) {
     const stored = await storage.get(EVENT_QUEUE_KEY);
     const inspected = inspectQueueWindow(stored);
-    const retainedPrefix = inspected.validPrefix.filter(
-      (event) => !removeEventIds.has(readDataProperty(event, 'eventId')),
-    );
-    const queue = [...retainedPrefix, ...inspected.tail];
+    const queue = [];
+    let removedCount = 0;
+    for (const entry of inspected.validPrefix) {
+      if (removeEventIds.has(entry.eventId)) {
+        removedCount += 1;
+      } else {
+        queue.push(entry.event);
+      }
+    }
+    appendUncheckedTail(queue, inspected.stored, inspected.inspectedSlotCount);
     if (appendEvent) queue.push(appendEvent);
 
-    const removedCount = inspected.validPrefix.length - retainedPrefix.length;
     if (inspected.changed || removedCount > 0 || appendEvent) {
       await storage.set(EVENT_QUEUE_KEY, queue);
     }
@@ -356,10 +387,9 @@ function createEventTracker({ storage, transport, clock, idFactory, context }) {
         const batch = inspected.validPrefix;
 
         const acknowledgedPrefixIds = new Set();
-        for (const event of batch) {
-          const eventId = readDataProperty(event, 'eventId');
-          if (!coordinator.acknowledgedEventIds.has(eventId)) break;
-          acknowledgedPrefixIds.add(eventId);
+        for (const entry of batch) {
+          if (!coordinator.acknowledgedEventIds.has(entry.eventId)) break;
+          acknowledgedPrefixIds.add(entry.eventId);
         }
         if (acknowledgedPrefixIds.size > 0) {
           await rewriteQueue({ removeEventIds: acknowledgedPrefixIds });
@@ -371,13 +401,12 @@ function createEventTracker({ storage, transport, clock, idFactory, context }) {
 
         let acknowledgedCount = 0;
         const acknowledgedIds = new Set();
-        for (const event of batch) {
-          const eventId = readDataProperty(event, 'eventId');
+        for (const entry of batch) {
           try {
-            if (!isAcknowledged(await transport(event))) break;
+            if (!isAcknowledged(await transport(entry.event))) break;
             acknowledgedCount += 1;
-            acknowledgedIds.add(eventId);
-            coordinator.acknowledgedEventIds.add(eventId);
+            acknowledgedIds.add(entry.eventId);
+            coordinator.acknowledgedEventIds.add(entry.eventId);
           } catch (error) {
             break;
           }
