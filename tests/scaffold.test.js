@@ -127,7 +127,7 @@ test('initializes CloudBase without an environment when cloudEnvId is null', () 
   let initOptions;
   const loaded = loadRegisteredApp({
     runtimeConfig: createRuntimeConfig(),
-    wx: { cloud: { init: (options) => { initOptions = options; } } },
+    wx: { cloud: { init: (options) => { initOptions = options; }, database: () => ({}) } },
   });
   try {
     loaded.appDefinition.onLaunch();
@@ -141,11 +141,36 @@ test('initializes CloudBase with cloudEnvId when it is configured', () => {
   let initOptions;
   const loaded = loadRegisteredApp({
     runtimeConfig: createRuntimeConfig({ cloudEnvId: 'trial-cloud' }),
-    wx: { cloud: { init: (options) => { initOptions = options; } } },
+    wx: { cloud: { init: (options) => { initOptions = options; }, database: () => ({}) } },
   });
   try {
     loaded.appDefinition.onLaunch();
     assert.deepEqual(initOptions, { traceUser: true, env: 'trial-cloud' });
+  } finally {
+    loaded.restore();
+  }
+});
+
+test('creates and stores a CloudBase-backed content repository during launch', () => {
+  let databaseCalls = 0;
+  const database = {};
+  const loaded = loadRegisteredApp({
+    runtimeConfig: createRuntimeConfig(),
+    wx: {
+      cloud: {
+        init: () => {},
+        database: () => {
+          databaseCalls += 1;
+          return database;
+        },
+      },
+    },
+  });
+
+  try {
+    loaded.appDefinition.onLaunch();
+    assert.equal(databaseCalls, 1);
+    assert.equal(typeof loaded.appDefinition.globalData.contentRepository.loadRoutes, 'function');
   } finally {
     loaded.restore();
   }

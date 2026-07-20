@@ -1,10 +1,11 @@
-const { getVisibleRoutes, validateRoute } = require('../domain/route-config');
+const runtimeConfig = require('../config/runtime-config');
+const { getVisibleRoutes } = require('../domain/route-config');
 
 const PERMITTED_REVIEW_STATUSES = ['internal_approved'];
 
 function createContentRepository({ database, localRoutes }) {
   return {
-    async loadRoutes(environment) {
+    async loadRoutes(environment = runtimeConfig.displayEnvironment) {
       try {
         const response = await database
           .collection('app_config')
@@ -13,7 +14,7 @@ function createContentRepository({ database, localRoutes }) {
             reviewStatus: database.command.in(PERMITTED_REVIEW_STATUSES),
           })
           .get();
-        return response.data.map(validateRoute);
+        return getVisibleRoutes(response.data, environment);
       } catch (error) {
         console.error(error && error.code);
         return getVisibleRoutes(localRoutes, environment);

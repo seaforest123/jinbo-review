@@ -71,3 +71,28 @@ test('falls back to validated local routes and logs only the CloudBase error cod
 
   assert.deepEqual(logged, [['CONFIG_READ_FAILED']]);
 });
+
+test('filters CloudBase records with the same production visibility policy as local routes', async () => {
+  const inconsistentCloudRoute = {
+    ...localRoutes[0],
+    allowedEnvironment: 'production',
+    allowedEnvironments: ['production'],
+  };
+  const fixture = createDatabase({ result: { data: [inconsistentCloudRoute] } });
+  const repository = createContentRepository({ database: fixture.database, localRoutes });
+
+  const routes = await repository.loadRoutes('production');
+
+  assert.deepEqual(routes, []);
+});
+
+test('uses the trial runtime environment when loadRoutes is called without an environment', async () => {
+  const cloudRoute = { ...localRoutes[0], allowedEnvironment: 'trial' };
+  const fixture = createDatabase({ result: { data: [cloudRoute] } });
+  const repository = createContentRepository({ database: fixture.database, localRoutes });
+
+  const routes = await repository.loadRoutes();
+
+  assert.deepEqual(routes.map((route) => route.id), [cloudRoute.id]);
+  assert.equal(fixture.inspected().query.allowedEnvironment, 'trial');
+});
