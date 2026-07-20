@@ -22,6 +22,12 @@ test('rejects non-numeric, non-finite, and negative elapsed durations', () => {
   }
 });
 
+test('returns fallback immediately for failed loads with invalid elapsed durations', () => {
+  for (const elapsedMs of [NaN, -1, '8000', undefined, null, Infinity, -Infinity]) {
+    assert.equal(evaluateLoadState(elapsedMs, true), 'fallback');
+  }
+});
+
 test('keeps the requested adapter from escalating when a capability is unavailable', () => {
   assert.equal(chooseAdapter('xr-frame', { xrFrame: true }), 'xr-frame');
   assert.equal(chooseAdapter('xr-frame', { xrFrame: false, continuousDrag: false }), 'select');

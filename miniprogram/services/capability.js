@@ -2,13 +2,16 @@ const SLOW_THRESHOLD_MS = 8000;
 const FALLBACK_THRESHOLD_MS = 15000;
 
 function evaluateLoadState(elapsedMs, failed) {
+  if (failed) {
+    return 'fallback';
+  }
   if (!Number.isFinite(elapsedMs)) {
     throw new TypeError('elapsedMs must be a finite number');
   }
   if (elapsedMs < 0) {
     throw new RangeError('elapsedMs must not be negative');
   }
-  if (failed || elapsedMs >= FALLBACK_THRESHOLD_MS) {
+  if (elapsedMs >= FALLBACK_THRESHOLD_MS) {
     return 'fallback';
   }
   if (elapsedMs >= SLOW_THRESHOLD_MS) {
