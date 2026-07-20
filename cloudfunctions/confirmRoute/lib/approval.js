@@ -10,7 +10,12 @@ const CANDIDATE_KEYS = ['routeId', 'contentItemId'];
 const AUDIT_KEYS = ['reviewerAnonymousId', 'approvedAt'];
 const STEP_KEYS = ['id', 'order', 'adapter', 'title'];
 const CONFIRMED_ROUTE_KEYS = ['displayName', 'banner', 'steps'];
-const STEP_ID_PATTERN = /^[a-z0-9][a-z0-9_-]{0,63}$/;
+const STEP_ID_PATTERN = /^(?:observe|motion|inspect|step-[1-9][0-9]{0,2})$/;
+const APPROVAL_CONTRACT = Object.freeze({
+  patterns: Object.freeze({
+    stepId: STEP_ID_PATTERN.source,
+  }),
+});
 const MAX_DISPLAY_NAME_LENGTH = 80;
 const MAX_BANNER_LENGTH = 200;
 const MAX_STEP_TITLE_LENGTH = 120;
@@ -335,6 +340,7 @@ function buildConfirmedRoute(candidate, contentItem, existingRoute, audit) {
 }
 
 module.exports = {
+  APPROVAL_CONTRACT,
   isAuthorizedReviewer,
   validateRouteCandidate,
   validateExistingRoute,

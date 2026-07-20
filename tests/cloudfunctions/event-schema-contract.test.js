@@ -12,6 +12,9 @@ const {
   validateEventEnvelope,
   EVENT_CONTRACT: serverContract,
 } = require('../../cloudfunctions/submitBehaviorEvent/lib/event-schema');
+const {
+  APPROVAL_CONTRACT: approvalContract,
+} = require('../../cloudfunctions/confirmRoute/lib/approval');
 
 const ANONYMOUS_ID = `anon_${'a'.repeat(32)}`;
 
@@ -38,6 +41,16 @@ test('exports an exact client/server contract snapshot to prevent deployment-cop
   assert.deepEqual(serverContract, clientContract);
   assert.ok(Object.isFrozen(serverContract));
   assert.ok(Object.isFrozen(clientContract));
+});
+
+test('keeps approval and both independently deployed event validators on the exact step ID pattern', () => {
+  const expectedPattern = '^(?:observe|motion|inspect|step-[1-9][0-9]{0,2})$';
+
+  assert.equal(approvalContract.patterns.stepId, expectedPattern);
+  assert.equal(approvalContract.patterns.stepId, clientContract.patterns.stepId);
+  assert.equal(approvalContract.patterns.stepId, serverContract.patterns.stepId);
+  assert.ok(Object.isFrozen(approvalContract));
+  assert.ok(Object.isFrozen(approvalContract.patterns));
 });
 
 test('accepts and normalizes a real Task 6 client event', async () => {

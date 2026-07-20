@@ -95,6 +95,10 @@ test('documents offline provisioning, deployment, and secret environment variabl
   assert.match(readme, /不得.*Web SDK|禁止.*Web SDK/);
   assert.match(readme, /auth\.loginType != 'ANONYMOUS' && auth != null/);
   assert.match(readme, /confirmedRoute.*content_items|content_items.*confirmedRoute/s);
+  assert.ok(
+    readme.includes('/^(?:observe|motion|inspect|step-[1-9][0-9]{0,2})$/'),
+    'README must document the exact confirmedRoute step ID contract',
+  );
   assert.match(readme, /同一.*事务|原子/);
   assert.match(readme, /不得.*候选示意|禁止.*候选示意/);
   assert.match(readme, /至少 32|>=\s*32/);

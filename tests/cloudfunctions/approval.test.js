@@ -82,6 +82,79 @@ test('existing placeholder contributes only stable route policy fields', () => {
   });
 });
 
+test('accepts only the analytics-compatible named and numbered confirmed step IDs', () => {
+  const candidate = { routeId: 'foil_making_candidate', contentItemId: 'content-foil-making' };
+  for (const stepIds of [
+    ['observe', 'motion', 'inspect'],
+    ['step-1', 'step-10', 'step-999'],
+  ]) {
+    const steps = confirmedRouteReplacement().steps.map((step, index) => ({
+      ...step,
+      id: stepIds[index],
+    }));
+    const confirmed = buildConfirmedRoute(
+      candidate,
+      reviewedContent({ confirmedRoute: confirmedRouteReplacement({ steps }) }),
+      candidateRoute(),
+      approvalAudit(),
+    );
+
+    assert.deepEqual(confirmed.steps.map(({ id }) => id), stepIds);
+    assert.equal(validateRoute(confirmed).status, 'confirmed');
+  }
+});
+
+test('rejects internal, arbitrary, uppercase, and out-of-range confirmed step IDs', () => {
+  const candidate = { routeId: 'foil_making_candidate', contentItemId: 'content-foil-making' };
+  for (const stepId of [
+    'internal_placeholder',
+    'hammering',
+    'Observe',
+    'STEP-1',
+    'step-0',
+    'step-01',
+    'step-1000',
+  ]) {
+    const steps = confirmedRouteReplacement().steps.map((step, index) => (
+      index === 0 ? { ...step, id: stepId } : step
+    ));
+    assert.throws(
+      () => buildConfirmedRoute(
+        candidate,
+        reviewedContent({ confirmedRoute: confirmedRouteReplacement({ steps }) }),
+        candidateRoute(),
+        approvalAudit(),
+      ),
+      /confirmed route step/i,
+      stepId,
+    );
+  }
+});
+
+test('rejects coercible confirmed step IDs without invoking coercion hooks', () => {
+  let coercions = 0;
+  const coercibleStepId = {
+    toString() {
+      coercions += 1;
+      return 'observe';
+    },
+  };
+  const steps = confirmedRouteReplacement().steps.map((step, index) => (
+    index === 0 ? { ...step, id: coercibleStepId } : step
+  ));
+
+  assert.throws(
+    () => buildConfirmedRoute(
+      { routeId: 'foil_making_candidate', contentItemId: 'content-foil-making' },
+      reviewedContent({ confirmedRoute: confirmedRouteReplacement({ steps }) }),
+      candidateRoute(),
+      approvalAudit(),
+    ),
+    /confirmed route step/i,
+  );
+  assert.equal(coercions, 0);
+});
+
 test('uses reviewed replacement copy instead of placeholder copy in a client-valid confirmed route', () => {
   const existingRoute = candidateRoute();
   const replacement = confirmedRouteReplacement();

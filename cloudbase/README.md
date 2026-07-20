@@ -46,7 +46,7 @@ CloudBase 函数权限规则只能约束客户端 SDK 的 `callFunction` 调用�
 }
 ```
 
-`displayName` 最长 80 字符，`banner` 最长 200 字符；每个 step 必须精确包含 `id/order/adapter/title`，`id` 最长 64 个小写字母、数字、下划线或连字符且以字母或数字开头，`title` 最长 120 字符。步骤必须恰好三个、顺序为 1/2/3、ID 唯一，adapter 只能是 `select`、`continuous-drag`、`inspect` 或 `xr-frame`。所有文本须为无首尾空白的非空字符串。
+`displayName` 最长 80 字符，`banner` 最长 200 字符；每个 step 必须精确包含 `id/order/adapter/title`，`id` 必须匹配 `/^(?:observe|motion|inspect|step-[1-9][0-9]{0,2})$/`，即只能是 `observe`、`motion`、`inspect` 或无前导零的 `step-1` 至 `step-999`，`title` 最长 120 字符。步骤必须恰好三个、顺序为 1/2/3、ID 唯一，adapter 只能是 `select`、`continuous-drag`、`inspect` 或 `xr-frame`。所有文本须为无首尾空白的非空字符串。
 
 已审核替换文案不得包含“候选示意”“尚未经专业确认”“待专业确认”“内部测试”，也不得包含作为独立标记的 `internal_placeholder`（Latin 大小写不敏感）。不得只把 `reviewStatus` 改为 `reviewed` 而遗漏 `confirmedRoute`，也不得把 placeholder 文案或素材字段复制进该对象。
 
