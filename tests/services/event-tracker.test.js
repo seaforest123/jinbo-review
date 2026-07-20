@@ -309,6 +309,32 @@ test('rejects an event ID already present in the persisted queue', async () => {
   assert.deepEqual(fixture.readQueue(), [existing]);
 });
 
+test('drops a queued non-string eventId without invoking coercion hooks', async () => {
+  let coercions = 0;
+  let transportCalls = 0;
+  const corrupted = {
+    ...createQueuedEvent(1),
+    eventId: {
+      toString() {
+        coercions += 1;
+        return 'event_0000000000000001';
+      },
+    },
+  };
+  const { tracker, fixture } = createTrackerFixture({
+    initialQueue: [corrupted],
+    transport: () => {
+      transportCalls += 1;
+      return true;
+    },
+  });
+
+  assert.equal(await tracker.flush(), 0);
+  assert.equal(coercions, 0);
+  assert.equal(transportCalls, 0);
+  assert.deepEqual(fixture.readQueue(), []);
+});
+
 test('accepts only explicit scalar property keys', async () => {
   const { tracker } = createTrackerFixture();
   const properties = {

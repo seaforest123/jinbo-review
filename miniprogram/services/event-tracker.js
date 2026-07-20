@@ -219,6 +219,7 @@ function readValidQueuedEvent(event) {
     const record = readExactDataProperties(event, [...EVENT_KEYS]);
     if (
       !record
+      || typeof record.eventId !== 'string'
       || !EVENT_ID_PATTERN.test(record.eventId)
       || record.delivery !== DELIVERY_SEMANTICS
       || !ALLOWED_EVENT_NAMES.has(record.name)

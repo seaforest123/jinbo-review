@@ -1,5 +1,7 @@
 'use strict';
 
+const { resolveTrustedAnonymousId } = require('./security-context');
+
 function createSubmitBehaviorEventHandler({
   getWXContext,
   environment,
@@ -17,12 +19,11 @@ function createSubmitBehaviorEventHandler({
     throw new TypeError('invalid submitBehaviorEvent dependencies');
   }
   return async function submitBehaviorEvent(event) {
-    const wxContext = getWXContext();
-    const openid = wxContext && wxContext.OPENID;
-    if (typeof openid !== 'string' || openid.trim() === '') {
-      throw new TypeError('trusted mini-program context is required');
-    }
-    const trustedAnonymousId = hashIdentity(openid, environment && environment.ANONYMIZATION_SALT);
+    const trustedAnonymousId = resolveTrustedAnonymousId({
+      getWXContext,
+      environment,
+      hashIdentity,
+    });
     const envelope = validateEventEnvelope(event);
     if (envelope.anonymousId !== trustedAnonymousId) {
       throw new Error('event identity does not match trusted caller');

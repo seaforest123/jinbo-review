@@ -8,6 +8,34 @@ const { createConfirmRouteHandler } = require('../../cloudfunctions/confirmRoute
 const { createSubmitBehaviorEventHandler } = require('../../cloudfunctions/submitBehaviorEvent/lib/handler');
 
 const ANONYMOUS_ID = `anon_${'a'.repeat(32)}`;
+const OTHER_ANONYMOUS_ID = `anon_${'b'.repeat(32)}`;
+const APP_ID = `wx${'a'.repeat(16)}`;
+const STRONG_SALT = 's'.repeat(32);
+const SERVER_DATE = Object.freeze({ $date: 'server' });
+
+function environment(overrides = {}) {
+  return {
+    ANONYMIZATION_SALT: STRONG_SALT,
+    WECHAT_APP_ID: APP_ID,
+    APPROVER_IDS: `${ANONYMOUS_ID},${OTHER_ANONYMOUS_ID}`,
+    ...overrides,
+  };
+}
+
+function trustedContext(overrides = {}) {
+  return { OPENID: 'trusted-openid', APPID: APP_ID, ...overrides };
+}
+
+function reviewedContent(overrides = {}) {
+  return {
+    _id: 'content-foil-making',
+    routeId: 'foil_making_candidate',
+    contentVersion: 'content-v2',
+    allowedEnvironment: 'trial',
+    reviewStatus: 'reviewed',
+    ...overrides,
+  };
+}
 
 function validEvent(overrides = {}) {
   return {
@@ -28,11 +56,67 @@ function validEvent(overrides = {}) {
   };
 }
 
+function createConfirmDatabase({ contentItem = reviewedContent(), rejectCommit = false } = {}) {
+  const committed = new Map();
+  const calls = {
+    directCollections: 0,
+    transactions: 0,
+    contentReads: 0,
+    stagedWrites: 0,
+    commits: 0,
+    order: [],
+  };
+  const database = {
+    collection() {
+      calls.directCollections += 1;
+      throw new Error('confirmRoute must stay inside runTransaction');
+    },
+    async runTransaction(operation) {
+      calls.transactions += 1;
+      calls.order.push('transaction:start');
+      const staged = new Map(committed);
+      const transaction = {
+        collection(name) {
+          assert.ok(['content_items', 'app_config'].includes(name));
+          return {
+            doc(id) {
+              if (name === 'content_items') {
+                return {
+                  async get() {
+                    calls.contentReads += 1;
+                    calls.order.push('content:read');
+                    return { data: id === contentItem._id ? contentItem : null };
+                  },
+                };
+              }
+              return {
+                async set({ data }) {
+                  calls.stagedWrites += 1;
+                  calls.order.push('config:write');
+                  staged.set(id, data);
+                },
+              };
+            },
+          };
+        },
+      };
+      const result = await operation(transaction);
+      if (rejectCommit) throw new Error('simulated transaction commit conflict');
+      committed.clear();
+      for (const [key, value] of staged) committed.set(key, value);
+      calls.commits += 1;
+      calls.order.push('transaction:commit');
+      return result;
+    },
+  };
+  return { database, committed, calls };
+}
+
 test('bootstrap uses only trusted context and returns the exact anonymous identity object', async () => {
   const hashCalls = [];
   const handler = createBootstrapAnonymousIdHandler({
-    getWXContext: () => ({ OPENID: 'trusted-openid', UNIONID: 'must-be-ignored' }),
-    environment: { ANONYMIZATION_SALT: 'trial-salt' },
+    getWXContext: () => trustedContext(),
+    environment: environment(),
     hashIdentity: (...args) => {
       hashCalls.push(args);
       return ANONYMOUS_ID;
@@ -40,75 +124,132 @@ test('bootstrap uses only trusted context and returns the exact anonymous identi
   });
 
   assert.deepEqual(await handler({}), { anonymousId: ANONYMOUS_ID });
-  assert.deepEqual(hashCalls, [['trusted-openid', 'trial-salt']]);
+  assert.deepEqual(hashCalls, [['trusted-openid', STRONG_SALT]]);
   await assert.rejects(handler({ openid: 'caller-openid' }), /request/i);
   await assert.rejects(handler({ arbitrary: true }), /request/i);
 });
 
-test('confirmRoute authorizes the trusted caller and writes only a bounded trial config', async () => {
-  const writes = [];
-  const database = {
-    collection(name) {
-      if (name === 'content_items') {
-        return {
-          doc: (id) => ({
-            get: async () => ({
-              data: {
-                _id: id,
-                routeId: 'foil_making_candidate',
-                allowedEnvironment: 'trial',
-                reviewStatus: 'reviewed',
-              },
-            }),
-          }),
-        };
-      }
-      assert.equal(name, 'app_config');
-      return {
-        doc: (id) => ({
-          set: async ({ data }) => writes.push([id, data]),
-        }),
-      };
-    },
-  };
+test('confirmRoute re-reads and writes versioned auditable config in one transaction', async () => {
+  const fixture = createConfirmDatabase({
+    contentItem: reviewedContent({ contentVersion: 'content-v2' }),
+  });
+  const serverDateCalls = [];
   const handler = createConfirmRouteHandler({
-    getWXContext: () => ({ OPENID: 'trusted-openid' }),
-    environment: {
-      ANONYMIZATION_SALT: 'trial-salt',
-      APPROVER_IDS: `${ANONYMOUS_ID},anon_${'b'.repeat(32)}`,
-    },
+    getWXContext: () => trustedContext(),
+    environment: environment(),
     hashIdentity: () => ANONYMOUS_ID,
-    database,
+    database: fixture.database,
+    serverDate: () => {
+      serverDateCalls.push('called');
+      fixture.calls.order.push('server:date');
+      return SERVER_DATE;
+    },
   });
 
   assert.deepEqual(await handler({
     routeId: 'foil_making_candidate',
     contentItemId: 'content-foil-making',
   }), { confirmed: true });
-  assert.deepEqual(writes, [[
-    'foil_making_candidate',
-    {
-      routeId: 'foil_making_candidate',
+  assert.deepEqual(fixture.committed.get('foil_making_candidate'), {
+    routeId: 'foil_making_candidate',
+    contentItemId: 'content-foil-making',
+    contentVersion: 'content-v2',
+    allowedEnvironment: 'trial',
+    reviewStatus: 'reviewed',
+    approvalAudit: {
+      reviewerAnonymousId: ANONYMOUS_ID,
+      approvedAt: SERVER_DATE,
       contentItemId: 'content-foil-making',
-      allowedEnvironment: 'trial',
-      reviewStatus: 'reviewed',
+      contentVersion: 'content-v2',
     },
-  ]]);
+  });
+  assert.deepEqual(fixture.calls.order, [
+    'transaction:start',
+    'content:read',
+    'server:date',
+    'config:write',
+    'transaction:commit',
+  ]);
+  assert.equal(serverDateCalls.length, 1);
+  assert.equal(fixture.calls.directCollections, 0);
+  assert.equal(fixture.calls.transactions, 1);
+  assert.equal(fixture.calls.contentReads, 1);
+  assert.equal(fixture.calls.commits, 1);
 });
 
-test('confirmRoute fails closed before database access for untrusted or open requests', async () => {
-  let databaseReads = 0;
+test('confirmRoute ignores a stale outside snapshot and uses the transactional content version', async () => {
+  let directCollections = 0;
+  const committed = new Map();
+  const stale = reviewedContent({ contentVersion: 'content-v1' });
+  const current = reviewedContent({ contentVersion: 'content-v2' });
   const database = {
-    collection() {
-      databaseReads += 1;
-      throw new Error('must not access database');
+    collection(name) {
+      directCollections += 1;
+      if (name === 'content_items') {
+        return { doc: () => ({ get: async () => ({ data: stale }) }) };
+      }
+      return { doc: (id) => ({ set: async ({ data }) => committed.set(id, data) }) };
+    },
+    async runTransaction(operation) {
+      const transaction = {
+        collection(name) {
+          return {
+            doc(id) {
+              if (name === 'content_items') {
+                return { get: async () => ({ data: id === current._id ? current : null }) };
+              }
+              return { set: async ({ data }) => committed.set(id, data) };
+            },
+          };
+        },
+      };
+      return operation(transaction);
     },
   };
-  const createHandler = (overrides = {}) => createConfirmRouteHandler({
-    getWXContext: () => ({ OPENID: 'trusted-openid' }),
-    environment: { ANONYMIZATION_SALT: 'trial-salt', APPROVER_IDS: '' },
+  const handler = createConfirmRouteHandler({
+    getWXContext: () => trustedContext(),
+    environment: environment(),
     hashIdentity: () => ANONYMOUS_ID,
     database,
+    serverDate: () => SERVER_DATE,
+  });
+
+  await handler({ routeId: 'foil_making_candidate', contentItemId: 'content-foil-making' });
+  assert.equal(directCollections, 0);
+  assert.equal(committed.get('foil_making_candidate').contentVersion, 'content-v2');
+  assert.equal(
+    committed.get('foil_making_candidate').approvalAudit.contentVersion,
+    'content-v2',
+  );
+});
+
+test('confirmRoute rolls back route and embedded audit when transaction commit fails', async () => {
+  const fixture = createConfirmDatabase({ rejectCommit: true });
+  const handler = createConfirmRouteHandler({
+    getWXContext: () => trustedContext(),
+    environment: environment(),
+    hashIdentity: () => ANONYMOUS_ID,
+    database: fixture.database,
+    serverDate: () => SERVER_DATE,
+  });
+
+  await assert.rejects(handler({
+    routeId: 'foil_making_candidate',
+    contentItemId: 'content-foil-making',
+  }), /commit conflict/i);
+  assert.equal(fixture.calls.stagedWrites, 1);
+  assert.equal(fixture.calls.commits, 0);
+  assert.equal(fixture.committed.size, 0);
+});
+
+test('confirmRoute fails closed before a transaction for open, unauthorized, or invalid requests', async () => {
+  const fixture = createConfirmDatabase();
+  const createHandler = (overrides = {}) => createConfirmRouteHandler({
+    getWXContext: () => trustedContext(),
+    environment: environment(),
+    hashIdentity: () => ANONYMOUS_ID,
+    database: fixture.database,
+    serverDate: () => SERVER_DATE,
     ...overrides,
   });
 
@@ -117,22 +258,25 @@ test('confirmRoute fails closed before database access for untrusted or open req
     /request/i,
   );
   await assert.rejects(
-    createHandler()({ routeId: 'foil_making_candidate', contentItemId: 'content' }),
-    /authorized/i,
-  );
-  await assert.rejects(
-    createHandler({ getWXContext: () => ({}) })({
+    createHandler({ hashIdentity: () => `anon_${'c'.repeat(32)}` })({
       routeId: 'foil_making_candidate',
       contentItemId: 'content',
     }),
-    /mini-program context/i,
+    /authorized/i,
   );
-  assert.equal(databaseReads, 0);
+  await assert.rejects(
+    createHandler({ environment: environment({ APPROVER_IDS: '' }) })({
+      routeId: 'foil_making_candidate',
+      contentItemId: 'content',
+    }),
+    /APPROVER_IDS|reviewer/i,
+  );
+  assert.equal(fixture.calls.transactions, 0);
 });
 
 test('confirmRoute rejects request accessors without invoking them', async () => {
   let getterReads = 0;
-  let databaseReads = 0;
+  const fixture = createConfirmDatabase();
   const request = { routeId: 'foil_making_candidate' };
   Object.defineProperty(request, 'contentItemId', {
     enumerable: true,
@@ -142,28 +286,24 @@ test('confirmRoute rejects request accessors without invoking them', async () =>
     },
   });
   const handler = createConfirmRouteHandler({
-    getWXContext: () => ({ OPENID: 'trusted-openid' }),
-    environment: { ANONYMIZATION_SALT: 'trial-salt', APPROVER_IDS: ANONYMOUS_ID },
+    getWXContext: () => trustedContext(),
+    environment: environment(),
     hashIdentity: () => ANONYMOUS_ID,
-    database: {
-      collection() {
-        databaseReads += 1;
-        throw new Error('must not access database');
-      },
-    },
+    database: fixture.database,
+    serverDate: () => SERVER_DATE,
   });
 
   await assert.rejects(handler(request), /request|candidate/i);
   assert.equal(getterReads, 0);
-  assert.equal(databaseReads, 0);
+  assert.equal(fixture.calls.transactions, 0);
 });
 
 test('submitBehaviorEvent binds the anonymous envelope to trusted OPENID before persistence', async () => {
   const submissions = [];
   const hashCalls = [];
   const handler = createSubmitBehaviorEventHandler({
-    getWXContext: () => ({ OPENID: 'trusted-openid', UNIONID: 'must-be-ignored' }),
-    environment: { ANONYMIZATION_SALT: 'trial-salt' },
+    getWXContext: () => trustedContext(),
+    environment: environment(),
     hashIdentity: (...args) => {
       hashCalls.push(args);
       return ANONYMOUS_ID;
@@ -179,28 +319,67 @@ test('submitBehaviorEvent binds the anonymous envelope to trusted OPENID before 
   const event = validEvent();
 
   assert.deepEqual(await handler(event), { acknowledged: true });
-  assert.deepEqual(hashCalls, [['trusted-openid', 'trial-salt']]);
+  assert.deepEqual(hashCalls, [['trusted-openid', STRONG_SALT]]);
   assert.deepEqual(submissions, [event]);
 });
 
-test('submitBehaviorEvent rejects caller identity conflicts and non-mini-program contexts', async () => {
+test('all handlers reject missing or mismatched trusted APPID before side effects', async () => {
+  for (const context of [
+    { OPENID: 'trusted-openid' },
+    trustedContext({ APPID: `wx${'b'.repeat(16)}` }),
+  ]) {
+    let hashCalls = 0;
+    let submitCalls = 0;
+    const hashIdentity = () => {
+      hashCalls += 1;
+      return ANONYMOUS_ID;
+    };
+    const fixture = createConfirmDatabase();
+    const bootstrap = createBootstrapAnonymousIdHandler({
+      getWXContext: () => context,
+      environment: environment(),
+      hashIdentity,
+    });
+    const confirm = createConfirmRouteHandler({
+      getWXContext: () => context,
+      environment: environment(),
+      hashIdentity,
+      database: fixture.database,
+      serverDate: () => SERVER_DATE,
+    });
+    const submit = createSubmitBehaviorEventHandler({
+      getWXContext: () => context,
+      environment: environment(),
+      hashIdentity,
+      validateEventEnvelope: (event) => event,
+      store: { submit: async () => { submitCalls += 1; } },
+    });
+
+    await assert.rejects(bootstrap({}), /APPID|mini-program context/i);
+    await assert.rejects(confirm({
+      routeId: 'foil_making_candidate',
+      contentItemId: 'content-foil-making',
+    }), /APPID|mini-program context/i);
+    await assert.rejects(submit(validEvent()), /APPID|mini-program context/i);
+    assert.equal(hashCalls, 0);
+    assert.equal(submitCalls, 0);
+    assert.equal(fixture.calls.transactions, 0);
+  }
+});
+
+test('submitBehaviorEvent rejects caller identity conflicts before persistence', async () => {
   let submitCalls = 0;
-  const createHandler = (overrides = {}) => createSubmitBehaviorEventHandler({
-    getWXContext: () => ({ OPENID: 'trusted-openid' }),
-    environment: { ANONYMIZATION_SALT: 'trial-salt' },
+  const handler = createSubmitBehaviorEventHandler({
+    getWXContext: () => trustedContext(),
+    environment: environment(),
     hashIdentity: () => ANONYMOUS_ID,
     validateEventEnvelope: (event) => event,
     store: { submit: async () => { submitCalls += 1; } },
-    ...overrides,
   });
 
   await assert.rejects(
-    createHandler()(validEvent({ anonymousId: `anon_${'b'.repeat(32)}` })),
+    handler(validEvent({ anonymousId: OTHER_ANONYMOUS_ID })),
     /identity/i,
-  );
-  await assert.rejects(
-    createHandler({ getWXContext: () => ({ OPENID: '' }) })(validEvent()),
-    /mini-program context/i,
   );
   assert.equal(submitCalls, 0);
 });

@@ -7,18 +7,36 @@ const path = require('node:path');
 
 const root = path.resolve(__dirname, '../..');
 const rulesRoot = path.join(root, 'cloudbase/database-rules');
+const functionRulesPath = path.join(root, 'cloudbase/function-rules.json');
 const readRule = "doc.allowedEnvironment == 'trial' && doc.reviewStatus in ['internal_approved', 'reviewed', 'published']";
 
 function loadRule(collection) {
   return JSON.parse(fs.readFileSync(path.join(rulesRoot, `${collection}.json`), 'utf8'));
 }
 
-test('uses the exact create-only behavior event rule', () => {
+test('denies every behavior_events client operation so only the cloud function can write', () => {
   assert.deepEqual(loadRule('behavior_events'), {
     read: false,
-    create: 'doc._openid == auth.openid',
+    create: false,
     update: false,
     delete: false,
+  });
+});
+
+test('keeps exactly the four approved database collection rule files', () => {
+  assert.deepEqual(
+    fs.readdirSync(rulesRoot).filter((file) => file.endsWith('.json')).sort(),
+    ['app_config.json', 'behavior_events.json', 'content_items.json', 'media_assets.json'],
+  );
+});
+
+test('deploys default-deny function invoke rules with only the three explicit client entries', () => {
+  const authenticatedInvoke = "auth != null && auth.loginType != 'ANONYMOUS'";
+  assert.deepEqual(JSON.parse(fs.readFileSync(functionRulesPath, 'utf8')), {
+    '*': { invoke: false },
+    bootstrapAnonymousId: { invoke: authenticatedInvoke },
+    confirmRoute: { invoke: authenticatedInvoke },
+    submitBehaviorEvent: { invoke: authenticatedInvoke },
   });
 });
 
@@ -50,10 +68,22 @@ test('documents offline provisioning, deployment, and secret environment variabl
     'confirmRoute',
     'submitBehaviorEvent',
     'ANONYMIZATION_SALT',
+    'WECHAT_APP_ID',
     'APPROVER_IDS',
+    'function-rules.json',
+    'client read/create/update/delete=false',
+    'HTTP',
+    '定时触发器',
+    '数据库触发器',
+    '管理 API',
+    '真实 CloudBase 并发',
     'https://docs.cloudbase.net/',
   ]) {
     assert.match(readme, new RegExp(required));
   }
+  assert.match(readme, /Option A|方案 A/);
+  assert.match(readme, /APPID.*WECHAT_APP_ID|WECHAT_APP_ID.*APPID/);
+  assert.match(readme, /至少 32|>=\s*32/);
+  assert.match(readme, /不能|无法.*区分.*微信小程序|无法.*识别.*微信小程序/);
   assert.doesNotMatch(readme, /anon_[a-f0-9]{32}|\b[a-f0-9]{32,}\b/i);
 });

@@ -2,8 +2,10 @@
 
 const ANONYMOUS_ID_PATTERN = /^anon_[a-f0-9]{32}$/;
 const CONTENT_ITEM_ID_PATTERN = /^[a-z0-9][a-z0-9_-]{0,127}$/;
+const CONTENT_VERSION_PATTERN = /^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$/;
 const ALLOWED_ROUTE_IDS = new Set(['foil_making_candidate', 'foil_application_candidate']);
 const CANDIDATE_KEYS = ['routeId', 'contentItemId'];
+const AUDIT_KEYS = ['reviewerAnonymousId', 'approvedAt'];
 
 function isPlainObject(value) {
   if (!value || typeof value !== 'object' || Array.isArray(value)) return false;
@@ -56,8 +58,23 @@ function validateRouteCandidate(candidate) {
   return Object.freeze(request);
 }
 
-function buildConfirmedRoute(candidate, contentItem) {
+function buildConfirmedRoute(candidate, contentItem, audit) {
   const request = validateRouteCandidate(candidate);
+  const auditInput = readExactDataProperties(audit, AUDIT_KEYS);
+  if (!auditInput) throw new TypeError('invalid approval audit');
+  if (
+    typeof auditInput.reviewerAnonymousId !== 'string'
+    || !ANONYMOUS_ID_PATTERN.test(auditInput.reviewerAnonymousId)
+  ) {
+    throw new TypeError('invalid approval reviewer');
+  }
+  if (
+    auditInput.approvedAt === null
+    || typeof auditInput.approvedAt !== 'object'
+    || Array.isArray(auditInput.approvedAt)
+  ) {
+    throw new TypeError('invalid approval timestamp');
+  }
   if (readDataProperty(contentItem, '_id') !== request.contentItemId) {
     throw new TypeError('content item mismatch');
   }
@@ -70,11 +87,26 @@ function buildConfirmedRoute(candidate, contentItem) {
   if (readDataProperty(contentItem, 'allowedEnvironment') !== 'trial') {
     throw new TypeError('content must target trial only');
   }
+  const contentVersion = readDataProperty(contentItem, 'contentVersion');
+  if (
+    typeof contentVersion !== 'string'
+    || !CONTENT_VERSION_PATTERN.test(contentVersion)
+  ) {
+    throw new TypeError('invalid content version');
+  }
+  const approvalAudit = Object.freeze({
+    reviewerAnonymousId: auditInput.reviewerAnonymousId,
+    approvedAt: auditInput.approvedAt,
+    contentItemId: request.contentItemId,
+    contentVersion,
+  });
   return Object.freeze({
     routeId: request.routeId,
     contentItemId: request.contentItemId,
+    contentVersion,
     allowedEnvironment: 'trial',
     reviewStatus: 'reviewed',
+    approvalAudit,
   });
 }
 

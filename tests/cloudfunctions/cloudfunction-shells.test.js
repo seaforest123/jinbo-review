@@ -47,6 +47,7 @@ test('keeps each SDK index as an initialized injectable thin shell', () => {
       database: () => ({
         collection: () => ({ doc: () => ({}) }),
         runTransaction: () => undefined,
+        serverDate: () => ({ $date: 'server' }),
       }),
     };
     const loaded = loadIndexWithCloud(functionName, cloud);
@@ -54,6 +55,23 @@ test('keeps each SDK index as an initialized injectable thin shell', () => {
     assert.equal(typeof loaded.main, 'function', functionName);
     assert.deepEqual(initCalls, [{ env: cloud.DYNAMIC_CURRENT_ENV }], functionName);
   }
+});
+
+test('production shells inject server time and closed-schema validation into transactional services', () => {
+  const confirmSource = fs.readFileSync(
+    path.join(root, 'cloudfunctions', 'confirmRoute', 'index.js'),
+    'utf8',
+  );
+  const submitSource = fs.readFileSync(
+    path.join(root, 'cloudfunctions', 'submitBehaviorEvent', 'index.js'),
+    'utf8',
+  );
+
+  assert.match(confirmSource, /serverDate:\s*\(\)\s*=>\s*database\.serverDate\(\)/);
+  assert.match(
+    submitSource,
+    /createBehaviorEventStore\(\{\s*database,\s*validateEventEnvelope,?\s*\}\)/,
+  );
 });
 
 test('contains no logging, UNIONID use, or raw identity persistence fields', () => {

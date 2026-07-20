@@ -1,0 +1,14 @@
+{
+  "*": {
+    "invoke": false
+  },
+  "bootstrapAnonymousId": {
+    "invoke": "auth != null && auth.loginType != 'ANONYMOUS'"
+  },
+  "confirmRoute": {
+    "invoke": "auth != null && auth.loginType != 'ANONYMOUS'"
+  },
+  "submitBehaviorEvent": {
+    "invoke": "auth != null && auth.loginType != 'ANONYMOUS'"
+  }
+}

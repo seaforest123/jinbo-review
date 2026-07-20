@@ -110,6 +110,19 @@ test('server revalidates the closed Task 6 event shape and nested data propertie
   assert.equal(reads, 0);
 });
 
+test('rejects a non-string eventId without invoking coercion hooks', () => {
+  let coercions = 0;
+  const eventId = {
+    toString() {
+      coercions += 1;
+      return 'event_abcdef0123456789';
+    },
+  };
+
+  assert.throws(() => validateEventEnvelope(validEvent({ eventId })), /invalid event/i);
+  assert.equal(coercions, 0);
+});
+
 test('accepts every Task 6 event name while preserving exact source semantics', () => {
   for (const name of serverContract.eventNames) {
     assert.equal(validateEventEnvelope(validEvent({ name })).name, name);

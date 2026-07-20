@@ -15,5 +15,5 @@ exports.main = createSubmitBehaviorEventHandler({
   environment: process.env,
   hashIdentity,
   validateEventEnvelope,
-  store: createBehaviorEventStore({ database }),
+  store: createBehaviorEventStore({ database, validateEventEnvelope }),
 });

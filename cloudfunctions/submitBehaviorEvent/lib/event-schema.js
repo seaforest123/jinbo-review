@@ -166,6 +166,7 @@ function validateEventEnvelope(value) {
   const event = readExactDataProperties(value, EVENT_KEYS);
   if (
     !event
+    || typeof event.eventId !== 'string'
     || !EVENT_ID_PATTERN.test(event.eventId)
     || !ANONYMOUS_ID_PATTERN.test(event.anonymousId)
     || !SESSION_ID_PATTERN.test(event.sessionId)

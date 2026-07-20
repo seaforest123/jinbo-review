@@ -10,7 +10,9 @@ function requireNonBlank(value, label) {
 
 function hashIdentity(openid, salt) {
   requireNonBlank(openid, 'identity');
-  requireNonBlank(salt, 'salt');
+  if (typeof salt !== 'string' || salt.trim().length < 32) {
+    throw new TypeError('salt must contain at least 32 non-whitespace characters');
+  }
   const digest = crypto.createHmac('sha256', salt).update(openid).digest('hex');
   return `anon_${digest.slice(0, 32)}`;
 }

@@ -3,30 +3,34 @@
 const crypto = require('node:crypto');
 
 const EVENT_ID_PATTERN = /^event_[a-f0-9]{16,64}$/;
+const DANGEROUS_KEYS = new Set(['__proto__', 'prototype', 'constructor']);
 
-function sortCanonicalValue(value) {
+function buildCanonicalValue(value) {
   if (value === null || typeof value === 'string' || typeof value === 'boolean') return value;
   if (typeof value === 'number' && Number.isFinite(value)) return value;
-  if (Array.isArray(value)) return value.map(sortCanonicalValue);
+  if (Array.isArray(value)) return value.map(buildCanonicalValue);
   if (!value || typeof value !== 'object') throw new TypeError('invalid canonical event value');
   const prototype = Object.getPrototypeOf(value);
   if (prototype !== Object.prototype && prototype !== null) {
     throw new TypeError('invalid canonical event value');
   }
-  const sorted = {};
-  for (const key of Reflect.ownKeys(value).sort()) {
-    if (typeof key !== 'string') throw new TypeError('invalid canonical event key');
+  const keys = Reflect.ownKeys(value);
+  if (keys.some((key) => typeof key !== 'string' || DANGEROUS_KEYS.has(key))) {
+    throw new TypeError('invalid canonical event key');
+  }
+  const sorted = Object.create(null);
+  for (const key of keys.sort()) {
     const descriptor = Object.getOwnPropertyDescriptor(value, key);
     if (!descriptor || !Object.hasOwn(descriptor, 'value')) {
       throw new TypeError('invalid canonical event property');
     }
-    sorted[key] = sortCanonicalValue(descriptor.value);
+    sorted[key] = buildCanonicalValue(descriptor.value);
   }
   return sorted;
 }
 
 function canonicalizeEvent(event) {
-  return JSON.stringify(sortCanonicalValue(event));
+  return JSON.stringify(buildCanonicalValue(event));
 }
 
 function hashCanonicalPayload(event) {
@@ -69,17 +73,22 @@ function readStoredEvent(value, eventId) {
   return { envelope, payloadHash };
 }
 
-function createBehaviorEventStore({ database }) {
-  if (!database || typeof database.runTransaction !== 'function') {
-    throw new TypeError('transactional database is required');
+function createBehaviorEventStore({ database, validateEventEnvelope }) {
+  if (
+    !database
+    || typeof database.runTransaction !== 'function'
+    || typeof validateEventEnvelope !== 'function'
+  ) {
+    throw new TypeError('transactional database and event validator are required');
   }
   return Object.freeze({
     async submit(envelope) {
-      const eventId = readDataProperty(envelope, 'eventId');
+      const normalizedEnvelope = validateEventEnvelope(envelope);
+      const eventId = readDataProperty(normalizedEnvelope, 'eventId');
       if (typeof eventId !== 'string' || !EVENT_ID_PATTERN.test(eventId)) {
         throw new TypeError('invalid eventId');
       }
-      const canonicalPayload = canonicalizeEvent(envelope);
+      const canonicalPayload = canonicalizeEvent(normalizedEnvelope);
       const payloadHash = crypto.createHash('sha256').update(canonicalPayload).digest('hex');
       await database.runTransaction(async (transaction) => {
         const document = transaction.collection('behavior_events').doc(eventId);
@@ -87,26 +96,33 @@ function createBehaviorEventStore({ database }) {
         const existing = existingResult && existingResult.data;
         if (existing) {
           const stored = readStoredEvent(existing, eventId);
+          let normalizedStoredEnvelope;
           let storedCanonicalPayload;
           try {
-            storedCanonicalPayload = canonicalizeEvent(stored.envelope);
+            normalizedStoredEnvelope = validateEventEnvelope(stored.envelope);
+            storedCanonicalPayload = canonicalizeEvent(normalizedStoredEnvelope);
           } catch (error) {
             throw new Error('invalid stored event');
           }
           if (
             stored.payloadHash !== payloadHash
             || storedCanonicalPayload !== canonicalPayload
-            || hashCanonicalPayload(stored.envelope) !== stored.payloadHash
+            || hashCanonicalPayload(normalizedStoredEnvelope) !== stored.payloadHash
           ) {
             throw new Error('eventId conflict');
           }
           return;
         }
-        await document.set({ data: { envelope, payloadHash } });
+        await document.set({ data: { envelope: normalizedEnvelope, payloadHash } });
       });
       return { acknowledged: true };
     },
   });
 }
 
-module.exports = { canonicalizeEvent, hashCanonicalPayload, createBehaviorEventStore };
+module.exports = {
+  buildCanonicalValue,
+  canonicalizeEvent,
+  hashCanonicalPayload,
+  createBehaviorEventStore,
+};
