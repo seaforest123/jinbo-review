@@ -1,1 +1,33 @@
-<view class="placeholder">候选示意，尚未经专业确认</view>
+<view class="page-shell">
+  <view class="title">{{routeName || '候选体验'}}</view>
+  <view class="notice">候选示意，尚未经专业确认</view>
+
+  <view wx:if="{{loadState === 'slow'}}" class="status">加载较慢，正在准备简化体验。</view>
+  <view wx:if="{{isFallback}}" class="status">当前使用简化交互方式。</view>
+
+  <view wx:if="{{phase === 'idle'}}" class="panel">
+    <view class="description">这是数字化轻量体验，不代表真实工艺教学。</view>
+    <button class="primary-button" bindtap="startExperience">开始体验</button>
+  </view>
+
+  <view wx:elif="{{phase === 'intro'}}" class="panel">
+    <view class="description">准备依次完成三个候选步骤。</view>
+    <button class="primary-button" bindtap="endIntro">进入步骤一</button>
+  </view>
+
+  <view wx:elif="{{phase === 'step'}}" class="panel">
+    <view class="step-count">步骤 {{step.order}} / 3</view>
+    <view class="step-title">{{step.title}}</view>
+    <view wx:if="{{adapter === 'continuous-drag'}}" class="drag-area" bindtouchstart="onTouchStart" bindtouchmove="onTouchMove">
+      <view class="drag-label">在此区域横向连续拖动</view>
+      <view class="progress-track"><view class="progress-bar" style="width: {{dragProgress * 100}}%;"></view></view>
+    </view>
+    <button wx:else class="primary-button" bindtap="completeCurrentStep">完成本步</button>
+    <view class="action-row">
+      <button bindtap="showHint">显示提示（{{hintCount}}）</button>
+      <button bindtap="retryStep">重新尝试（{{retryCount}}）</button>
+    </view>
+  </view>
+
+  <button class="exit-button" bindtap="exitExperience">退出体验</button>
+</view>

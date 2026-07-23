@@ -6,6 +6,17 @@
 
 只允许创建 `app_config`、`content_items`、`media_assets`、`behavior_events` 四个集合，不得增加 analytics 集合或原始用户标识集合。先把 `database-rules/` 中四份同名 JSON 应用到对应集合，再导入内测数据。
 
+### 离线种子数据导入顺序
+
+`seed-data/` 是可复核的离线候选数据包，不含任何真实环境标识或密钥。仅在已创建的专用内测环境中，按以下顺序导入：
+
+1. `app_config.json`：两条候选路线；同时保留 CloudBase 查询使用的 `allowedEnvironment: "trial"` 和客户端路线校验使用的 `allowedEnvironments: ["development", "trial"]`。
+2. `content_items.json`：两条通用候选内容记录；不含 `confirmedRoute`，不得将其改写为已确认内容。
+3. `media_assets.json`：仅本地候选占位路径；导入前须替换为经专业审核且授权可用的素材，或保持不可公开状态。
+4. `behavior_events.json`：必须保持空数组；行为事件只能由 `submitBehaviorEvent` 云函数在运行时写入。
+
+导入后复核：集合名恰好四个、三类可读取记录均为 `allowedEnvironment == "trial"` 与 `reviewStatus == "internal_approved"`、两条路线仍为 `internal_placeholder`、没有 `confirmedRoute`、没有 OpenID、UnionID、联系方式、真实姓名、AppID、环境 ID、盐值或审批人 ID。不得把种子包视作专业审核结果或正式发布数据。
+
 经用户批准的冲突解决采用方案 A（Option A）：`behavior_events` 的 client read/create/update/delete=false。客户端对该集合没有任何直接权限，所有正式事件写入只能通过 `submitBehaviorEvent` 云函数的服务端事务完成。`app_config`、`content_items`、`media_assets` 只允许读取已审核且 `allowedEnvironment == 'trial'` 的记录，客户端写入始终关闭；`confirmRoute` 是唯一专业审批写入口。
 
 规则语法与部署方式见 [CloudBase 数据库安全规则官方文档](https://docs.cloudbase.net/en/database/security-rules)。

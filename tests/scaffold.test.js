@@ -114,6 +114,12 @@ test('exports the exact frozen trial runtime configuration', () => {
   assert.ok(Object.isFrozen(runtimeConfig));
 });
 
+test('keeps the optional local CloudBase override out of version control', () => {
+  const ignored = fs.readFileSync(path.join(root, '.gitignore'), 'utf8');
+  assert.match(ignored, /^miniprogram\/config\/runtime-config\.local\.js$/m);
+  assert.equal(require(runtimeConfigPath).cloudEnvId, null);
+});
+
 test('reports the CloudBase compatibility error when wx.cloud is unavailable', () => {
   const loaded = loadRegisteredApp({ runtimeConfig: createRuntimeConfig(), wx: undefined });
   try {

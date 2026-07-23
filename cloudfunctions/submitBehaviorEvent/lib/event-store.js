@@ -43,6 +43,11 @@ function readDataProperty(value, key) {
   return descriptor && Object.hasOwn(descriptor, 'value') ? descriptor.value : undefined;
 }
 
+function isMissingDocumentError(error, eventId) {
+  return readDataProperty(error, 'message')
+    === `document.get:fail document with _id ${eventId} does not exist`;
+}
+
 function readStoredEvent(value, eventId) {
   if (!value || typeof value !== 'object' || Array.isArray(value)) {
     throw new Error('invalid stored event');
@@ -92,7 +97,13 @@ function createBehaviorEventStore({ database, validateEventEnvelope }) {
       const payloadHash = crypto.createHash('sha256').update(canonicalPayload).digest('hex');
       await database.runTransaction(async (transaction) => {
         const document = transaction.collection('behavior_events').doc(eventId);
-        const existingResult = await document.get();
+        let existingResult;
+        try {
+          existingResult = await document.get();
+        } catch (error) {
+          if (!isMissingDocumentError(error, eventId)) throw error;
+          existingResult = null;
+        }
         const existing = existingResult && existingResult.data;
         if (existing) {
           const stored = readStoredEvent(existing, eventId);

@@ -1,39 +1,45 @@
 # 金箔非遗数字体验与活化传播项目
 
-#### 介绍
-{**以下是 Gitee 平台说明，您可以替换此简介**
-Gitee 是 OSCHINA 推出的基于 Git 的代码托管平台（同时支持 SVN）。专为开发者提供稳定、高效、安全的云端软件开发协作平台
-无论是个人、团队、或是企业，都能够用 Gitee 实现代码托管、项目管理、协作开发。企业项目请看 [https://gitee.com/enterprises](https://gitee.com/enterprises)}
+这是一个微信小程序 P0 候选内测实现，用于验证两条候选路线的三步骤数字化轻体验、匿名埋点与 CloudBase 最小权限边界。项目不是公开发布版，所有文化与工艺内容均须以专业审核结果为准。
 
-#### 软件架构
-软件架构说明
+## 当前状态
 
+- 已完成：五个 P0 页面壳层、两条候选路线、三步骤交互、能力降级、匿名事件契约、CloudBase 规则与云函数离线实现。
+- 当前候选路线均为 `internal_placeholder` / `internal_approved`，仅面向 `development` 和 `trial`。
+- 未完成：真实 CloudBase 部署、真实小程序配置、专业内容确认、上传、体验码、真机验收和公开发布。
 
-#### 安装教程
+## 本地验证
 
-1.  xxxx
-2.  xxxx
-3.  xxxx
+运行全部自动化测试：
 
-#### 使用说明
+```powershell
+npm test
+git diff --check
+```
 
-1.  xxxx
-2.  xxxx
-3.  xxxx
+## 微信开发者工具
 
-#### 参与贡献
+1. 复制 `project.config.example.json` 为本地 `project.config.json`，保持游客模式配置；不要提交该本地文件。
+2. 导入仓库根目录，确认小程序根目录为 `miniprogram/`、云函数根目录为 `cloudfunctions/`。
+3. 在候选路线中完成三步骤体验，检查横向拖动、提示、重试、退出、结果页和路线重启。
+4. 未部署云函数或断网时，体验仍可继续；匿名埋点可失败且不阻断流程。
 
-1.  Fork 本仓库
-2.  新建 Feat_xxx 分支
-3.  提交代码
-4.  新建 Pull Request
+## CloudBase 部署前检查
 
+详细步骤见 [cloudbase/README.md](cloudbase/README.md)。部署前必须：
 
-#### 特技
+- 创建只服务于此小程序的专用 CloudBase 内测环境；
+- 应用四个集合规则和 `function-rules.json`；
+- 按 `cloudbase/seed-data/` 的顺序导入离线候选数据；
+- 为三个云函数单独设置环境变量，且不得将真实值写入仓库；
+- 保持候选内容的免责声明，未完成专业确认前不得改为正式路线或公开发布。
 
-1.  使用 Readme\_XXX.md 来支持不同的语言，例如 Readme\_en.md, Readme\_zh.md
-2.  Gitee 官方博客 [blog.gitee.com](https://blog.gitee.com)
-3.  你可以 [https://gitee.com/explore](https://gitee.com/explore) 这个地址来了解 Gitee 上的优秀开源项目
-4.  [GVP](https://gitee.com/gvp) 全称是 Gitee 最有价值开源项目，是综合评定出的优秀开源项目
-5.  Gitee 官方提供的使用手册 [https://gitee.com/help](https://gitee.com/help)
-6.  Gitee 封面人物是一档用来展示 Gitee 会员风采的栏目 [https://gitee.com/gitee-stars/](https://gitee.com/gitee-stars/)
+## 第 11 项边界
+
+第 11 项才执行真实 AppID 与 CloudBase 环境配置、规则导入、云函数部署、小程序上传、体验二维码生成及 iOS/Android 真机验收。完成这些操作和专业内容确认前，不得提交公开审核。
+
+## 项目导航
+
+- [项目文件导航](README_项目文件导航.md)
+- [CloudBase 离线接入与部署边界](cloudbase/README.md)
+- [当前开发进度](docs/progress/当前开发进度_20260721.md)

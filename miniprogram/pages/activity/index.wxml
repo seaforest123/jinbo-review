@@ -1,1 +1,6 @@
-<view class="placeholder">内部测试页面，功能将在后续任务补齐。</view>
+<view class="page-shell">
+  <view class="title">活动</view>
+  <view class="notice">活动尚未开放</view>
+  <view class="description">活动信息将在完成内容审核和运营准备后发布。</view>
+  <button class="secondary-button" bindtap="goHome">返回首页</button>
+</view>

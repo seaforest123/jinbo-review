@@ -1,1 +1,11 @@
-<view class="placeholder">内部测试页面，功能将在后续任务补齐。</view>
+<view class="page-shell">
+  <view class="title">体验完成</view>
+  <view class="notice">你完成的是数字化轻量体验，不代表已经掌握真实工艺。</view>
+  <view class="description">感谢你的参与。你可以重新体验，或浏览暂待开放的项目内容。</view>
+  <button class="primary-button" bindtap="restartExperience">再体验一次</button>
+  <view class="action-grid">
+    <button bindtap="openArchive">金箔志</button>
+    <button bindtap="openActivity">活动</button>
+    <button bindtap="goHome">返回首页</button>
+  </view>
+</view>

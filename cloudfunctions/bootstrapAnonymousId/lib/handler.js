@@ -13,7 +13,7 @@ function createBootstrapAnonymousIdHandler({ getWXContext, environment, hashIden
     throw new TypeError('invalid bootstrap dependencies');
   }
   return async function bootstrapAnonymousId(event) {
-    if (!isPlainObject(event) || Reflect.ownKeys(event).length !== 0) {
+    if (!isPlainObject(event)) {
       throw new TypeError('invalid bootstrap request');
     }
     const anonymousId = resolveTrustedAnonymousId({ getWXContext, environment, hashIdentity });

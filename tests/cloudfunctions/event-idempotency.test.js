@@ -190,6 +190,96 @@ test('creates the first event once under its eventId with only envelope and payl
   assert.equal(fixture.calls.directCollections, 0);
 });
 
+test('creates the first event when CloudBase reports its document is absent', async () => {
+  const event = validEvent();
+  const writes = [];
+  const database = {
+    async runTransaction(operation) {
+      return operation({
+        collection(name) {
+          assert.equal(name, 'behavior_events');
+          return {
+            doc(eventId) {
+              assert.equal(eventId, event.eventId);
+              return {
+                async get() {
+                  throw new Error(`document.get:fail document with _id ${eventId} does not exist`);
+                },
+                async set({ data }) {
+                  writes.push(data);
+                },
+              };
+            },
+          };
+        },
+      });
+    },
+  };
+  const store = createBehaviorEventStore({ database, validateEventEnvelope });
+
+  assert.deepEqual(await store.submit(event), { acknowledged: true });
+  assert.equal(writes.length, 1);
+  assert.deepEqual(writes[0].envelope, event);
+});
+
+test('does not treat another CloudBase read failure as an absent document', async () => {
+  let writes = 0;
+  const database = {
+    async runTransaction(operation) {
+      return operation({
+        collection() {
+          return {
+            doc() {
+              return {
+                async get() {
+                  throw new Error('document.get:fail database unavailable');
+                },
+                async set() {
+                  writes += 1;
+                },
+              };
+            },
+          };
+        },
+      });
+    },
+  };
+  const store = createBehaviorEventStore({ database, validateEventEnvelope });
+
+  await assert.rejects(store.submit(validEvent()), /database unavailable/i);
+  assert.equal(writes, 0);
+});
+
+test('does not accept a missing-document error for another eventId', async () => {
+  let writes = 0;
+  const database = {
+    async runTransaction(operation) {
+      return operation({
+        collection() {
+          return {
+            doc() {
+              return {
+                async get() {
+                  throw new Error(
+                    'document.get:fail document with _id event_1111111111111111 does not exist',
+                  );
+                },
+                async set() {
+                  writes += 1;
+                },
+              };
+            },
+          };
+        },
+      });
+    },
+  };
+  const store = createBehaviorEventStore({ database, validateEventEnvelope });
+
+  await assert.rejects(store.submit(validEvent()), /event_1111111111111111/);
+  assert.equal(writes, 0);
+});
+
 test('rejects coercible anonymous and session IDs before starting a persistence transaction', async () => {
   for (const field of ['anonymousId', 'sessionId']) {
     const fixture = createTransactionalDatabase();

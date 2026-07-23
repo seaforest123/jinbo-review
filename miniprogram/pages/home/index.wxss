@@ -1,3 +1,16 @@
 .placeholder {
   color: var(--deep-brown);
 }
+
+.page-shell { padding: 56rpx 8rpx 24rpx; }
+.eyebrow, .section-title { color: var(--gold); font-size: 24rpx; letter-spacing: 4rpx; }
+.title { margin: 12rpx 0 28rpx; font-size: 52rpx; font-weight: 700; }
+.notice { padding: 18rpx 20rpx; border: 1rpx solid var(--muted-gold); border-radius: var(--card-radius); background: #fffdf7; }
+.section-title { margin: 48rpx 0 16rpx; letter-spacing: 2rpx; }
+.route-card { margin: 16rpx 0; padding: 24rpx; border: 2rpx solid transparent; border-radius: var(--card-radius); background: #fff; box-shadow: 0 8rpx 20rpx rgba(59, 42, 31, .08); }
+.route-card-selected { border-color: var(--gold); }
+.route-name { font-size: 32rpx; font-weight: 700; }
+.route-banner { margin-top: 8rpx; color: #735f50; font-size: 24rpx; }
+.primary-button { margin-top: 36rpx; color: #fff; background: var(--deep-brown); }
+.link-row { display: flex; justify-content: center; gap: 64rpx; margin-top: 28rpx; }
+.link { color: var(--gold); }

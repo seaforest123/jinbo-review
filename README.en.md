@@ -1,36 +1,28 @@
-# 金箔非遗数字体验与活化传播项目
+# Gold Foil Heritage Digital Experience Project
 
-#### Description
-{**When you're done, you can delete the content in this README and update the file with details for others getting started with your repository**}
+This repository contains a P0 candidate trial implementation for a WeChat Mini Program. It validates two candidate routes, a three-step lightweight digital experience, anonymous analytics, and minimum CloudBase permission boundaries. It is not a public release and does not establish unreviewed cultural or craft claims.
 
-#### Software Architecture
-Software architecture description
+## Status
 
-#### Installation
+- Included: five P0 page shells, two candidate routes, three-step interaction, capability fallback, anonymous event contracts, and offline CloudBase rules/functions.
+- Both routes remain `internal_placeholder` / `internal_approved` and are limited to `development` and `trial`.
+- Excluded: real CloudBase deployment, real Mini Program configuration, professional content approval, upload, QR code generation, device acceptance, and public release.
 
-1.  xxxx
-2.  xxxx
-3.  xxxx
+## Local checks
 
-#### Instructions
+```powershell
+npm test
+git diff --check
+```
 
-1.  xxxx
-2.  xxxx
-3.  xxxx
+## WeChat Developer Tools
 
-#### Contribution
+Copy `project.config.example.json` to an uncommitted local `project.config.json`, keep tourist-mode settings, and import the repository root. Verify the candidate-route flow, horizontal drag, hint, retry, exit, result actions, and route restart. A failed CloudBase call must not block the experience.
 
-1.  Fork the repository
-2.  Create Feat_xxx branch
-3.  Commit your code
-4.  Create Pull Request
+## CloudBase preparation
 
+Read [cloudbase/README.md](cloudbase/README.md) before any deployment. Apply the four collection rules and function rules, then import `cloudbase/seed-data/` in order. Do not place real credentials, application identifiers, environment identifiers, salts, approver IDs, or raw identities in this repository.
 
-#### Gitee Feature
+## Task 11 boundary
 
-1.  You can use Readme\_XXX.md to support different languages, such as Readme\_en.md, Readme\_zh.md
-2.  Gitee blog [blog.gitee.com](https://blog.gitee.com)
-3.  Explore open source project [https://gitee.com/explore](https://gitee.com/explore)
-4.  The most valuable open source project [GVP](https://gitee.com/gvp)
-5.  The manual of Gitee [https://gitee.com/help](https://gitee.com/help)
-6.  The most popular members  [https://gitee.com/gitee-stars/](https://gitee.com/gitee-stars/)
+Only Task 11 may configure the real AppID and CloudBase environment, deploy functions, upload the Mini Program, generate a trial QR code, and complete iOS/Android acceptance. Professional confirmation is required before public review or release.

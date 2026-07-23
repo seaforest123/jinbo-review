@@ -1,1 +1,6 @@
-<view class="placeholder">内部测试页面，功能将在后续任务补齐。</view>
+<view class="page-shell">
+  <view class="title">金箔志</view>
+  <view class="notice">资料尚待专业确认</view>
+  <view class="description">相关档案将在完成专业访谈和内容审核后开放。</view>
+  <button class="secondary-button" bindtap="goHome">返回首页</button>
+</view>

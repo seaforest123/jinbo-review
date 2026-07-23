@@ -2,6 +2,7 @@
 .superpowers/
 project.config.json
 project.private.config.json
+miniprogram/config/runtime-config.local.js
 node_modules/
 cloudfunctions/**/node_modules/
 coverage/

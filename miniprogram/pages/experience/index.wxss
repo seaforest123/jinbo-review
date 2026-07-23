@@ -1,3 +1,16 @@
-.placeholder {
-  color: var(--deep-brown);
-}
+.page-shell { padding: 56rpx 8rpx 24rpx; }
+.title { margin-bottom: 28rpx; font-size: 44rpx; font-weight: 700; }
+.notice, .status { padding: 18rpx 20rpx; border: 1rpx solid var(--muted-gold); border-radius: var(--card-radius); }
+.status { margin-top: 16rpx; color: #735f50; }
+.panel { margin-top: 36rpx; padding: 28rpx; border-radius: var(--card-radius); background: #fff; box-shadow: 0 8rpx 20rpx rgba(59, 42, 31, .08); }
+.description { color: #735f50; }
+.step-count { color: var(--gold); font-size: 24rpx; }
+.step-title { margin: 12rpx 0 28rpx; font-size: 34rpx; font-weight: 700; }
+.primary-button { margin-top: 28rpx; color: #fff; background: var(--deep-brown); }
+.drag-area { padding: 36rpx 20rpx; border: 2rpx dashed var(--gold); border-radius: var(--card-radius); text-align: center; }
+.drag-label { color: #735f50; }
+.progress-track { height: 16rpx; margin-top: 28rpx; overflow: hidden; border-radius: 8rpx; background: var(--muted-gold); }
+.progress-bar { height: 100%; background: var(--gold); }
+.action-row { display: flex; gap: 16rpx; margin-top: 24rpx; }
+.action-row button { flex: 1; font-size: 24rpx; }
+.exit-button { margin-top: 36rpx; color: var(--deep-brown); background: #fff; border: 1rpx solid var(--muted-gold); }

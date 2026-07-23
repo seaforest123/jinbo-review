@@ -1,1 +1,15 @@
-<view class="placeholder">候选示意，尚未经专业确认</view>
+<view class="page-shell">
+  <view class="eyebrow">金箔非遗数字体验</view>
+  <view class="title">金箔数字轻体验</view>
+  <view class="notice">候选示意，尚未经专业确认</view>
+  <view class="section-title">选择一条候选路线</view>
+  <view wx:for="{{routes}}" wx:key="id" class="route-card {{selectedRouteId === item.id ? 'route-card-selected' : ''}}" data-route-id="{{item.id}}" bindtap="onRouteSelect">
+    <view class="route-name">{{item.displayName}}</view>
+    <view class="route-banner">{{item.banner}}</view>
+  </view>
+  <button class="primary-button" bindtap="startExperience">开始3分钟体验</button>
+  <view class="link-row">
+    <text class="link" bindtap="openArchive">金箔志</text>
+    <text class="link" bindtap="openActivity">活动</text>
+  </view>
+</view>
