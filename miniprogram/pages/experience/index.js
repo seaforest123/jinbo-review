@@ -4,6 +4,7 @@ const { createTrialAnalytics } = require('../../services/trial-analytics');
 const { createLearningRepository } = require('../../services/learning-repository');
 const { createWxLearningStorage } = require('../../services/wx-learning-storage');
 const { getKnowledgeCard } = require('../../data/knowledge-cards');
+const { getStepVisual } = require('../../data/candidate-visuals');
 
 function readCapabilities() {
   return { continuousDrag: true, xrFrame: false, networkType: 'unknown' };
@@ -35,6 +36,7 @@ Page({
     taskMap: [],
     activeKnowledgeCard: null,
     isKnowledgeCardOpen: false,
+    activeVisual: null,
   },
 
   onLoad(options = {}) {
@@ -102,6 +104,7 @@ Page({
       isFallback: view.isFallback,
       taskMap: view.taskMap,
       activeKnowledgeCard: view.step ? getKnowledgeCard(view.route.id, view.step.id) : null,
+      activeVisual: view.step ? getStepVisual(view.step.id) : null,
     });
   },
 

@@ -31,14 +31,24 @@ test('home page exposes both candidate routes and starts the selected experience
   assert.equal(page.data.selectedRouteId, 'foil_making_candidate');
   assert.match(readMarkup('home'), /候选示意，尚未经专业确认/);
   assert.match(readMarkup('home'), /开始3分钟体验/);
+  assert.match(readMarkup('home'), /候选视觉示意，尚待专业确认/);
+  assert.match(readMarkup('home'), /binderror="onVisualError"/);
   assert.equal(typeof page.onRouteSelect, 'function');
   assert.equal(typeof page.startExperience, 'function');
+});
+
+test('home page uses local candidate exhibit visuals without external image URLs', () => {
+  const source = fs.readFileSync(path.join(pagesRoot, 'home', 'index.js'), 'utf8');
+  assert.match(source, /candidate-visuals/);
+  assert.match(source, /getCoverVisual/);
+  assert.doesNotMatch(source, /https?:\/\//);
 });
 
 test('archive, progress, and activity pages expose candidate learning actions', () => {
   assert.match(readMarkup('archive'), /开始体验/);
   assert.match(readMarkup('archive'), /收藏/);
   assert.match(readMarkup('archive'), /候选知识卡/);
+  assert.match(readMarkup('archive'), /候选视觉示意，尚待专业确认/);
   assert.match(readMarkup('activity'), /候选内测/);
   assert.ok(JSON.parse(fs.readFileSync(path.join(root, 'miniprogram/app.json'), 'utf8')).pages.includes('pages/progress/index'));
 });
@@ -51,6 +61,7 @@ test('result page exposes all four shell actions without score language', () => 
   assert.match(markup, /学习报告/);
   assert.match(markup, /查看我的进度/);
   assert.match(markup, /回看学习节点/);
+  assert.match(markup, /候选视觉示意，尚待专业确认/);
   assert.match(markup, /返回首页/);
   assert.doesNotMatch(markup, /分数|排名|证书/);
 });
@@ -62,6 +73,7 @@ test('knowledge-card surfaces use candidate-only copy with static data', () => {
   assert.match(home, /3 个学习节点/);
   assert.match(archive, /knowledge-cards/);
   assert.match(result, /knowledge-cards/);
+  assert.match(result, /candidate-visuals/);
   assert.match(result, /completedStepIds/);
   assert.match(readMarkup('result'), /item.completed/);
   assert.doesNotMatch([home, readMarkup('archive'), readMarkup('result')].join('\n'), /专业认证|正式发布|公开报名/);
@@ -69,7 +81,9 @@ test('knowledge-card surfaces use candidate-only copy with static data', () => {
 
 test('archive fallback preserves static knowledge cards when local progress is unavailable', () => {
   const source = fs.readFileSync(path.join(pagesRoot, 'archive', 'index.js'), 'utf8');
-  assert.match(source, /cards: listKnowledgeCards\(route\.id\), favorite: false, progress: \{ completedCount: 0 \}/);
+  assert.match(source, /cards: listKnowledgeCards\(route\.id\)\.map/);
+  assert.match(source, /visual: getStepVisual\(card\.stepId\)/);
+  assert.match(source, /progress: \{ completedCount: 0 \}/);
 });
 
 test('shell actions navigate to the intended pages', () => {
@@ -122,6 +136,8 @@ test('experience page uses static knowledge cards and task-map view data', () =>
   assert.match(source, /knowledge-cards/);
   assert.match(source, /taskMap/);
   assert.match(source, /activeKnowledgeCard/);
+  assert.match(source, /candidate-visuals/);
+  assert.match(readMarkup('experience'), /候选视觉示意，尚待专业确认/);
 });
 
 test('experience page initializes anonymous trial analytics for its selected route', () => {

@@ -1,5 +1,5 @@
 .page-shell { padding: 56rpx 24rpx; }
 .title { margin-bottom: 28rpx; font-size: 44rpx; font-weight: 700; }
-.notice, .empty { color: #735f50; }
+.notice, .empty { color: var(--ink-soft); }
 .section-title { margin: 32rpx 0 16rpx; font-weight: 700; }
-.card { margin: 16rpx 0; padding: 22rpx; background: #fff; border-radius: 16rpx; }
+.card { margin: 16rpx 0; padding: 22rpx; background: #fff; border: 1rpx solid var(--muted-gold); border-radius: 16rpx; box-shadow: var(--paper-shadow); }

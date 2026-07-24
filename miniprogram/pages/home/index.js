@@ -1,4 +1,5 @@
 const routes = require('../../data/routes');
+const { getCoverVisual, getRouteVisual } = require('../../data/candidate-visuals');
 
 function navigateTo(url) {
   wx.navigateTo({ url });
@@ -7,7 +8,18 @@ function navigateTo(url) {
 Page({
   data: {
     selectedRouteId: routes[0].id,
-    routes,
+    coverVisual: getCoverVisual(),
+    routes: routes.map((route) => ({ ...route, visual: getRouteVisual(route.id), visualFailed: false })),
+  },
+
+  onVisualError(event) {
+    const routeId = event.currentTarget.dataset.routeId;
+    if (!routeId) {
+      this.setData({ 'coverVisual.failed': true });
+      return;
+    }
+    const nextRoutes = this.data.routes.map((route) => route.id === routeId ? { ...route, visualFailed: true } : route);
+    this.setData({ routes: nextRoutes });
   },
 
   onRouteSelect(event) {

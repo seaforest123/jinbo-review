@@ -5,6 +5,10 @@ page {
   --muted-gold: #e8d7ad;
   --page-gutter: 32rpx;
   --card-radius: 20rpx;
+  --paper: #f6eedf;
+  --ink-soft: #735f50;
+  --exhibit-line: #d8b66a;
+  --paper-shadow: 0 14rpx 32rpx rgba(59, 42, 31, .10);
   box-sizing: border-box;
   min-height: 100%;
   padding: var(--page-gutter);

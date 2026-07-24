@@ -12,3 +12,5 @@
 .archive-card-title { margin-top: 20rpx; font-weight: 700; }
 .knowledge-card { margin-top: 12rpx; padding: 16rpx; background: #fff8ed; border-radius: 12rpx; }
 .knowledge-notice { margin-top: 8rpx; color: #735f50; font-size: 22rpx; }
+.route-image { width: 100%; height: 220rpx; border-radius: 16rpx; }
+.card-image { width: 100%; height: 120rpx; border-radius: 10rpx; }

@@ -22,6 +22,8 @@
   <view wx:elif="{{phase === 'step'}}" class="panel">
     <view class="step-count">步骤 {{step.order}} / 3</view>
     <view class="step-title">{{step.title}}</view>
+    <image wx:if="{{activeVisual}}" class="step-visual" src="{{activeVisual.path}}" mode="aspectFill" />
+    <view class="knowledge-notice">候选视觉示意，尚待专业确认</view>
     <button class="knowledge-toggle" bindtap="toggleKnowledgeCard">查看本节点说明</button>
     <view wx:if="{{isKnowledgeCardOpen && activeKnowledgeCard}}" class="knowledge-card">
       <view class="knowledge-title">{{activeKnowledgeCard.title}}</view>

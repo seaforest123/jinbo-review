@@ -2,6 +2,7 @@ const routes = require('../../data/routes');
 const { createLearningRepository } = require('../../services/learning-repository');
 const { createWxLearningStorage } = require('../../services/wx-learning-storage');
 const { listKnowledgeCards } = require('../../data/knowledge-cards');
+const { getRouteVisual, getStepVisual } = require('../../data/candidate-visuals');
 
 function createRepository() {
   return createLearningRepository({ routes, storage: createWxLearningStorage(wx), now: () => Date.now(), idFactory: () => Date.now().toString(16) });
@@ -14,10 +15,24 @@ Page({
     try {
       const repository = createRepository();
       const favorites = await repository.listFavorites();
-      const summaries = await Promise.all(routes.map(async (route) => ({ ...route, cards: listKnowledgeCards(route.id), favorite: favorites.includes(route.id), progress: await repository.getRouteProgress(route.id) })));
+      const summaries = await Promise.all(routes.map(async (route) => ({
+        ...route,
+        visual: getRouteVisual(route.id),
+        cards: listKnowledgeCards(route.id).map((card) => ({ ...card, visual: getStepVisual(card.stepId) })),
+        favorite: favorites.includes(route.id),
+        progress: await repository.getRouteProgress(route.id),
+      })));
       this.setData({ routes: summaries });
     } catch (error) {
-      this.setData({ routes: routes.map((route) => ({ ...route, cards: listKnowledgeCards(route.id), favorite: false, progress: { completedCount: 0 } })) });
+      this.setData({
+        routes: routes.map((route) => ({
+          ...route,
+          visual: getRouteVisual(route.id),
+          cards: listKnowledgeCards(route.id).map((card) => ({ ...card, visual: getStepVisual(card.stepId) })),
+          favorite: false,
+          progress: { completedCount: 0 },
+        })),
+      });
     }
   },
 

@@ -2,11 +2,19 @@
   <view class="eyebrow">金箔非遗数字体验</view>
   <view class="title">金箔数字轻体验</view>
   <view class="notice">候选示意，尚未经专业确认</view>
+  <view class="cover-exhibit">
+    <image wx:if="{{!coverVisual.failed}}" class="cover-image" src="{{coverVisual.path}}" mode="aspectFill" binderror="onVisualError" />
+    <view wx:else class="visual-fallback">候选视觉示意加载失败</view>
+    <view class="visual-notice">候选视觉示意，尚待专业确认</view>
+  </view>
   <view class="section-title">选择一条候选路线</view>
   <view wx:for="{{routes}}" wx:key="id" class="route-card {{selectedRouteId === item.id ? 'route-card-selected' : ''}}" data-route-id="{{item.id}}" bindtap="onRouteSelect">
+    <image wx:if="{{!item.visualFailed}}" class="route-image" src="{{item.visual.path}}" mode="aspectFill" data-route-id="{{item.id}}" binderror="onVisualError" />
+    <view wx:else class="visual-fallback">候选路线视觉示意</view>
     <view class="route-name">{{item.displayName}}</view>
     <view class="route-banner">{{item.banner}}</view>
     <view class="route-nodes">3 个学习节点</view>
+    <view class="visual-notice">候选视觉示意，尚待专业确认</view>
   </view>
   <button class="primary-button" bindtap="startExperience">开始3分钟体验</button>
   <view class="link-row">

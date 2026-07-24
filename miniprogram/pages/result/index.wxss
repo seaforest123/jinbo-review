@@ -11,5 +11,6 @@
 .review-title, .knowledge-title { margin: 24rpx 0 12rpx; font-weight: 700; }
 .knowledge-card { margin: 12rpx 0; padding: 20rpx; background: #fff8ed; border-radius: var(--card-radius); }
 .knowledge-notice { margin-top: 12rpx; color: #735f50; font-size: 24rpx; }
+.review-image { width: 100%; height: 160rpx; border-radius: 12rpx; }
 .primary-button { color: #fff; background: var(--deep-brown); }
 .action-grid { display: grid; gap: 16rpx; margin-top: 20rpx; }

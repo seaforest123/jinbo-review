@@ -6,8 +6,14 @@
 .eyebrow, .section-title { color: var(--gold); font-size: 24rpx; letter-spacing: 4rpx; }
 .title { margin: 12rpx 0 28rpx; font-size: 52rpx; font-weight: 700; }
 .notice { padding: 18rpx 20rpx; border: 1rpx solid var(--muted-gold); border-radius: var(--card-radius); background: #fffdf7; }
+.cover-exhibit { margin-top: 24rpx; overflow: hidden; border: 1rpx solid var(--exhibit-line); border-radius: var(--card-radius); background: var(--paper); box-shadow: var(--paper-shadow); }
+.cover-image { width: 100%; height: 300rpx; }
+.visual-notice { padding: 10rpx 16rpx; color: var(--ink-soft); font-size: 22rpx; }
+.visual-fallback { min-height: 160rpx; padding: 28rpx; color: var(--ink-soft); background: var(--paper); }
 .section-title { margin: 48rpx 0 16rpx; letter-spacing: 2rpx; }
-.route-card { margin: 16rpx 0; padding: 24rpx; border: 2rpx solid transparent; border-radius: var(--card-radius); background: #fff; box-shadow: 0 8rpx 20rpx rgba(59, 42, 31, .08); }
+.route-card { margin: 16rpx 0; overflow: hidden; border: 2rpx solid transparent; border-radius: var(--card-radius); background: #fff; box-shadow: var(--paper-shadow); }
+.route-image { width: 100%; height: 176rpx; }
+.route-name, .route-banner, .route-nodes { margin-left: 24rpx; margin-right: 24rpx; }
 .route-card-selected { border-color: var(--gold); }
 .route-name { font-size: 32rpx; font-weight: 700; }
 .route-banner { margin-top: 8rpx; color: #735f50; font-size: 24rpx; }
