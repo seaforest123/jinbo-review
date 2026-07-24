@@ -35,9 +35,11 @@ test('home page exposes both candidate routes and starts the selected experience
   assert.equal(typeof page.startExperience, 'function');
 });
 
-test('archive and activity pages expose their unconfirmed states', () => {
-  assert.match(readMarkup('archive'), /资料尚待专业确认/);
-  assert.match(readMarkup('activity'), /活动尚未开放/);
+test('archive, progress, and activity pages expose candidate learning actions', () => {
+  assert.match(readMarkup('archive'), /开始体验/);
+  assert.match(readMarkup('archive'), /收藏/);
+  assert.match(readMarkup('activity'), /候选内测/);
+  assert.ok(JSON.parse(fs.readFileSync(path.join(root, 'miniprogram/app.json'), 'utf8')).pages.includes('pages/progress/index'));
 });
 
 test('result page exposes all four shell actions without score language', () => {
@@ -45,6 +47,8 @@ test('result page exposes all four shell actions without score language', () => 
   assert.match(markup, /再体验一次/);
   assert.match(markup, /金箔志/);
   assert.match(markup, /活动/);
+  assert.match(markup, /学习报告/);
+  assert.match(markup, /查看我的进度/);
   assert.match(markup, /返回首页/);
   assert.doesNotMatch(markup, /分数|排名|证书/);
 });

@@ -2,10 +2,18 @@
   <view class="title">体验完成</view>
   <view class="notice">你完成的是数字化轻量体验，不代表已经掌握真实工艺。</view>
   <view class="description">感谢你的参与。你可以重新体验，或浏览暂待开放的项目内容。</view>
+  <view class="report" wx:if="{{report}}">
+    <view class="report-title">学习报告</view>
+    <view>总用时：{{report.elapsedMs}} 毫秒</view>
+    <view wx:for="{{report.steps}}" wx:key="stepId">{{item.stepId}}：已完成，提示 {{item.hintCount}} 次，重试 {{item.retryCount}} 次</view>
+    <view>状态：已完成，可再次练习</view>
+  </view>
+  <view class="report" wx:else>学习报告暂不可用，你仍可再次体验。</view>
   <button class="primary-button" bindtap="restartExperience">再体验一次</button>
   <view class="action-grid">
     <button bindtap="openArchive">金箔志</button>
     <button bindtap="openActivity">活动</button>
+    <button bindtap="openProgress">查看我的进度</button>
     <button bindtap="goHome">返回首页</button>
   </view>
 </view>

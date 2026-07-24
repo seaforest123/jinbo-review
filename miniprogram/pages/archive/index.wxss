@@ -7,3 +7,5 @@
 .notice { padding: 18rpx 20rpx; border: 1rpx solid var(--muted-gold); border-radius: var(--card-radius); }
 .description { margin: 36rpx 0; color: #735f50; }
 .secondary-button { color: var(--deep-brown); background: #fff; border: 1rpx solid var(--muted-gold); }
+.archive-card { margin: 24rpx 0; padding: 24rpx; background: #fff; border-radius: var(--card-radius); }
+.route-name { margin-bottom: 12rpx; font-weight: 700; }

@@ -1,6 +1,6 @@
 <view class="page-shell">
   <view class="title">活动</view>
-  <view class="notice">活动尚未开放</view>
-  <view class="description">活动信息将在完成内容审核和运营准备后发布。</view>
+  <view class="notice">候选内测进行中</view>
+  <view class="description">你已完成 {{completedRouteCount}} 条候选路线。公开活动和正式内容尚未开放。</view>
   <button class="secondary-button" bindtap="goHome">返回首页</button>
 </view>

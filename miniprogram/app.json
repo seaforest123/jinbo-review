@@ -4,7 +4,8 @@
     "pages/experience/index",
     "pages/result/index",
     "pages/archive/index",
-    "pages/activity/index"
+    "pages/activity/index",
+    "pages/progress/index"
   ],
   "window": {
     "navigationBarTitleText": "金箔数字轻体验"

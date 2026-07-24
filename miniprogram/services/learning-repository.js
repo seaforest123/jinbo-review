@@ -108,6 +108,10 @@ function createLearningRepository({ routes, storage, now, idFactory }) {
     },
     async listFavorites() { return (await load()).favorites; },
     listSessionReports,
+    async getSessionReport(reportId) {
+      if (typeof reportId !== 'string') return undefined;
+      return (await listSessionReports()).find((report) => report.reportId === reportId);
+    },
   };
 }
 

@@ -1,0 +1,18 @@
+<view class="page-shell">
+  <view class="title">我的进度</view>
+  <view class="notice">记录仅保存在当前设备，用于候选内测回看。</view>
+  <view wx:if="{{favorites.length}}" class="section-title">我的收藏</view>
+  <view wx:for="{{favorites}}" wx:key="id" class="card">
+    <view>{{item.displayName}}</view>
+    <button data-route-id="{{item.id}}" bindtap="startExperience">开始体验</button>
+  </view>
+  <view class="section-title">学习记录</view>
+  <view wx:if="{{reports.length}}">
+    <view wx:for="{{reports}}" wx:key="reportId" class="card">
+      <view>{{item.routeId}}</view>
+      <view>{{item.status === 'completed' ? '已完成' : '已退出'}}，用时 {{item.elapsedMs}} 毫秒</view>
+    </view>
+  </view>
+  <view wx:else class="empty">尚无本地学习记录。</view>
+  <button bindtap="goHome">返回</button>
+</view>

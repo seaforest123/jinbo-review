@@ -6,5 +6,7 @@
 .title { margin-bottom: 28rpx; font-size: 44rpx; font-weight: 700; }
 .notice { padding: 18rpx 20rpx; border: 1rpx solid var(--muted-gold); border-radius: var(--card-radius); }
 .description { margin: 36rpx 0; color: #735f50; }
+.report { margin: 24rpx 0; padding: 22rpx; background: #fff; border-radius: var(--card-radius); }
+.report-title { margin-bottom: 12rpx; font-weight: 700; }
 .primary-button { color: #fff; background: var(--deep-brown); }
 .action-grid { display: grid; gap: 16rpx; margin-top: 20rpx; }

@@ -52,7 +52,7 @@ function loadRegisteredApp({ runtimeConfig, wx }) {
   };
 }
 
-test('registers the five P0 pages and cloud roots', () => {
+test('registers P0 pages, local progress page, and cloud roots', () => {
   const app = JSON.parse(fs.readFileSync(path.join(root, 'miniprogram/app.json'), 'utf8'));
   const project = JSON.parse(fs.readFileSync(path.join(root, 'project.config.example.json'), 'utf8'));
   assert.deepEqual(app.pages, [
@@ -61,6 +61,7 @@ test('registers the five P0 pages and cloud roots', () => {
     'pages/result/index',
     'pages/archive/index',
     'pages/activity/index',
+    'pages/progress/index',
   ]);
   assert.equal(project.miniprogramRoot, 'miniprogram/');
   assert.equal(project.cloudfunctionRoot, 'cloudfunctions/');
