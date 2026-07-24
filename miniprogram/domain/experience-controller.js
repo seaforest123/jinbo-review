@@ -54,6 +54,14 @@ function createExperienceController({ routes, routeId, capabilities, now, track 
   function getView() {
     const activeStep = step();
     const activeAdapter = adapter();
+    const taskMap = route.steps.map((candidate, index) => {
+      let status = 'pending';
+      if (state.phase === 'step') {
+        if (index < state.stepIndex) status = 'completed';
+        else if (index === state.stepIndex) status = 'current';
+      } else if (state.phase === 'completed') status = 'completed';
+      return { stepId: candidate.id, title: candidate.title, status };
+    });
     return {
       route,
       phase: state.phase,
@@ -65,6 +73,7 @@ function createExperienceController({ routes, routeId, capabilities, now, track 
       loadState,
       isFallback: Boolean(activeStep && activeAdapter !== activeStep.adapter) || loadState === 'fallback',
       learningReport,
+      taskMap,
     };
   }
 

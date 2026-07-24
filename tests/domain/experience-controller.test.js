@@ -53,6 +53,19 @@ test('records hints and retries for the active configured step', () => {
   ]);
 });
 
+test('exposes a three-node task map that follows configured step progress', () => {
+  const { controller } = createController();
+  assert.deepEqual(controller.getView().taskMap.map((item) => item.status), ['pending', 'pending', 'pending']);
+  controller.start();
+  controller.endIntro();
+  assert.deepEqual(controller.getView().taskMap.map((item) => item.status), ['current', 'pending', 'pending']);
+  controller.completeStep();
+  assert.deepEqual(controller.getView().taskMap.map((item) => item.status), ['completed', 'current', 'pending']);
+  controller.completeStep();
+  controller.completeStep();
+  assert.deepEqual(controller.getView().taskMap.map((item) => item.status), ['completed', 'completed', 'completed']);
+});
+
 test('falls back from continuous drag and records an exit without blocking state', () => {
   const { controller, events } = createController({ capabilities: { continuousDrag: false, xrFrame: false } });
   controller.start();
