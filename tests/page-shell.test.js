@@ -67,6 +67,11 @@ test('knowledge-card surfaces use candidate-only copy with static data', () => {
   assert.doesNotMatch([home, readMarkup('archive'), readMarkup('result')].join('\n'), /专业认证|正式发布|公开报名/);
 });
 
+test('archive fallback preserves static knowledge cards when local progress is unavailable', () => {
+  const source = fs.readFileSync(path.join(pagesRoot, 'archive', 'index.js'), 'utf8');
+  assert.match(source, /cards: listKnowledgeCards\(route\.id\), favorite: false, progress: \{ completedCount: 0 \}/);
+});
+
 test('shell actions navigate to the intended pages', () => {
   const calls = [];
   const previousWx = global.wx;

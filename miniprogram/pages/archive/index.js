@@ -17,7 +17,7 @@ Page({
       const summaries = await Promise.all(routes.map(async (route) => ({ ...route, cards: listKnowledgeCards(route.id), favorite: favorites.includes(route.id), progress: await repository.getRouteProgress(route.id) })));
       this.setData({ routes: summaries });
     } catch (error) {
-      this.setData({ routes: routes.map((route) => ({ ...route, cards: [], favorite: false, progress: { completedCount: 0 } })) });
+      this.setData({ routes: routes.map((route) => ({ ...route, cards: listKnowledgeCards(route.id), favorite: false, progress: { completedCount: 0 } })) });
     }
   },
 
