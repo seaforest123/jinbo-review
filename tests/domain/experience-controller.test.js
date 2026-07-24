@@ -64,3 +64,31 @@ test('falls back from continuous drag and records an exit without blocking state
   assert.equal(controller.getView().phase, 'exited');
   assert.deepEqual(events.at(-1), { name: 'experience_exit', properties: { reason: 'user_exit', elapsedMs: 0 } });
 });
+
+test('records local learning outcomes without changing the experience state machine', async () => {
+  const calls = [];
+  const { controller } = createController({
+    learningSession: {
+      start: (routeId) => calls.push(['start', routeId]),
+      recordStep: (stepId, outcome) => calls.push(['step', stepId, outcome]),
+      complete: () => ({ reportId: 'local_report_1', status: 'completed' }),
+      exit: () => undefined,
+    },
+  });
+  controller.start();
+  controller.endIntro();
+  controller.hint();
+  controller.completeStep();
+  controller.retry();
+  controller.completeStep();
+  controller.completeStep();
+  await Promise.resolve();
+
+  assert.equal(controller.getView().phase, 'completed');
+  assert.equal(controller.getView().learningReport.reportId, 'local_report_1');
+  assert.deepEqual(calls.filter((call) => call[0] === 'step'), [
+    ['step', 'observe', { hintCount: 1, retryCount: 0 }],
+    ['step', 'motion', { hintCount: 0, retryCount: 1 }],
+    ['step', 'inspect', { hintCount: 0, retryCount: 0 }],
+  ]);
+});

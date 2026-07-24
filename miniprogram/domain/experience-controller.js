@@ -4,7 +4,7 @@ const { chooseAdapter, evaluateLoadState } = require('../services/capability');
 
 const DRAG_REQUIRED_DISTANCE = 100;
 
-function createExperienceController({ routes, routeId, capabilities, now, track = () => {} }) {
+function createExperienceController({ routes, routeId, capabilities, now, track = () => {}, learningSession = null }) {
   if (!Array.isArray(routes)) throw new TypeError('routes must be an array');
   const route = routes.find((candidate) => candidate.id === routeId);
   if (!route) throw new TypeError('route must be a configured candidate');
@@ -14,6 +14,19 @@ function createExperienceController({ routes, routeId, capabilities, now, track 
   let state = createInitialState();
   let dragProgress = 0;
   let loadState = 'loading';
+  let learningReport = null;
+
+  function recordLearning(operation) {
+    if (!learningSession) return;
+    try {
+      const result = operation();
+      if (result && typeof result.then === 'function') {
+        result.then((report) => { if (report) learningReport = report; }).catch(() => undefined);
+      } else if (result) learningReport = result;
+    } catch (error) {
+      // Local progress must never interrupt the candidate experience.
+    }
+  }
 
   function emit(name, properties) {
     try {
@@ -55,6 +68,7 @@ function createExperienceController({ routes, routeId, capabilities, now, track 
       dragProgress,
       loadState,
       isFallback: Boolean(activeStep && activeAdapter !== activeStep.adapter) || loadState === 'fallback',
+      learningReport,
     };
   }
 
@@ -63,6 +77,7 @@ function createExperienceController({ routes, routeId, capabilities, now, track 
     start() {
       transition({ type: 'START' });
       if (state.phase === 'intro') emit('experience_start', {});
+      recordLearning(() => learningSession && learningSession.start(route.id));
       return getView();
     },
     endIntro() {
@@ -97,8 +112,15 @@ function createExperienceController({ routes, routeId, capabilities, now, track 
       const activeAdapter = adapter();
       transition({ type: 'COMPLETE_STEP' });
       dragProgress = 0;
+      recordLearning(() => learningSession && learningSession.recordStep(activeStep.id, {
+        hintCount: state.hints[activeStep.id] || 0,
+        retryCount: state.retries[activeStep.id] || 0,
+      }));
       emit('step_complete', { stepId: activeStep.id, adapter: activeAdapter });
-      if (state.phase === 'completed') emit('experience_complete', { elapsedMs: Math.max(0, state.completedAt - state.startedAt) });
+      if (state.phase === 'completed') {
+        recordLearning(() => learningSession && learningSession.complete());
+        emit('experience_complete', { elapsedMs: Math.max(0, state.completedAt - state.startedAt) });
+      }
       else emitStepStart();
       return getView();
     },
@@ -123,6 +145,7 @@ function createExperienceController({ routes, routeId, capabilities, now, track 
         reason: 'user_exit',
         elapsedMs: Math.max(0, state.exitedAt - (state.startedAt || state.exitedAt)),
       });
+      if (state.phase === 'exited') recordLearning(() => learningSession && learningSession.exit());
       return getView();
     },
   };
