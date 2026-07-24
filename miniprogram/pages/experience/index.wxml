@@ -1,6 +1,10 @@
 <view class="page-shell">
   <view class="title">{{routeName || '候选体验'}}</view>
   <view class="notice">候选示意，尚未经专业确认</view>
+  <view class="task-map">
+    <view class="task-map-title">学习节点</view>
+    <view wx:for="{{taskMap}}" wx:key="stepId" class="task-node task-node-{{item.status}}">{{item.title}}</view>
+  </view>
 
   <view wx:if="{{loadState === 'slow'}}" class="status">加载较慢，正在准备简化体验。</view>
   <view wx:if="{{isFallback}}" class="status">当前使用简化交互方式。</view>
@@ -18,6 +22,13 @@
   <view wx:elif="{{phase === 'step'}}" class="panel">
     <view class="step-count">步骤 {{step.order}} / 3</view>
     <view class="step-title">{{step.title}}</view>
+    <button class="knowledge-toggle" bindtap="toggleKnowledgeCard">查看本节点说明</button>
+    <view wx:if="{{isKnowledgeCardOpen && activeKnowledgeCard}}" class="knowledge-card">
+      <view class="knowledge-title">{{activeKnowledgeCard.title}}</view>
+      <view>{{activeKnowledgeCard.description}}</view>
+      <view>{{activeKnowledgeCard.observationTip}}</view>
+      <view class="knowledge-notice">候选内测内容，尚待专业确认</view>
+    </view>
     <view wx:if="{{adapter === 'continuous-drag'}}" class="drag-area" bindtouchstart="onTouchStart" bindtouchmove="onTouchMove">
       <view class="drag-label">在此区域横向连续拖动</view>
       <view class="progress-track"><view class="progress-bar" style="width: {{dragProgress * 100}}%;"></view></view>

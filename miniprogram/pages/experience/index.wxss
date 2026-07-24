@@ -14,3 +14,10 @@
 .action-row { display: flex; gap: 16rpx; margin-top: 24rpx; }
 .action-row button { flex: 1; font-size: 24rpx; }
 .exit-button { margin-top: 36rpx; color: var(--deep-brown); background: #fff; border: 1rpx solid var(--muted-gold); }
+.task-map { margin: 24rpx 0; padding: 20rpx; background: #fff; border-radius: var(--card-radius); }
+.task-map-title, .knowledge-title { margin-bottom: 12rpx; font-weight: 700; }
+.task-node { display: inline-block; margin: 8rpx; padding: 8rpx 12rpx; border-radius: 16rpx; background: #eee7de; }
+.task-node-current { color: #fff; background: var(--deep-brown); }
+.task-node-completed { background: var(--muted-gold); }
+.knowledge-card { margin: 20rpx 0; padding: 20rpx; background: #fff8ed; border-radius: var(--card-radius); }
+.knowledge-notice { margin-top: 12rpx; color: #735f50; font-size: 24rpx; }

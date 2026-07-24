@@ -3,6 +3,7 @@ const { createExperienceController } = require('../../domain/experience-controll
 const { createTrialAnalytics } = require('../../services/trial-analytics');
 const { createLearningRepository } = require('../../services/learning-repository');
 const { createWxLearningStorage } = require('../../services/wx-learning-storage');
+const { getKnowledgeCard } = require('../../data/knowledge-cards');
 
 function readCapabilities() {
   return { continuousDrag: true, xrFrame: false, networkType: 'unknown' };
@@ -31,6 +32,9 @@ Page({
     dragProgress: 0,
     loadState: 'loading',
     isFallback: false,
+    taskMap: [],
+    activeKnowledgeCard: null,
+    isKnowledgeCardOpen: false,
   },
 
   onLoad(options = {}) {
@@ -96,7 +100,14 @@ Page({
       dragProgress: view.dragProgress,
       loadState: view.loadState,
       isFallback: view.isFallback,
+      taskMap: view.taskMap,
+      activeKnowledgeCard: view.step ? getKnowledgeCard(view.route.id, view.step.id) : null,
     });
+  },
+
+  toggleKnowledgeCard() {
+    if (!this.data.activeKnowledgeCard) return;
+    this.setData({ isKnowledgeCardOpen: !this.data.isKnowledgeCardOpen });
   },
 
   updateLoadState(failed = false) {

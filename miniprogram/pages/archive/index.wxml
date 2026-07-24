@@ -6,6 +6,12 @@
     <view class="route-name">{{item.displayName}}</view>
     <view>{{item.learningGoal}}</view>
     <view>已完成 {{item.progress.completedCount}} 次</view>
+    <view class="archive-card-title">候选知识卡</view>
+    <view wx:for="{{item.cards}}" wx:for-item="card" wx:key="id" class="knowledge-card">
+      <view>{{card.title}}</view>
+      <view>{{card.description}}</view>
+      <view class="knowledge-notice">候选内测内容，尚待专业确认</view>
+    </view>
     <button data-route-id="{{item.id}}" bindtap="startExperience">开始体验</button>
     <button data-route-id="{{item.id}}" bindtap="toggleFavorite">{{item.favorite ? '取消收藏' : '收藏'}}</button>
   </view>

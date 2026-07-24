@@ -2,6 +2,7 @@ const routes = require('../../data/routes');
 const { createTrialAnalytics } = require('../../services/trial-analytics');
 const { createLearningRepository } = require('../../services/learning-repository');
 const { createWxLearningStorage } = require('../../services/wx-learning-storage');
+const { listKnowledgeCards } = require('../../data/knowledge-cards');
 
 function createStorage() {
   return {
@@ -18,18 +19,22 @@ Page({
   data: {
     routeId: routes[0].id,
     report: null,
+    knowledgeCards: [],
+    completedStepIds: [],
   },
 
   async onLoad(options = {}) {
     const routeId = routes.some((route) => route.id === options.routeId)
       ? options.routeId
       : routes[0].id;
-    this.setData({ routeId });
+    this.setData({ routeId, knowledgeCards: listKnowledgeCards(routeId) });
     if (typeof options.reportId === 'string') {
       try {
         const repository = createLearningRepository({ routes, storage: createWxLearningStorage(wx), now: () => Date.now(), idFactory: createIdFactory() });
-        this.setData({ report: await repository.getSessionReport(options.reportId) || null });
-      } catch (error) { this.setData({ report: null }); }
+        const report = await repository.getSessionReport(options.reportId) || null;
+        const completedStepIds = report ? report.steps.filter((step) => step.status === 'completed').map((step) => step.stepId) : [];
+        this.setData({ report, completedStepIds, knowledgeCards: listKnowledgeCards(routeId).map((card) => ({ ...card, completed: completedStepIds.includes(card.stepId) })) });
+      } catch (error) { this.setData({ report: null, completedStepIds: [] }); }
     }
     try {
       this.analytics = createTrialAnalytics({

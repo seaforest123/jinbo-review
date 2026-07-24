@@ -6,6 +6,7 @@
   <view wx:for="{{routes}}" wx:key="id" class="route-card {{selectedRouteId === item.id ? 'route-card-selected' : ''}}" data-route-id="{{item.id}}" bindtap="onRouteSelect">
     <view class="route-name">{{item.displayName}}</view>
     <view class="route-banner">{{item.banner}}</view>
+    <view class="route-nodes">3 个学习节点</view>
   </view>
   <button class="primary-button" bindtap="startExperience">开始3分钟体验</button>
   <view class="link-row">

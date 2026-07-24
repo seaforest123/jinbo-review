@@ -38,6 +38,7 @@ test('home page exposes both candidate routes and starts the selected experience
 test('archive, progress, and activity pages expose candidate learning actions', () => {
   assert.match(readMarkup('archive'), /开始体验/);
   assert.match(readMarkup('archive'), /收藏/);
+  assert.match(readMarkup('archive'), /候选知识卡/);
   assert.match(readMarkup('activity'), /候选内测/);
   assert.ok(JSON.parse(fs.readFileSync(path.join(root, 'miniprogram/app.json'), 'utf8')).pages.includes('pages/progress/index'));
 });
@@ -49,8 +50,21 @@ test('result page exposes all four shell actions without score language', () => 
   assert.match(markup, /活动/);
   assert.match(markup, /学习报告/);
   assert.match(markup, /查看我的进度/);
+  assert.match(markup, /回看学习节点/);
   assert.match(markup, /返回首页/);
   assert.doesNotMatch(markup, /分数|排名|证书/);
+});
+
+test('knowledge-card surfaces use candidate-only copy with static data', () => {
+  const home = readMarkup('home');
+  const archive = fs.readFileSync(path.join(pagesRoot, 'archive', 'index.js'), 'utf8');
+  const result = fs.readFileSync(path.join(pagesRoot, 'result', 'index.js'), 'utf8');
+  assert.match(home, /3 个学习节点/);
+  assert.match(archive, /knowledge-cards/);
+  assert.match(result, /knowledge-cards/);
+  assert.match(result, /completedStepIds/);
+  assert.match(readMarkup('result'), /item.completed/);
+  assert.doesNotMatch([home, readMarkup('archive'), readMarkup('result')].join('\n'), /专业认证|正式发布|公开报名/);
 });
 
 test('shell actions navigate to the intended pages', () => {
@@ -89,10 +103,20 @@ test('experience page exposes the three-step controls and guards an invalid rout
   assert.match(markup, /显示提示/);
   assert.match(markup, /重新尝试/);
   assert.match(markup, /退出体验/);
+  assert.match(markup, /学习节点/);
+  assert.match(markup, /查看本节点说明/);
+  assert.match(markup, /候选内测内容，尚待专业确认/);
   assert.equal(typeof page.onTouchStart, 'function');
   assert.equal(typeof page.onTouchMove, 'function');
   assert.equal(typeof page.completeCurrentStep, 'function');
   assert.equal(typeof page.exitExperience, 'function');
+});
+
+test('experience page uses static knowledge cards and task-map view data', () => {
+  const source = fs.readFileSync(path.join(pagesRoot, 'experience', 'index.js'), 'utf8');
+  assert.match(source, /knowledge-cards/);
+  assert.match(source, /taskMap/);
+  assert.match(source, /activeKnowledgeCard/);
 });
 
 test('experience page initializes anonymous trial analytics for its selected route', () => {

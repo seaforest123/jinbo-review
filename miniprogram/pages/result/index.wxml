@@ -9,6 +9,14 @@
     <view>状态：已完成，可再次练习</view>
   </view>
   <view class="report" wx:else>学习报告暂不可用，你仍可再次体验。</view>
+  <view class="review-title">回看学习节点</view>
+  <view wx:for="{{knowledgeCards}}" wx:key="id" class="knowledge-card">
+    <view class="knowledge-title">{{item.title}}</view>
+    <view wx:if="{{item.completed}}">本次已完成</view>
+    <view>{{item.description}}</view>
+    <view>{{item.observationTip}}</view>
+    <view class="knowledge-notice">候选内测内容，尚待专业确认</view>
+  </view>
   <button class="primary-button" bindtap="restartExperience">再体验一次</button>
   <view class="action-grid">
     <button bindtap="openArchive">金箔志</button>
