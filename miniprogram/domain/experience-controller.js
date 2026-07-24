@@ -15,17 +15,13 @@ function createExperienceController({ routes, routeId, capabilities, now, track 
   let dragProgress = 0;
   let loadState = 'loading';
   let learningReport = null;
+  let learningOperations = Promise.resolve();
 
   function recordLearning(operation) {
     if (!learningSession) return;
-    try {
-      const result = operation();
-      if (result && typeof result.then === 'function') {
-        result.then((report) => { if (report) learningReport = report; }).catch(() => undefined);
-      } else if (result) learningReport = result;
-    } catch (error) {
-      // Local progress must never interrupt the candidate experience.
-    }
+    learningOperations = learningOperations.then(() => operation()).then((report) => {
+      if (report) learningReport = report;
+    }).catch(() => undefined);
   }
 
   function emit(name, properties) {
@@ -74,6 +70,7 @@ function createExperienceController({ routes, routeId, capabilities, now, track 
 
   return {
     getView,
+    whenLearningSettled() { return learningOperations.then(() => learningReport); },
     start() {
       transition({ type: 'START' });
       if (state.phase === 'intro') emit('experience_start', {});

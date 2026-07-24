@@ -82,7 +82,7 @@ test('records local learning outcomes without changing the experience state mach
   controller.retry();
   controller.completeStep();
   controller.completeStep();
-  await Promise.resolve();
+  await controller.whenLearningSettled();
 
   assert.equal(controller.getView().phase, 'completed');
   assert.equal(controller.getView().learningReport.reportId, 'local_report_1');

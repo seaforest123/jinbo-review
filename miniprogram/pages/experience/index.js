@@ -1,6 +1,8 @@
 const routes = require('../../data/routes');
 const { createExperienceController } = require('../../domain/experience-controller');
 const { createTrialAnalytics } = require('../../services/trial-analytics');
+const { createLearningRepository } = require('../../services/learning-repository');
+const { createWxLearningStorage } = require('../../services/wx-learning-storage');
 
 function readCapabilities() {
   return { continuousDrag: true, xrFrame: false, networkType: 'unknown' };
@@ -52,11 +54,28 @@ Page({
       capabilities,
       now: () => Date.now(),
       track: (name, properties) => this.analytics.track(name, properties),
+      learningSession: this.createLearningSession(routeId),
     });
     this.loadStartedAt = Date.now();
     this.render();
     this.slowTimer = setTimeout(() => this.updateLoadState(), 8000);
     this.fallbackTimer = setTimeout(() => this.updateLoadState(), 15000);
+  },
+
+  createLearningSession(routeId) {
+    const repository = createLearningRepository({
+      routes,
+      storage: createWxLearningStorage(wx),
+      now: () => Date.now(),
+      idFactory: createIdFactory(),
+    });
+    let session;
+    return {
+      async start() { session = await repository.startLearningSession(routeId); },
+      async recordStep(stepId, outcome) { if (session) await repository.recordStepOutcome(session.sessionId, stepId, outcome); },
+      async complete() { return session ? repository.completeLearningSession(session.sessionId) : undefined; },
+      async exit() { return session ? repository.exitLearningSession(session.sessionId) : undefined; },
+    };
   },
 
   onUnload() {
@@ -123,10 +142,12 @@ Page({
     this.afterStepChange();
   },
 
-  afterStepChange() {
+  async afterStepChange() {
     const view = this.controller.getView();
     if (view.phase === 'completed') {
-      wx.redirectTo({ url: `/pages/result/index?routeId=${view.route.id}` });
+      const report = await this.controller.whenLearningSettled();
+      const reportId = report && typeof report.reportId === 'string' ? `&reportId=${encodeURIComponent(report.reportId)}` : '';
+      wx.redirectTo({ url: `/pages/result/index?routeId=${view.route.id}${reportId}` });
       return;
     }
     this.render();
