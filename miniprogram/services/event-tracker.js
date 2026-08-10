@@ -13,7 +13,7 @@ const EVENT_ID_PATTERN = /^event_[a-f0-9]{16,64}$/;
 const SESSION_ID_PATTERN = /^session_[a-f0-9]{16,64}$/;
 const STEP_ID_PATTERN = /^(?:observe|motion|inspect|step-[1-9][0-9]{0,2})$/;
 
-const ALLOWED_ROUTE_IDS = new Set(['foil_making_candidate', 'foil_application_candidate']);
+const ALLOWED_ROUTE_IDS = new Set(['foil_making_candidate']);
 const ALLOWED_ENVIRONMENTS = new Set(['trial', 'test']);
 const ALLOWED_TEST_ACCOUNT_TAGS = new Set(['team', 'teacher', 'invitee', null]);
 const ALLOWED_NETWORK_TYPES = new Set(['wifi', '2g', '3g', '4g', '5g', 'none', 'unknown']);

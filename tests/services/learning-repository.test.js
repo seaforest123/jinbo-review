@@ -45,13 +45,13 @@ test('preserves exit reports outside completed progress and toggles configured f
     now: () => 100,
     idFactory: () => 'local_002',
   });
-  const session = await repository.startLearningSession(routes[1].id);
+  const session = await repository.startLearningSession(routes[0].id);
   const report = await repository.exitLearningSession(session.sessionId);
 
   assert.equal(report.status, 'exited');
-  assert.equal((await repository.getRouteProgress(routes[1].id)).completedCount, 0);
-  assert.deepEqual(await repository.toggleFavorite(routes[1].id), [routes[1].id]);
-  assert.deepEqual(await repository.toggleFavorite(routes[1].id), []);
+  assert.equal((await repository.getRouteProgress(routes[0].id)).completedCount, 0);
+  assert.deepEqual(await repository.toggleFavorite(routes[0].id), [routes[0].id]);
+  assert.deepEqual(await repository.toggleFavorite(routes[0].id), []);
   await assert.rejects(repository.toggleFavorite('unknown'), /route/i);
 });
 

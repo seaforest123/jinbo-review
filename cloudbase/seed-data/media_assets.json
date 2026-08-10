@@ -6,13 +6,5 @@
     "reviewStatus": "internal_approved",
     "path": "local://candidate/foil-making-placeholder",
     "label": "候选路线本地占位素材"
-  },
-  {
-    "id": "candidate-media-foil-application",
-    "routeId": "foil_application_candidate",
-    "allowedEnvironment": "trial",
-    "reviewStatus": "internal_approved",
-    "path": "local://candidate/foil-application-placeholder",
-    "label": "候选路线本地占位素材"
   }
 ]

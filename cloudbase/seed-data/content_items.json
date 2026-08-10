@@ -6,13 +6,5 @@
     "reviewStatus": "internal_approved",
     "title": "制箔候选路线说明",
     "summary": "仅用于内部候选体验的通用说明，尚未经专业确认。"
-  },
-  {
-    "id": "candidate-content-foil-application",
-    "routeId": "foil_application_candidate",
-    "allowedEnvironment": "trial",
-    "reviewStatus": "internal_approved",
-    "title": "用箔候选路线说明",
-    "summary": "仅用于内部候选体验的通用说明，尚未经专业确认。"
   }
 ]

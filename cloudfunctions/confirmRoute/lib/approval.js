@@ -3,7 +3,7 @@
 const ANONYMOUS_ID_PATTERN = /^anon_[a-f0-9]{32}$/;
 const CONTENT_ITEM_ID_PATTERN = /^[a-z0-9][a-z0-9_-]{0,127}$/;
 const CONTENT_VERSION_PATTERN = /^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$/;
-const ALLOWED_ROUTE_IDS = new Set(['foil_making_candidate', 'foil_application_candidate']);
+const ALLOWED_ROUTE_IDS = new Set(['foil_making_candidate']);
 const ALLOWED_ENVIRONMENTS = new Set(['development', 'trial', 'production']);
 const ALLOWED_ADAPTERS = new Set(['select', 'continuous-drag', 'inspect', 'xr-frame']);
 const CANDIDATE_KEYS = ['routeId', 'contentItemId'];

@@ -81,8 +81,9 @@ test('deep-freezes validated routes and the exported candidate collection withou
   assert.equal(validated.steps[0].title, valid.steps[0].title);
 
   assert.ok(Object.isFrozen(candidateRoutes));
-  assert.notStrictEqual(candidateRoutes[0].allowedEnvironments, candidateRoutes[1].allowedEnvironments);
-  assert.notStrictEqual(candidateRoutes[0].steps, candidateRoutes[1].steps);
+  const independentlyValidated = validateRoute(valid);
+  assert.notStrictEqual(candidateRoutes[0].allowedEnvironments, independentlyValidated.allowedEnvironments);
+  assert.notStrictEqual(candidateRoutes[0].steps, independentlyValidated.steps);
   assert.throws(() => candidateRoutes[0].allowedEnvironments.push('production'), TypeError);
   assert.throws(() => candidateRoutes[0].steps.push({}), TypeError);
 });

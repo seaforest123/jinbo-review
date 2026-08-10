@@ -1,7 +1,7 @@
 'use strict';
 
 const NOTICE = '资料依据：中国非物质文化遗产网 · 南京金箔锻制技艺';
-const routeIds = ['foil_making_candidate', 'foil_application_candidate'];
+const routeIds = ['foil_making_candidate'];
 const cardTemplate = Object.freeze([
   Object.freeze({
     stepId: 'twist', title: '做捻子：先把金分成小片',

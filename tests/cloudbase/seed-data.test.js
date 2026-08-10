@@ -20,9 +20,9 @@ test('ships exactly the four approved offline collection seed files', () => {
   assert.deepEqual(fs.readdirSync(seedRoot).filter((name) => name.endsWith('.json')).sort(), expectedFiles);
 });
 
-test('keeps two validated internal candidate routes consistent with local configuration', () => {
+test('keeps the validated internal candidate route consistent with local configuration', () => {
   const records = loadSeed('app_config.json');
-  assert.equal(records.length, 2);
+  assert.equal(records.length, 1);
   assert.deepEqual(records.map((record) => record.id).sort(), localRoutes.map((route) => route.id).sort());
   for (const record of records) {
     assert.equal(record.allowedEnvironment, 'trial');
@@ -38,8 +38,8 @@ test('keeps two validated internal candidate routes consistent with local config
 test('contains only generic candidate content, local placeholder media, and no event records', () => {
   const content = loadSeed('content_items.json');
   const media = loadSeed('media_assets.json');
-  assert.equal(content.length, 2);
-  assert.equal(media.length, 2);
+  assert.equal(content.length, 1);
+  assert.equal(media.length, 1);
   assert.deepEqual(loadSeed('behavior_events.json'), []);
   for (const record of [...content, ...media]) {
     assert.equal(record.allowedEnvironment, 'trial');

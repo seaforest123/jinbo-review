@@ -217,10 +217,8 @@ test('rejects coercible anonymous and session context IDs without invoking hooks
   }
 });
 
-test('accepts only the two current P0 route IDs and the configured app version', () => {
-  for (const routeId of ['foil_making_candidate', 'foil_application_candidate']) {
-    assert.doesNotThrow(() => createTrackerFixture({ context: createContext({ routeId }) }));
-  }
+test('accepts only the current P0 route ID and the configured app version', () => {
+  assert.doesNotThrow(() => createTrackerFixture({ context: createContext({ routeId: 'foil_making_candidate' }) }));
   assert.doesNotThrow(() => createTrackerFixture({
     context: createContext({ appVersion: runtimeConfig.appVersion }),
   }));

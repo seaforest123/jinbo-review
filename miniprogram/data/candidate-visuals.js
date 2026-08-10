@@ -9,7 +9,6 @@ function visual(path) {
 const cover = visual('/assets/candidate/cover.png');
 const routes = Object.freeze({
   foil_making_candidate: visual('/assets/candidate/route-making.png'),
-  foil_application_candidate: visual('/assets/candidate/route-application.png'),
 });
 const steps = Object.freeze({
   twist: visual('/assets/candidate/step-observe.png'),
