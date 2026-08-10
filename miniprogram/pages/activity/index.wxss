@@ -2,7 +2,7 @@
   color: var(--deep-brown);
 }
 
-.page-shell { padding: 56rpx 8rpx 24rpx; }
+.page-shell { padding: 56rpx 8rpx calc(24rpx + env(safe-area-inset-bottom)); }
 .notice { border: 1rpx solid var(--exhibit-line); box-shadow: var(--paper-shadow); }
 .title { margin-bottom: 28rpx; font-size: 44rpx; font-weight: 700; }
 .notice { padding: 18rpx 20rpx; border: 1rpx solid var(--muted-gold); border-radius: var(--card-radius); }

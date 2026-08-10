@@ -1,4 +1,4 @@
-.page-shell { padding: 56rpx 24rpx; }
+.page-shell { padding: 56rpx 24rpx calc(56rpx + env(safe-area-inset-bottom)); }
 .title { margin-bottom: 28rpx; font-size: 44rpx; font-weight: 700; }
 .notice, .empty { color: var(--ink-soft); }
 .section-title { margin: 32rpx 0 16rpx; font-weight: 700; }
