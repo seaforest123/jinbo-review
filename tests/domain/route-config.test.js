@@ -23,7 +23,7 @@ test('accepts exactly three ordered internal candidate steps', () => {
 
 test('rejects a route with duplicate or unordered step order', () => {
   const bad = { ...valid, steps: valid.steps.map((step) => ({ ...step, order: 1 })) };
-  assert.throws(() => validateRoute(bad), /步骤顺序必须是 1,2,3/);
+  assert.throws(() => validateRoute(bad), /步骤顺序必须连续/);
 });
 
 test('hides internal candidates from production', () => {

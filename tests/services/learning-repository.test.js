@@ -13,7 +13,7 @@ function createStorage(initialValue) {
   };
 }
 
-test('persists a completed three-step report and summarizes its route', async () => {
+test('persists a completed five-step report and summarizes its route', async () => {
   let time = 100;
   const repository = createLearningRepository({
     routes,
@@ -28,7 +28,7 @@ test('persists a completed three-step report and summarizes its route', async ()
   const report = await repository.completeLearningSession(session.sessionId);
 
   assert.equal(report.status, 'completed');
-  assert.equal(report.steps.length, 3);
+  assert.equal(report.steps.length, 5);
   assert.equal(report.elapsedMs, 1);
   assert.deepEqual(await repository.getRouteProgress(routes[0].id), {
     routeId: routes[0].id,

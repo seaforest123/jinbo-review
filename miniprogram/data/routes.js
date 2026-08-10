@@ -11,9 +11,11 @@ const routes = Object.freeze([
     allowedEnvironments: ['development', 'trial'],
     banner: candidateNotice,
     steps: [
-      { id: 'observe', order: 1, adapter: 'select', title: '认识材料与目标（候选示意）' },
-      { id: 'motion', order: 2, adapter: 'continuous-drag', title: '模拟关键动作（候选示意）' },
-      { id: 'inspect', order: 3, adapter: 'inspect', title: '检查数字结果（候选示意）' },
+      { id: 'twist', order: 1, adapter: 'cut', title: '做捻子' },
+      { id: 'pack', order: 2, adapter: 'place', title: '装家生' },
+      { id: 'hammer', order: 3, adapter: 'hammer', title: '打箔' },
+      { id: 'inspect', order: 4, adapter: 'inspect', title: '出具检查' },
+      { id: 'finish', order: 5, adapter: 'finish', title: '切箔成叶' },
     ],
   }),
   validateRoute({
@@ -24,9 +26,11 @@ const routes = Object.freeze([
     allowedEnvironments: ['development', 'trial'],
     banner: candidateNotice,
     steps: [
-      { id: 'observe', order: 1, adapter: 'select', title: '认识材料与目标（候选示意）' },
-      { id: 'motion', order: 2, adapter: 'continuous-drag', title: '模拟关键动作（候选示意）' },
-      { id: 'inspect', order: 3, adapter: 'inspect', title: '检查数字结果（候选示意）' },
+      { id: 'twist', order: 1, adapter: 'cut', title: '做捻子' },
+      { id: 'pack', order: 2, adapter: 'place', title: '装家生' },
+      { id: 'hammer', order: 3, adapter: 'hammer', title: '打箔' },
+      { id: 'inspect', order: 4, adapter: 'inspect', title: '出具检查' },
+      { id: 'finish', order: 5, adapter: 'finish', title: '切箔成叶' },
     ],
   }),
 ]);

@@ -1,8 +1,9 @@
 page {
-  --gold: #b88a2a;
-  --deep-brown: #3b2a1f;
-  --warm-white: #fffaf0;
-  --muted-gold: #e8d7ad;
+  --gold: #c99a32;
+  --gold-bright: #f4d77b;
+  --deep-brown: #241710;
+  --warm-white: #fbf4e7;
+  --muted-gold: #e4c987;
   --page-gutter: 32rpx;
   --card-radius: 20rpx;
   --paper: #f6eedf;
@@ -12,7 +13,7 @@ page {
   box-sizing: border-box;
   min-height: 100%;
   padding: var(--page-gutter);
-  background: var(--warm-white);
+  background: #17100c;
   color: var(--deep-brown);
   font-size: 28rpx;
   line-height: 1.6;
@@ -36,4 +37,12 @@ button:active,
   background-color: var(--muted-gold);
   opacity: 0.85;
   transform: scale(0.98);
+}
+
+button {
+  border-radius: 999rpx;
+}
+
+button::after {
+  border: 0;
 }

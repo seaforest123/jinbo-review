@@ -16,6 +16,18 @@ test('runs intro and three ordered steps before completion', () => {
   assert.deepEqual([state.phase, state.completedAt], ['completed', 1400]);
 });
 
+test('starts an isolated shortened experience at an explicitly configured route step', () => {
+  const initial = createInitialState();
+  const started = reduceExperience(initial, { type: 'START_AT_STEP', stepId: 's3' }, route, 100);
+  assert.equal(started.phase, 'step');
+  assert.equal(started.stepIndex, 2);
+  assert.equal(started.startedAt, 100);
+  assert.deepEqual(
+    reduceExperience(initial, { type: 'START_AT_STEP', stepId: 'unknown' }, route, 100),
+    initial,
+  );
+});
+
 test('counts hints and retries for the current step', () => {
   let state = reduceExperience(createInitialState(), { type: 'START' }, route, 1000);
   state = reduceExperience(state, { type: 'INTRO_ENDED' }, route, 1100);

@@ -3,6 +3,7 @@ const { createLearningRepository } = require('../../services/learning-repository
 const { createWxLearningStorage } = require('../../services/wx-learning-storage');
 const { listKnowledgeCards } = require('../../data/knowledge-cards');
 const { getRouteVisual, getStepVisual } = require('../../data/candidate-visuals');
+const publicRoutes = routes.filter((route) => route.id === 'foil_making_candidate');
 
 function createRepository() {
   return createLearningRepository({ routes, storage: createWxLearningStorage(wx), now: () => Date.now(), idFactory: () => Date.now().toString(16) });
@@ -15,8 +16,9 @@ Page({
     try {
       const repository = createRepository();
       const favorites = await repository.listFavorites();
-      const summaries = await Promise.all(routes.map(async (route) => ({
+      const summaries = await Promise.all(publicRoutes.map(async (route) => ({
         ...route,
+        displayName: '金箔锻制体验（候选内容）',
         visual: getRouteVisual(route.id),
         cards: listKnowledgeCards(route.id).map((card) => ({ ...card, visual: getStepVisual(card.stepId) })),
         favorite: favorites.includes(route.id),
@@ -25,8 +27,9 @@ Page({
       this.setData({ routes: summaries });
     } catch (error) {
       this.setData({
-        routes: routes.map((route) => ({
+        routes: publicRoutes.map((route) => ({
           ...route,
+          displayName: '金箔锻制体验（候选内容）',
           visual: getRouteVisual(route.id),
           cards: listKnowledgeCards(route.id).map((card) => ({ ...card, visual: getStepVisual(card.stepId) })),
           favorite: false,

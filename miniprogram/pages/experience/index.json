@@ -1,3 +1,7 @@
 {
-  "navigationBarTitleText": "开始体验"
+  "navigationStyle": "custom",
+  "disableScroll": false,
+  "enablePullDownRefresh": false,
+  "backgroundColor": "#100b08",
+  "backgroundTextStyle": "dark"
 }

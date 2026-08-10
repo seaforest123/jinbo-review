@@ -1,0 +1,19 @@
+<view class="craft-page">
+  <view class="craft-intro">
+    <view class="intro-tag">候选内容 · 工艺全流程</view>
+    <view class="craft-title">一片金箔，<br />要经过十二道手</view>
+    <view class="craft-lead">每一步都在让金更薄、更柔，也更需要耐心。按顺序往下看，不跳过关键工序。</view>
+    <view class="source-alert">技术流程参照赵绪成《南京金箔个案研究》；实际合作对象与城市待专业访谈确认。</view>
+    <view class="intro-stat"><view><text>12</text><small>道工序</small></view><view><text>约 0.1</text><small>微米成箔</small></view><view><text>约 3 万</text><small>锤打了细</small></view></view>
+  </view>
+
+  <view class="craft-list">
+    <view wx:for="{{steps}}" wx:key="id" class="step-card {{item.highlight ? 'is-key-step' : ''}}">
+      <view class="step-side"><view class="step-number">{{item.orderLabel}}</view><view wx:if="{{index !== steps.length - 1}}" class="step-line"></view></view>
+      <view class="step-content"><view class="step-meta"><text>{{item.phase}}</text><text wx:if="{{item.highlight}}" class="key-label">核心工序</text></view><view class="step-name">{{item.name}}<text wx:if="{{item.alias}}">（{{item.alias}}）</text></view><view class="step-one-liner">{{item.oneLiner}}</view><view class="step-detail">{{item.detail}}</view><view wx:if="{{item.highlight}}" class="step-highlight"><text>{{item.highlight}}</text><small>正副手对坐捶打，是金箔“薄、柔、轻”的关键。</small></view></view>
+    </view>
+  </view>
+
+  <view class="next-card"><view class="next-icon">箔</view><view class="next-copy"><view>读完工艺，亲手试一试</view><small>在器物轮廓上完成一次贴箔</small></view><button class="next-button" bindtap="startFoilApplication">开始体验</button></view>
+  <view class="craft-source">{{sourceNote}}</view>
+</view>

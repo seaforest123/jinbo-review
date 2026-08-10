@@ -23,7 +23,7 @@ function evaluateLoadState(elapsedMs, failed) {
 function chooseAdapter(preferred, capabilities) {
   const available = capabilities && typeof capabilities === 'object' ? capabilities : {};
 
-  if (preferred === 'inspect' || preferred === 'select') {
+  if (['cut', 'place', 'hammer', 'inspect', 'finish', 'select'].includes(preferred)) {
     return preferred;
   }
   if (preferred === 'continuous-drag') {

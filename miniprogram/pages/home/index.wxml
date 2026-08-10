@@ -1,24 +1,48 @@
-<view class="page-shell">
-  <view class="eyebrow">金箔非遗数字体验</view>
-  <view class="title">金箔数字轻体验</view>
-  <view class="notice">候选示意，尚未经专业确认</view>
-  <view class="cover-exhibit">
-    <image wx:if="{{!coverVisual.failed}}" class="cover-image" src="{{coverVisual.path}}" mode="aspectFill" binderror="onVisualError" />
-    <view wx:else class="visual-fallback">候选视觉示意加载失败</view>
-    <view class="visual-notice">候选视觉示意，尚待专业确认</view>
+<view class="home-page">
+  <view class="ambient-gold" aria-hidden="true"><view class="ambient-piece one"></view><view class="ambient-piece two"></view></view>
+
+  <view class="home-topbar" style="padding-right:{{navRightPadding}}px">
+    <view><view class="home-eyebrow">JIN · BO / PROCESS LAB</view><view class="home-brand">金箔工艺</view></view>
+    <view class="topbar-state">候选内容</view>
   </view>
-  <view class="section-title">选择一条候选路线</view>
-  <view wx:for="{{routes}}" wx:key="id" class="route-card {{selectedRouteId === item.id ? 'route-card-selected' : ''}}" data-route-id="{{item.id}}" bindtap="onRouteSelect">
-    <image wx:if="{{!item.visualFailed}}" class="route-image" src="{{item.visual.path}}" mode="aspectFill" data-route-id="{{item.id}}" binderror="onVisualError" />
-    <view wx:else class="visual-fallback">候选路线视觉示意</view>
-    <view class="route-name">{{item.displayName}}</view>
-    <view class="route-banner">{{item.banner}}</view>
-    <view class="route-nodes">3 个学习节点</view>
-    <view class="visual-notice">候选视觉示意，尚待专业确认</view>
+
+  <view class="home-hero">
+    <image wx:if="{{!coverVisual.failed}}" class="hero-image" src="{{coverVisual.path}}" mode="aspectFill" binderror="onVisualError" />
+    <view wx:else class="hero-image hero-image-fallback"></view>
+    <view class="hero-mask"></view>
+    <view class="hero-copy">
+      <view class="hero-eyebrow">ONE MATERIAL · FIVE CONSEQUENCES</view>
+      <view class="hero-title">不是观看金色<br />而是亲手让金成箔</view>
+      <view class="hero-subtitle">裁切、装家生、打箔、检查、成叶。五个连续任务，共用同一张箔面状态。</view>
+      <view class="hero-notice">实际合作对象与城市待专业访谈确认</view>
+    </view>
   </view>
-  <button class="primary-button" bindtap="startExperience">开始3分钟体验</button>
-  <view class="link-row">
-    <text class="link" bindtap="openArchive">金箔志</text>
-    <text class="link" bindtap="openActivity">活动</text>
+
+  <view class="home-content">
+    <view class="section-kicker">THE EXPERIENCE</view>
+    <view class="section-title">五道工序，一次完成</view>
+    <view class="section-copy">你的偏移、落锤和判断都会保留到最后，生成属于你的体验结果。</view>
+
+    <view class="process-rail">
+      <view class="process-item current"><text>01</text><view>做捻子</view></view>
+      <view class="process-line"></view>
+      <view class="process-item"><text>02</text><view>装家生</view></view>
+      <view class="process-line"></view>
+      <view class="process-item"><text>03</text><view>打箔</view></view>
+      <view class="process-line"></view>
+      <view class="process-item"><text>04</text><view>检查</view></view>
+      <view class="process-line"></view>
+      <view class="process-item"><text>05</text><view>成叶</view></view>
+    </view>
+
+    <view class="entry-panel" bindtap="startExperience">
+      <view class="entry-seal">箔</view>
+      <view class="entry-copy"><view class="entry-kicker">CONTINUOUS CRAFT</view><view class="entry-title">从做捻子开始</view><view class="entry-desc">约 3 分钟 · 新手引导可随时开启</view></view>
+      <view class="entry-arrow">→</view>
+    </view>
+    <button class="gold-button" bindtap="startExperience">开始五步体验</button>
+
+    <view class="home-links"><text bindtap="openArchive">金箔志</text><view></view><text bindtap="openActivity">活动</text></view>
+    <view class="source-note">候选内容，用于体验与讨论；实际合作对象与城市待专业访谈确认。</view>
   </view>
 </view>

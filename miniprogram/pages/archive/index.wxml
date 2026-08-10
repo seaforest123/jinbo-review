@@ -1,21 +1,22 @@
 <view class="page-shell">
   <view class="title">金箔志</view>
-  <view class="notice">候选内测档案：内容仍待专业确认</view>
-  <view class="description">以下条目仅用于候选学习体验，不代表正式工艺结论。</view>
+  <view class="notice">金箔类非遗工艺学习档案（候选内容）</view>
+  <view class="description">技术资料参照南京金箔个案研究；本项目的实际合作对象与城市待专业访谈确认。</view>
   <view wx:for="{{routes}}" wx:key="id" class="archive-card">
     <image class="route-image" src="{{item.visual.path}}" mode="aspectFill" />
-    <view class="knowledge-notice">候选视觉示意，尚待专业确认</view>
+    <view class="knowledge-notice">工艺影像</view>
     <view class="route-name">{{item.displayName}}</view>
     <view>{{item.learningGoal}}</view>
     <view>已完成 {{item.progress.completedCount}} 次</view>
-    <view class="archive-card-title">候选知识卡</view>
+    <view class="archive-card-title">工艺知识卡</view>
     <view wx:for="{{item.cards}}" wx:for-item="card" wx:key="id" class="knowledge-card">
       <image class="card-image" src="{{card.visual.path}}" mode="aspectFill" />
       <view>{{card.title}}</view>
       <view>{{card.description}}</view>
-      <view class="knowledge-notice">候选视觉示意，尚待专业确认</view>
+      <view class="knowledge-notice">{{card.notice}}</view>
     </view>
     <button data-route-id="{{item.id}}" bindtap="startExperience">开始体验</button>
+    <view class="knowledge-notice">含五道连续工艺任务</view>
     <button data-route-id="{{item.id}}" bindtap="toggleFavorite">{{item.favorite ? '取消收藏' : '收藏'}}</button>
   </view>
   <button class="secondary-button" bindtap="openProgress">查看我的进度</button>

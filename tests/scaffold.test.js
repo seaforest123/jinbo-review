@@ -52,7 +52,7 @@ function loadRegisteredApp({ runtimeConfig, wx }) {
   };
 }
 
-test('registers P0 pages, local progress page, and cloud roots', () => {
+test('registers the public five-step experience pages and cloud roots', () => {
   const app = JSON.parse(fs.readFileSync(path.join(root, 'miniprogram/app.json'), 'utf8'));
   const project = JSON.parse(fs.readFileSync(path.join(root, 'project.config.example.json'), 'utf8'));
   assert.deepEqual(app.pages, [
@@ -95,12 +95,34 @@ test('provides compilable files for every registered page', () => {
   }
 });
 
-test('labels home and experience screens as unconfirmed candidate illustrations', () => {
-  const requiredNotice = '候选示意，尚未经专业确认';
-  for (const page of ['home', 'experience']) {
-    const wxml = fs.readFileSync(path.join(root, 'miniprogram/pages', page, 'index.wxml'), 'utf8');
-    assert.ok(wxml.includes(requiredNotice), `${page} page should display the candidate notice`);
+test('labels the public home screen as unconfirmed candidate content', () => {
+  const home = fs.readFileSync(path.join(root, 'miniprogram/pages/home/index.wxml'), 'utf8');
+  assert.match(home, /候选内容/);
+  assert.match(home, /实际合作对象与城市待专业访谈确认/);
+  assert.doesNotMatch(home, /南京/);
+});
+
+test('keeps 南京 only in explicit technical-reference copy', () => {
+  const files = [
+    'miniprogram/data/craft-steps.js',
+    'miniprogram/data/knowledge-cards.js',
+    'miniprogram/pages/archive/index.wxml',
+    'miniprogram/pages/craft/index.wxml',
+  ];
+  const matches = [];
+  function walk(directory) {
+    for (const entry of fs.readdirSync(directory, { withFileTypes: true })) {
+      const target = path.join(directory, entry.name);
+      if (entry.isDirectory()) walk(target);
+      else if (entry.isFile() && /\.(js|wxml)$/.test(entry.name) && fs.readFileSync(target, 'utf8').includes('南京')) {
+        matches.push(path.relative(root, target).replace(/\\/g, '/'));
+      }
+    }
   }
+  walk(path.join(root, 'miniprogram'));
+  assert.deepEqual(matches.sort(), files.sort());
+  assert.match(fs.readFileSync(path.join(root, 'miniprogram/pages/archive/index.wxml'), 'utf8'), /技术资料参照/);
+  assert.match(fs.readFileSync(path.join(root, 'miniprogram/pages/craft/index.wxml'), 'utf8'), /技术流程参照/);
 });
 
 test('exports the exact frozen trial runtime configuration', () => {

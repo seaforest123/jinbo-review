@@ -1,0 +1,18 @@
+<view class="foil-page">
+  <view class="foil-heading"><view><view class="page-tag">互动体验</view><view class="foil-title">慢一点，才贴得住</view><view class="foil-desc">用手指拖动金箔，缓慢覆盖器物轮廓。</view></view><view class="progress-badge"><text>{{session.coverage}}%</text><small>贴合</small></view></view>
+
+  <view class="guide-card"><view class="guide-dot">1</view><text>匀速拖动金箔；动作太快会起皱或碎裂。</text></view>
+  <view class="application-stage" bindtouchstart="onFoilStart" catchtouchmove="onFoilMove" bindtouchend="onFoilEnd" bindtouchcancel="onFoilEnd">
+    <view class="stage-label">拖动金箔贴满轮廓</view>
+    <view class="artifact-outline"><view class="artifact-crown"></view><view class="artifact-body"><text>器物</text></view><view class="artifact-base"></view></view>
+    <view class="coverage-mask" style="height:{{session.coverage}}%"></view>
+    <view class="foil-sheet" style="left:{{foilPosition.x}}%;top:{{foilPosition.y}}%"><text>箔</text></view>
+    <view wx:if="{{session.lastEvent === 'broken'}}" class="break-tip"><text>金箔碎裂</text><small>换一张，慢一点继续</small></view>
+    <view wx:if="{{session.complete}}" class="complete-tip">已贴满 ✓</view>
+  </view>
+
+  <view class="application-status"><view><small>用箔</small><text>{{session.sheetsUsed}} 张</text></view><view></view><view><small>重来</small><text>{{session.failures}} 次</text></view><view></view><view><small>当前贴合</small><text>{{session.coverage}}%</text></view></view>
+  <view class="foil-message {{session.lastEvent === 'broken' ? 'is-error' : ''}}">{{message}}</view>
+  <view class="foil-actions"><button class="secondary-button" bindtap="restartApplication">重新贴</button><button class="primary-button" disabled="{{!session.complete}}" bindtap="openResult">{{session.complete ? '生成我的成品' : '完成贴箔后解锁'}}</button></view>
+  <view class="foil-note">数字体验用于理解贴箔的耐心与节奏，不代替真实工艺训练。</view>
+</view>

@@ -12,9 +12,11 @@ const routes = Object.freeze({
   foil_application_candidate: visual('/assets/candidate/route-application.png'),
 });
 const steps = Object.freeze({
-  observe: visual('/assets/candidate/step-observe.png'),
-  motion: visual('/assets/candidate/step-motion.png'),
+  twist: visual('/assets/candidate/step-observe.png'),
+  pack: visual('/assets/candidate/step-observe.png'),
+  hammer: visual('/assets/candidate/step-motion.png'),
   inspect: visual('/assets/candidate/step-inspect.png'),
+  finish: visual('/assets/candidate/step-motion.png'),
 });
 
 function copy(value) { return value ? { ...value } : null; }
