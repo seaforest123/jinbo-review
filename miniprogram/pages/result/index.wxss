@@ -89,3 +89,6 @@
   .card-copy { width: auto; padding-top: 210px; }
   .review-shade { background: linear-gradient(180deg, transparent 10%, rgba(20,12,7,.92) 56%); }
 }
+@media (prefers-reduced-motion: reduce) {
+  .gold-star { animation: none; }
+}

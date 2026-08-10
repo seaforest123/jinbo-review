@@ -272,6 +272,6 @@ button.inspection-patch::after { border: 0; border-radius: 0; }
 @keyframes ready-button { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-3rpx); box-shadow: 0 19rpx 40rpx rgba(220,166,57,.38),0 0 0 1rpx rgba(255,236,167,.35); } }
 
 @media (prefers-reduced-motion: reduce) {
-  .ambient-piece,.placement-target,.foil-zone.is-suggested::before,.rhythm-coach>view,.rhythm-cursor,.impact-sparks>view,.tweezer-tool.is-drifting .loose-sheet,.finish-trail view,.finished-leaf-seal,.celebration-particles view,.gold-button.is-ready { animation: none; }
+  .ambient-piece,.placement-target,.foil-zone.is-suggested::before,.rhythm-coach>view,.rhythm-cursor,.impact-sparks>view,.tweezer-tool.is-drifting .loose-sheet,.finish-trail view,.finished-leaf-seal,.celebration-particles view,.gold-button.is-ready,.decision-button.is-recommended,.paper-pack.is-settling .placement-target,.foil-zone.is-warning::before,.final-foil.is-holding .continuous-foil { animation: none; }
   .workshop.scene-enter .heading,.workshop.scene-enter .beginner-guard,.workshop.scene-enter .action-demo,.workshop.scene-enter .stage-panel { animation-duration: .01s; }
 }
