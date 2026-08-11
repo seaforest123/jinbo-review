@@ -62,6 +62,10 @@ test('registers the public five-step experience pages and cloud roots', () => {
     'pages/archive/index',
     'pages/activity/index',
     'pages/progress/index',
+    'pages/media/index',
+    'pages/media/interviews/index',
+    'pages/media/process/index',
+    'pages/media/extended/index',
   ]);
   assert.equal(project.miniprogramRoot, 'miniprogram/');
   assert.equal(project.cloudfunctionRoot, 'cloudfunctions/');

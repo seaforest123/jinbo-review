@@ -1,0 +1,14 @@
+<view class="player-shell">
+  <video
+    class="video-player"
+    src="{{src}}"
+    poster="{{poster}}"
+    style="height: {{height}};"
+    autoplay="{{autoplay}}"
+    muted="{{muted}}"
+    controls="{{controls}}"
+    show-center-play-btn="{{showCenterPlayBtn}}"
+    bindended="handleEnded"
+    binderror="handleError"
+  ></video>
+</view>

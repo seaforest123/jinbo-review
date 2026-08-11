@@ -5,7 +5,11 @@
     "pages/result/index",
     "pages/archive/index",
     "pages/activity/index",
-    "pages/progress/index"
+    "pages/progress/index",
+    "pages/media/index",
+    "pages/media/interviews/index",
+    "pages/media/process/index",
+    "pages/media/extended/index"
   ],
   "window": {
     "navigationBarTitleText": "金箔数字轻体验"

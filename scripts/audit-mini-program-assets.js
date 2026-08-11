@@ -8,6 +8,10 @@ const {
   getRouteVisual,
   getStepVisual,
 } = require('../miniprogram/data/candidate-visuals');
+const {
+  listConfiguredLocalMediaPaths,
+  listConfiguredLocalVideoPaths,
+} = require('../miniprogram/data/video-library');
 
 const MINI_PROGRAM_BUDGET_BYTES = 2 * 1024 * 1024;
 const VIDEO_BUDGET_BYTES = 384 * 1024;
@@ -32,7 +36,7 @@ function referencedMediaPaths() {
     getStepVisual('finish'),
   ];
   const videos = ['twist', 'pack', 'hammer', 'inspect', 'finish'].map((stepId) => getStepVideo(stepId).src);
-  return [...visuals.map((visual) => visual.path), ...videos];
+  return [...visuals.map((visual) => visual.path), ...videos, ...listConfiguredLocalMediaPaths()];
 }
 
 function auditAssets(root = path.resolve(__dirname, '..')) {
@@ -41,9 +45,10 @@ function auditAssets(root = path.resolve(__dirname, '..')) {
   const miniProgramFiles = listFiles(miniProgramRoot);
   const assetFiles = listFiles(assetRoot);
   const errors = [];
-  const allowedVideoPaths = new Set(
-    ['twist', 'pack', 'hammer', 'inspect', 'finish'].map((stepId) => path.join(miniProgramRoot, getStepVideo(stepId).src)),
-  );
+  const allowedVideoPaths = new Set([
+    ...['twist', 'pack', 'hammer', 'inspect', 'finish'].map((stepId) => getStepVideo(stepId).src),
+    ...listConfiguredLocalVideoPaths(),
+  ].map((videoPath) => path.join(miniProgramRoot, videoPath)));
   const packageBytes = miniProgramFiles.reduce((sum, file) => sum + fs.statSync(file).size, 0);
 
   if (packageBytes > MINI_PROGRAM_BUDGET_BYTES) {
@@ -72,7 +77,7 @@ function auditAssets(root = path.resolve(__dirname, '..')) {
     errors.push(`video budget exceeded: ${videoBytes} > ${VIDEO_BUDGET_BYTES}`);
   }
 
-  const pageMarkup = listFiles(path.join(miniProgramRoot, 'pages'))
+  const pageMarkup = listFiles(miniProgramRoot)
     .filter((file) => path.extname(file) === '.wxml')
     .map((file) => fs.readFileSync(file, 'utf8'))
     .join('\n');

@@ -56,11 +56,60 @@ test('the public main flow links home to the five-step experience', () => {
   }
 });
 
+test('home links to the image and video record centre', () => {
+  const calls = [];
+  const previousWx = global.wx;
+  global.wx = { navigateTo: ({ url }) => calls.push(url) };
+  try {
+    const page = load('home');
+    assert.equal(typeof page.openMedia, 'function');
+    page.openMedia();
+    assert.deepEqual(calls, ['/pages/media/index']);
+    assert.match(read('home'), /影像记录/);
+  } finally {
+    if (previousWx === undefined) delete global.wx;
+    else global.wx = previousWx;
+  }
+});
+
+test('media centre separates the three video collections into dedicated routes', () => {
+  const markup = read('media');
+  for (const text of ['{{item.title}}', 'category-card', 'openCategory']) {
+    assert.match(markup, new RegExp(text.replace(/[<>]/g, '\\$&')));
+  }
+  const page = load('media');
+  for (const handler of ['openCategory', 'goHome']) assert.equal(typeof page[handler], 'function');
+  assert.equal(JSON.parse(read('media', 'json')).navigationStyle, 'custom');
+  const calls = [];
+  const previousWx = global.wx;
+  global.wx = { navigateTo: ({ url }) => calls.push(url) };
+  try {
+    page.openCategory({ currentTarget: { dataset: { pagePath: '/pages/media/process/index' } } });
+    assert.deepEqual(calls, ['/pages/media/process/index']);
+  } finally {
+    if (previousWx === undefined) delete global.wx;
+    else global.wx = previousWx;
+  }
+});
+
+test('each media collection page selects exactly one reusable gallery', () => {
+  const categories = [
+    ['media/interviews', 'artisan-interviews'],
+    ['media/process', 'craft-explanations'],
+    ['media/extended', 'extended-archive'],
+  ];
+  for (const [pageName, sectionId] of categories) {
+    assert.match(read(pageName), new RegExp(`<media-gallery section-id="${sectionId}"`));
+    const config = JSON.parse(read(pageName, 'json'));
+    assert.equal(config.usingComponents['media-gallery'], '/components/media-gallery/index');
+  }
+});
+
 test('experience renders five causal craft tasks and all adjustment controls', () => {
   const markup = read('experience');
   for (const text of ['做捻子', '装家生', '打箔', '出具检查', '切箔成叶', '返回定点补锤', '旋转箔包', '新手护航']) assert.match(markup, new RegExp(text));
   for (const handler of ['onCutMove', 'onPlaceMove', 'previewHammerCell', 'cancelHammerPress', 'hammerCell', 'probeInspectionCell', 'returnToHammer', 'onSmoothMove', 'assistCurrentStep']) assert.equal(typeof load('experience')[handler], 'function');
-  assert.match(markup, /<video/);
+  assert.match(markup, /<video-player/);
   assert.match(markup, /activeKnowledgeCard.notice/);
 });
 

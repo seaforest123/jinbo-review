@@ -42,7 +42,11 @@
     </view>
     <button class="gold-button" bindtap="startExperience">开始五步体验</button>
 
-    <view class="home-links"><text bindtap="openArchive">金箔志</text><view></view><text bindtap="openActivity">活动</text></view>
+    <view class="home-links">
+      <text bindtap="openArchive">金箔志</text><view></view>
+      <text bindtap="openMedia">影像记录</text><view></view>
+      <text bindtap="openActivity">活动</text>
+    </view>
     <view class="source-note">候选内容，用于体验与讨论；实际合作对象与城市待专业访谈确认。</view>
   </view>
 </view>

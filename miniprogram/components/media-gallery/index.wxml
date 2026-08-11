@@ -1,0 +1,45 @@
+<view class="category-page">
+  <view class="category-topbar">
+    <view>
+      <view class="eyebrow">JIN · BO / FILM ARCHIVE</view>
+      <view class="brand">{{section.title}}</view>
+    </view>
+    <button class="back-button" bindtap="goBack">分类首页</button>
+  </view>
+
+  <view class="category-hero">
+    <view class="hero-shape one"></view><view class="hero-shape two"></view>
+    <view class="eyebrow">{{section.eyebrow}}</view>
+    <view class="hero-title">{{section.title}}</view>
+    <view class="hero-copy">{{section.description}}</view>
+  </view>
+
+  <view class="video-content">
+    <view wx:if="{{!section.videos.length}}" class="empty-video-state">
+      <text>{{section.emptyCopy}}</text><small>授权完成后将在此展示</small>
+    </view>
+    <view wx:for="{{section.videos}}" wx:for-item="video" wx:key="id" class="video-card">
+      <view class="video-cover video-cover-action" data-video-id="{{video.id}}" bindtap="playVideo">
+        <image wx:if="{{video.source.posterPath}}" src="{{video.source.posterPath}}" mode="aspectFill" />
+        <view wx:else class="cover-placeholder"><text>影</text><view></view><view></view></view>
+        <view class="cover-gradient"></view>
+        <view class="duration">{{video.duration}}</view>
+        <view class="play-mark">▶</view>
+      </view>
+      <view class="video-body">
+        <view class="video-title">{{video.title}}</view>
+        <view class="video-description">{{video.description}}</view>
+        <view class="video-notice">{{video.notice}}</view>
+        <button class="play-button" data-video-id="{{video.id}}" bindtap="playVideo">{{loadingVideoId === video.id ? '正在加载…' : video.playable ? '播放视频' : '播放位待接入'}}</button>
+      </view>
+    </view>
+  </view>
+
+  <view wx:if="{{activeVideoId}}" class="player-sheet">
+    <view class="player-mask" bindtap="closePlayer"></view>
+    <view class="player-panel">
+      <view class="player-heading"><text>正在播放</text><button bindtap="closePlayer" aria-label="关闭播放器">×</button></view>
+      <video-player class="video-player" src="{{activeVideoSource}}" poster="{{activeVideoPoster}}" height="390rpx" controls autoplay show-center-play-btn></video-player>
+    </view>
+  </view>
+</view>

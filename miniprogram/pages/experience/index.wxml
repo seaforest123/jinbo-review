@@ -37,7 +37,7 @@
       <view class="guard-action"><view>{{assistCopy.title}}</view><button disabled="{{assistBusy}}" bindtap="assistCurrentStep">{{assistBusy ? '协助中…' : assistCopy.button}}</button></view>
     </view>
     <view wx:if="{{activeVideo && !videoDone}}" class="action-demo">
-      <video id="step-guide-video" src="{{activeVideo.src}}" poster="{{activeVideo.poster}}" autoplay muted controls="{{false}}" show-center-play-btn="{{false}}" bindended="onVideoEnded" binderror="onVideoError"></video>
+      <video-player src="{{activeVideo.src}}" poster="{{activeVideo.poster}}" height="260rpx" autoplay muted controls="{{false}}" show-center-play-btn="{{false}}" bind:ended="onVideoEnded" bind:error="onVideoError"></video-player>
       <button bindtap="skipVideo">跳过动作示范</button>
     </view>
 

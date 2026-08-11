@@ -1,0 +1,29 @@
+<view class="media-page">
+  <view class="media-topbar" style="padding-right:{{navRightPadding}}px">
+    <view>
+      <view class="eyebrow">JIN · BO / FILM ARCHIVE</view>
+      <view class="brand">影像记录</view>
+    </view>
+    <button class="back-button" bindtap="goHome" aria-label="返回首页">返回</button>
+  </view>
+
+  <view class="media-hero">
+    <view class="hero-shape one"></view><view class="hero-shape two"></view>
+    <view class="eyebrow">VIDEO CENTRE</view>
+    <view class="hero-title">从手上功夫<br />看见一叶金箔</view>
+    <view class="hero-copy">从访谈、工序解说与拓展资料中，选择一条线索进入观看。影像均按分类呈现，不强制观看。</view>
+  </view>
+
+  <view class="media-content">
+    <view class="category-intro"><view class="eyebrow">SELECT A COLLECTION</view><view>选择一个分类进入观看</view></view>
+    <view wx:for="{{categories}}" wx:key="id" class="category-card" data-page-path="{{item.pagePath}}" bindtap="openCategory">
+      <view class="category-order">{{item.order}}</view>
+      <view class="category-main">
+        <view class="eyebrow">{{item.eyebrow}}</view>
+        <view class="category-title">{{item.title}}</view>
+        <view class="category-description">{{item.description}}</view>
+        <view class="category-footer"><text>{{item.countLabel}}</text><text class="category-arrow">进入观看 →</text></view>
+      </view>
+    </view>
+  </view>
+</view>

@@ -1,0 +1,46 @@
+'use strict';
+
+const test = require('node:test');
+const assert = require('node:assert/strict');
+const {
+  CLOUD_ROOT,
+  CLOUD_FILE_PREFIX,
+  listVideoSections,
+  findVideo,
+  listConfiguredLocalMediaPaths,
+  listConfiguredLocalVideoPaths,
+  getVideoPlayback,
+} = require('../../miniprogram/data/video-library');
+
+test('provides an empty interview group, twelve process videos, and six authorised extensions', () => {
+  const sections = listVideoSections();
+  assert.deepEqual(sections.map((section) => section.id), ['artisan-interviews', 'craft-explanations', 'extended-archive']);
+  assert.equal(sections[0].videos.length, 0);
+  assert.equal(sections[1].videos.length, 12);
+  assert.equal(sections[2].videos.length, 6);
+  assert.equal(sections[1].videos[0].title, '工序 1');
+  assert.equal(sections[1].videos[11].description, '解说内容待补充');
+  assert.match(sections[2].videos[0].title, /^佛山金箔锻造工艺/);
+});
+
+test('keeps CloudBase upload paths and local package paths separate', () => {
+  const video = findVideo('process-01');
+  assert.equal(video.source.cloudPath, `${CLOUD_ROOT}/videos/process-01.mp4`);
+  assert.equal(video.source.posterCloudPath, `${CLOUD_ROOT}/posters/process-01.png`);
+  assert.equal(video.source.cloudFileId, `${CLOUD_FILE_PREFIX}${CLOUD_ROOT}/videos/process-01.mp4`);
+  assert.equal(video.source.posterCloudFileId, `${CLOUD_FILE_PREFIX}${CLOUD_ROOT}/posters/process-01.png`);
+  assert.equal(video.source.sourceFileName, '工序1.mp4');
+  assert.deepEqual(listConfiguredLocalMediaPaths(), []);
+  assert.deepEqual(listConfiguredLocalVideoPaths(), []);
+  video.title = 'changed';
+  assert.equal(findVideo('process-01').title, '工序 1');
+});
+
+test('marks a configured cloud file as playable through the CloudBase resolver', () => {
+  const playback = getVideoPlayback('process-01');
+  assert.equal(playback.sourceType, 'cloud');
+  assert.equal(playback.src, '');
+  assert.equal(playback.cloudFileId, `${CLOUD_FILE_PREFIX}${CLOUD_ROOT}/videos/process-01.mp4`);
+  assert.equal(playback.posterCloudFileId, `${CLOUD_FILE_PREFIX}${CLOUD_ROOT}/posters/process-01.png`);
+  assert.equal(getVideoPlayback('missing'), null);
+});

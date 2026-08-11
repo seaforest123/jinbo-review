@@ -35,4 +35,8 @@ Page({
     navigateTo('/pages/activity/index');
   },
 
+  openMedia() {
+    navigateTo('/pages/media/index');
+  },
+
 });

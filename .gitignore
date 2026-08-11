@@ -8,4 +8,5 @@ cloudfunctions/**/node_modules/
 coverage/
 .tmp*/
 artifacts/
+/视频/
 /ZoabyU565S7H2ed86209e3dccf0fecaec342ca22e1d8.png
