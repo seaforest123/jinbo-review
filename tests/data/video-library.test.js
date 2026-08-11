@@ -18,8 +18,10 @@ test('provides an empty interview group, twelve process videos, and six authoris
   assert.equal(sections[0].videos.length, 0);
   assert.equal(sections[1].videos.length, 12);
   assert.equal(sections[2].videos.length, 6);
-  assert.equal(sections[1].videos[0].title, '工序 1');
-  assert.equal(sections[1].videos[11].description, '解说内容待补充');
+  assert.equal(sections[1].videos[0].title, '工序 1 · 黄金配比');
+  assert.equal(sections[1].videos[11].title, '工序 12 · 切金箔');
+  assert.equal(sections[1].videos[11].description, '在竹板上用竹刀把金箔切成标准规格。');
+  assert.match(sections[1].videos[0].notice, /赵绪成/);
   assert.match(sections[2].videos[0].title, /^佛山金箔锻造工艺/);
 });
 
@@ -33,7 +35,7 @@ test('keeps CloudBase upload paths and local package paths separate', () => {
   assert.deepEqual(listConfiguredLocalMediaPaths(), []);
   assert.deepEqual(listConfiguredLocalVideoPaths(), []);
   video.title = 'changed';
-  assert.equal(findVideo('process-01').title, '工序 1');
+  assert.equal(findVideo('process-01').title, '工序 1 · 黄金配比');
 });
 
 test('marks a configured cloud file as playable through the CloudBase resolver', () => {

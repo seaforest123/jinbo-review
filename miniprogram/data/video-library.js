@@ -1,9 +1,12 @@
 'use strict';
 
+const { CRAFT_SOURCE, listCraftSteps } = require('./craft-steps');
+
 const CLOUD_ROOT = 'gold-foil-trial/video-centre/2026-08';
 const CLOUD_FILE_PREFIX = 'cloud://cloud1-d5gsryg0q3834cccc.636c-cloud1-d5gsryg0q3834cccc-1456702624/';
-const PROCESS_NOTICE = '工艺解说影像；仅用于本项目内测展示。';
+const PROCESS_NOTICE = `工艺解说影像；仅用于本项目内测展示。${CRAFT_SOURCE}`;
 const EXTENSION_NOTICE = '授权影像资料；仅用于本项目内测展示。';
+const CRAFT_STEPS_BY_ORDER = new Map(listCraftSteps().map((step) => [step.order, step]));
 
 function cloudFileId(cloudPath) {
   return `${CLOUD_FILE_PREFIX}${cloudPath}`;
@@ -45,11 +48,12 @@ function cloudMedia({ sourceFileName, slug }) {
 
 function processVideo(index, duration) {
   const padded = String(index).padStart(2, '0');
+  const step = CRAFT_STEPS_BY_ORDER.get(index);
   return Object.freeze({
     id: `process-${padded}`,
-    title: `工序 ${index}`,
+    title: `工序 ${index} · ${step.name}`,
     duration,
-    description: '解说内容待补充',
+    description: step.oneLiner,
     notice: PROCESS_NOTICE,
     source: cloudMedia({ sourceFileName: `工序${index}.mp4`, slug: `process-${padded}` }),
   });

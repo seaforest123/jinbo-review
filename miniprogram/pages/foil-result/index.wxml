@@ -1,5 +1,0 @@
-<view class="result-page">
-  <view class="result-card"><view class="success-mark">✓</view><view class="result-title">你完成了一次贴箔体验</view><view class="result-desc">这一片金，是你慢下来贴出的。</view><view class="result-artifact"><view class="result-crown"></view><view class="result-body">箔</view><view class="result-base"></view></view><view class="result-data"><view><small>用箔</small><text>{{sheets}} 张</text></view><view><small>耗时</small><text>{{seconds}} 秒</text></view><view><small>重来</small><text>{{failures}} 次</text></view></view></view>
-  <view class="reflection-card"><view class="reflection-title">小提示</view><view>失败不是扣分。金箔越薄，动作越需要慢、稳、轻。</view></view>
-  <button class="result-primary" bindtap="tryAgain">再贴一次</button><button class="result-secondary" bindtap="backToCraft">回看十二道工序</button>
-</view>

@@ -1,6 +1,11 @@
-<view class="page-shell">
-  <view class="title">活动</view>
-  <view class="notice">候选内测进行中</view>
-  <view class="description">你已完成 {{completedRouteCount}} 条候选路线。公开活动和正式内容尚未开放。</view>
-  <button class="secondary-button" bindtap="goHome">返回首页</button>
+<view class="activity-page">
+  <view class="activity-intro">
+    <view class="activity-kicker">JIN · BO / ACTIVITY</view>
+    <view class="activity-title">活动</view>
+    <view class="activity-status">候选内测进行中</view>
+    <view class="activity-description">你已完成 {{completedRouteCount}} 条候选路线。公开活动和正式内容尚未开放。</view>
+  </view>
+  <view class="activity-footer">
+    <button class="footer-link" bindtap="goHome">返回首页</button>
+  </view>
 </view>

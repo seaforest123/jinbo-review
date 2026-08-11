@@ -16,5 +16,10 @@ Page({
     } catch (error) { this.setData({ reports: [], favorites: [] }); }
   },
   startExperience(event) { wx.navigateTo({ url: `/pages/experience/index?routeId=${event.currentTarget.dataset.routeId}` }); },
+  openReport(event) {
+    const { reportId, routeId } = event.currentTarget.dataset;
+    if (typeof reportId !== 'string' || typeof routeId !== 'string') return;
+    wx.navigateTo({ url: `/pages/result/index?routeId=${encodeURIComponent(routeId)}&reportId=${encodeURIComponent(reportId)}` });
+  },
   goHome() { wx.navigateBack({ delta: 1 }); },
 });

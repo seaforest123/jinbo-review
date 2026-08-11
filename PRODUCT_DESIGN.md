@@ -110,6 +110,34 @@
 
 > 注：视觉素材目前为候选状态。**在专业素材确认前，AI 不得把候选图当作最终资产做强绑定的布局硬编码。**
 
+### 6.1 深色展厅设计令牌（当前唯一权威来源）
+
+以下数值是对 `home` / `archive` / `media/*` / `result` 四个页面已实现样式的收敛统一。
+**任何页面要做"深色展厅"风格改造，必须复用这些变量，禁止另起一套相近但不同的十六进制值。**
+如需调整数值，先改这里，再同步到 `app.wxss` 和各页面，不要只在单个页面里改。
+
+```
+--exhibit-bg-radial: radial-gradient(circle at 88% 2%, #54391e, #20140d 38%, #100b08 81%);
+--exhibit-bg-panel: linear-gradient(180deg, #20140d, #130d09);
+--exhibit-text: #f9f0da;
+--exhibit-text-soft-64: rgba(255,248,232,.64);
+--exhibit-text-soft-42: rgba(255,248,232,.42);
+--exhibit-text-soft-20: rgba(255,248,232,.20);
+--exhibit-gold: #f4d77b;
+--exhibit-gold-line: rgba(244,215,123,.2);
+--exhibit-gold-button: linear-gradient(100deg, #c9912e, #f3d984, #bd7d1f);
+--exhibit-font-display: serif; /* 标题 */
+--exhibit-font-kicker-tracking: 4rpx; /* 小标签字间距 */
+```
+
+来源页面：`pages/home`、`pages/archive`、`pages/media/*`、`pages/result`（2026-08-11 收敛）。
+
+**已知未同步到该风格的页面**（不要默认它们"暂时没关系"，每次涉及视觉的任务都应在汇报里重申状态）：
+- `pages/progress`、`pages/activity`：仍是旧版占位样式（继承全局 `page{}` 深棕文字，落在深色背景上，
+  实测标题文字对比度接近不可读），且属于 §6 明确写着不想要的"通用后台管理风格卡片堆叠"。
+- `pages/craft`、`pages/foil-apply`、`pages/foil-result`：已不在 `app.json` 的 `pages` 路由表中，
+  是第三套配色（浅灰 `#f6f7f9`）的遗留死代码，不得作为任何新页面的风格参考。
+
 ---
 
 ## 7. 工程约束（硬性）

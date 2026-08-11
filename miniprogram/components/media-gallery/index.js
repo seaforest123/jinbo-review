@@ -25,6 +25,7 @@ Component({
     activeVideoSource: '',
     activeVideoPoster: '',
     loadingVideoId: '',
+    navRightPadding: 18,
   },
 
   lifetimes: {
@@ -35,10 +36,20 @@ Component({
       this.setData({ section: preparedSection });
       this.cloudVideoSource = this.createCloudVideoSource();
       this.resolveCloudPosters(preparedSection);
+      this.applyNavRightPadding();
     },
   },
 
   methods: {
+    applyNavRightPadding() {
+      if (!wx.getMenuButtonBoundingClientRect) return;
+      try {
+        const capsule = wx.getMenuButtonBoundingClientRect();
+        const windowInfo = wx.getWindowInfo ? wx.getWindowInfo() : wx.getSystemInfoSync();
+        this.setData({ navRightPadding: Math.max(18, windowInfo.windowWidth - capsule.left + 12) });
+      } catch (error) { /* Keep the default safe spacing. */ }
+    },
+
     createCloudVideoSource() {
       if (!wx.cloud || typeof wx.cloud.getTempFileURL !== 'function') return null;
       return createCloudVideoSource({ getTempFileURL: wx.cloud.getTempFileURL.bind(wx.cloud) });

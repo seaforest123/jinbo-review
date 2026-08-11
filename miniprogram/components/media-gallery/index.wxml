@@ -1,5 +1,5 @@
 <view class="category-page">
-  <view class="category-topbar">
+  <view class="category-topbar" style="padding-right:{{navRightPadding}}px">
     <view>
       <view class="eyebrow">JIN · BO / FILM ARCHIVE</view>
       <view class="brand">{{section.title}}</view>
@@ -30,7 +30,6 @@
         <view class="video-title">{{video.title}}</view>
         <view class="video-description">{{video.description}}</view>
         <view class="video-notice">{{video.notice}}</view>
-        <button class="play-button" data-video-id="{{video.id}}" bindtap="playVideo">{{loadingVideoId === video.id ? '正在加载…' : video.playable ? '播放视频' : '播放位待接入'}}</button>
       </view>
     </view>
   </view>

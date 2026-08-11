@@ -1,24 +1,48 @@
-<view class="page-shell">
-  <view class="title">金箔志</view>
-  <view class="notice">金箔类非遗工艺学习档案（候选内容）</view>
-  <view class="description">技术资料参照南京金箔个案研究；本项目的实际合作对象与城市待专业访谈确认。</view>
-  <view wx:for="{{routes}}" wx:key="id" class="archive-card">
-    <image class="route-image" src="{{item.visual.path}}" mode="aspectFill" />
-    <view class="knowledge-notice">工艺影像</view>
-    <view class="route-name">{{item.displayName}}</view>
-    <view>{{item.learningGoal}}</view>
-    <view>已完成 {{item.progress.completedCount}} 次</view>
-    <view class="archive-card-title">工艺知识卡</view>
-    <view wx:for="{{item.cards}}" wx:for-item="card" wx:key="id" class="knowledge-card">
-      <image class="card-image" src="{{card.visual.path}}" mode="aspectFill" />
-      <view>{{card.title}}</view>
-      <view>{{card.description}}</view>
-      <view class="knowledge-notice">{{card.notice}}</view>
-    </view>
-    <button data-route-id="{{item.id}}" bindtap="startExperience">开始体验</button>
-    <view class="knowledge-notice">含五道连续工艺任务</view>
-    <button data-route-id="{{item.id}}" bindtap="toggleFavorite">{{item.favorite ? '取消收藏' : '收藏'}}</button>
+<view class="archive-page">
+  <view class="archive-intro">
+    <view class="archive-kicker">JIN · BO / CRAFT ARCHIVE</view>
+    <view class="archive-title">金箔志</view>
+    <view class="archive-lead">把一次次亲手完成的工艺判断，留成可以回看的展签。</view>
+    <view class="archive-reference">技术资料参照南京金箔个案研究；本项目的实际合作对象与城市待专业访谈确认。</view>
   </view>
-  <button class="secondary-button" bindtap="openProgress">查看我的进度</button>
-  <button class="secondary-button" bindtap="goHome">返回首页</button>
+
+  <view wx:for="{{routes}}" wx:key="id" class="route-exhibit">
+    <view class="route-hero">
+      <image class="route-image" src="{{item.visual.path}}" mode="aspectFill" />
+      <view class="route-shade"></view>
+      <view class="route-copy">
+        <view class="route-status">候选内容 · 工艺影像</view>
+        <view class="route-name">{{item.displayName}}</view>
+        <view class="route-progress"><text>{{item.progress.completedCount}}</text> 次完整体验</view>
+      </view>
+    </view>
+
+    <view class="route-actions">
+      <button class="route-primary" data-route-id="{{item.id}}" bindtap="startExperience">从做捻子开始 <text>→</text></button>
+      <button class="route-secondary" data-route-id="{{item.id}}" bindtap="toggleFavorite">{{item.favorite ? '已收藏 · 取消' : '收藏此路线'}}</button>
+    </view>
+
+    <view class="knowledge-section">
+      <view class="section-kicker">FIVE CRAFT NOTES</view>
+      <view class="section-title">工艺知识卡</view>
+      <view class="section-lead">每一步都回到同一张箔面，前序的判断会在下一道工序留下痕迹。</view>
+
+      <view class="knowledge-list">
+        <view wx:for="{{item.cards}}" wx:for-item="card" wx:key="id" class="knowledge-card">
+          <image class="card-image" src="{{card.visual.path}}" mode="aspectFill" />
+          <view class="card-copy">
+            <view class="card-index">0{{index + 1}}</view>
+            <view class="card-title">{{card.title}}</view>
+            <view class="card-description">{{card.description}}</view>
+          </view>
+        </view>
+      </view>
+      <view wx:if="{{item.cards.length}}" class="knowledge-source">{{item.cards[0].notice}}</view>
+    </view>
+  </view>
+
+  <view class="archive-footer">
+    <button class="footer-link" bindtap="openProgress">查看我的进度 <text>→</text></button>
+    <button class="footer-link subtle" bindtap="goHome">返回首页</button>
+  </view>
 </view>

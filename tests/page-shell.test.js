@@ -29,20 +29,6 @@ test('home exposes the five-step route as its primary navigation', () => {
   assert.match(read('home'), /PROCESS LAB/);
 });
 
-test('craft flow renders all twelve steps and leads to the foil application', () => {
-  const markup = read('craft');
-  for (const text of ['十二道手', '读完工艺', '开始体验', '实际合作对象与城市待专业访谈确认']) assert.match(markup, new RegExp(text));
-  assert.equal(typeof load('craft').startFoilApplication, 'function');
-});
-
-test('foil application exposes slow placement, fast failure, and a result action', () => {
-  const markup = read('foil-apply');
-  for (const handler of ['onFoilStart', 'onFoilMove', 'onFoilEnd', 'restartApplication', 'openResult']) assert.equal(typeof load('foil-apply')[handler], 'function');
-  assert.match(markup, /慢一点/);
-  assert.match(markup, /生成我的成品/);
-  assert.match(read('foil-result'), /用箔/);
-});
-
 test('the public main flow links home to the five-step experience', () => {
   const calls = [];
   const previousWx = global.wx;
@@ -111,6 +97,42 @@ test('experience renders five causal craft tasks and all adjustment controls', (
   for (const handler of ['onCutMove', 'onPlaceMove', 'previewHammerCell', 'cancelHammerPress', 'hammerCell', 'probeInspectionCell', 'returnToHammer', 'onSmoothMove', 'assistCurrentStep']) assert.equal(typeof load('experience')[handler], 'function');
   assert.match(markup, /<video-player/);
   assert.match(markup, /activeKnowledgeCard.notice/);
+});
+
+test('normal experience persists a report and progress can open its detail page', () => {
+  const experienceSource = read('experience', 'js');
+  const progress = load('progress');
+  assert.match(experienceSource, /createLearningSession/);
+  assert.match(experienceSource, /learningSession: this\.learningSession/);
+  assert.match(experienceSource, /whenLearningSettled\(\)/);
+  assert.match(experienceSource, /reportId=\$\{encodeURIComponent\(report\.reportId\)\}/);
+  assert.equal(typeof progress.openReport, 'function');
+  assert.match(read('progress'), /data-report-id="\{\{item\.reportId\}\}"/);
+
+  const calls = [];
+  const previousWx = global.wx;
+  global.wx = { navigateTo: ({ url }) => calls.push(url) };
+  try {
+    progress.openReport({ currentTarget: { dataset: { routeId: 'foil_making_candidate', reportId: 'local_001' } } });
+    assert.deepEqual(calls, ['/pages/result/index?routeId=foil_making_candidate&reportId=local_001']);
+  } finally {
+    if (previousWx === undefined) delete global.wx;
+    else global.wx = previousWx;
+  }
+});
+
+test('archive presents one spacious route exhibit while retaining learning actions and every knowledge card', () => {
+  const markup = read('archive');
+  const styles = read('archive', 'wxss');
+  const page = load('archive');
+  for (const token of ['route-exhibit', 'route-hero', 'knowledge-section', 'knowledge-list', 'item.cards[0].notice']) {
+    assert.match(markup, new RegExp(token.replace(/[.[\]]/g, '\\$&')));
+  }
+  for (const handler of ['startExperience', 'toggleFavorite', 'openProgress', 'goHome']) assert.equal(typeof page[handler], 'function');
+  assert.match(markup, /data-route-id="\{\{item\.id\}\}" bindtap="startExperience"/);
+  assert.match(markup, /data-route-id="\{\{item\.id\}\}" bindtap="toggleFavorite"/);
+  assert.match(styles, /grid-template-columns: 178rpx minmax\(0, 1fr\)/);
+  assert.match(styles, /@media \(max-width: 360px\)/);
 });
 
 test('experience visual system exposes grid states, risk, scan, and final trace', () => {

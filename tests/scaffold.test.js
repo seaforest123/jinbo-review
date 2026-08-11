@@ -111,7 +111,6 @@ test('keeps 南京 only in explicit technical-reference copy', () => {
     'miniprogram/data/craft-steps.js',
     'miniprogram/data/knowledge-cards.js',
     'miniprogram/pages/archive/index.wxml',
-    'miniprogram/pages/craft/index.wxml',
   ];
   const matches = [];
   function walk(directory) {
@@ -126,7 +125,6 @@ test('keeps 南京 only in explicit technical-reference copy', () => {
   walk(path.join(root, 'miniprogram'));
   assert.deepEqual(matches.sort(), files.sort());
   assert.match(fs.readFileSync(path.join(root, 'miniprogram/pages/archive/index.wxml'), 'utf8'), /技术资料参照/);
-  assert.match(fs.readFileSync(path.join(root, 'miniprogram/pages/craft/index.wxml'), 'utf8'), /技术流程参照/);
 });
 
 test('exports the exact frozen trial runtime configuration', () => {

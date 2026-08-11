@@ -10,6 +10,21 @@ page {
   --ink-soft: #735f50;
   --exhibit-line: #d8b66a;
   --paper-shadow: 0 14rpx 32rpx rgba(59, 42, 31, .10);
+
+  /* 深色展厅设计令牌，权威定义见 PRODUCT_DESIGN.md §6.1；
+     改深色展厅风格页面时复用这些变量，不要重新写十六进制值。 */
+  --exhibit-bg-radial: radial-gradient(circle at 88% 2%, #54391e, #20140d 38%, #100b08 81%);
+  --exhibit-bg-panel: linear-gradient(180deg, #20140d, #130d09);
+  --exhibit-text: #f9f0da;
+  --exhibit-text-soft-64: rgba(255, 248, 232, .64);
+  --exhibit-text-soft-42: rgba(255, 248, 232, .42);
+  --exhibit-text-soft-20: rgba(255, 248, 232, .20);
+  --exhibit-gold: #f4d77b;
+  --exhibit-gold-line: rgba(244, 215, 123, .2);
+  --exhibit-gold-button: linear-gradient(100deg, #c9912e, #f3d984, #bd7d1f);
+  --exhibit-font-display: serif;
+  --exhibit-font-kicker-tracking: 4rpx;
+
   box-sizing: border-box;
   min-height: 100%;
   padding: var(--page-gutter);

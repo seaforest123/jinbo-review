@@ -1,18 +1,35 @@
-<view class="page-shell">
-  <view class="title">我的进度</view>
-  <view class="notice">记录仅保存在当前设备，用于候选内测回看。</view>
-  <view wx:if="{{favorites.length}}" class="section-title">我的收藏</view>
-  <view wx:for="{{favorites}}" wx:key="id" class="card">
-    <view>{{item.displayName}}</view>
-    <button data-route-id="{{item.id}}" bindtap="startExperience">开始体验</button>
+<view class="progress-page">
+  <view class="progress-intro">
+    <view class="progress-kicker">JIN · BO / MY RECORDS</view>
+    <view class="progress-title">我的进度</view>
+    <view class="progress-lead">记录仅保存在当前设备，用于候选内测回看。</view>
   </view>
-  <view class="section-title">学习记录</view>
-  <view wx:if="{{reports.length}}">
-    <view wx:for="{{reports}}" wx:key="reportId" class="card">
-      <view>{{item.routeId}}</view>
-      <view>{{item.status === 'completed' ? '已完成' : '已退出'}}，用时 {{item.elapsedMs}} 毫秒</view>
+
+  <view wx:if="{{favorites.length}}" class="progress-section">
+    <view class="section-kicker">FAVORITES</view>
+    <view class="section-title">我的收藏</view>
+    <view class="favorite-list">
+      <view wx:for="{{favorites}}" wx:key="id" class="favorite-card">
+        <view class="favorite-name">{{item.displayName}}</view>
+        <button class="favorite-action" data-route-id="{{item.id}}" bindtap="startExperience">开始体验 <text>→</text></button>
+      </view>
     </view>
   </view>
-  <view wx:else class="empty">尚无本地学习记录。</view>
-  <button bindtap="goHome">返回</button>
+
+  <view class="progress-section">
+    <view class="section-kicker">SESSION LOG</view>
+    <view class="section-title">学习记录</view>
+    <view wx:if="{{reports.length}}" class="report-list">
+      <view wx:for="{{reports}}" wx:key="reportId" class="report-card">
+        <view class="report-route">{{item.routeId}}</view>
+        <view class="report-meta">{{item.status === 'completed' ? '已完成' : '已退出'}} · 用时 {{item.elapsedMs}} 毫秒</view>
+        <button class="report-action" data-route-id="{{item.routeId}}" data-report-id="{{item.reportId}}" bindtap="openReport">查看报告详情 <text>→</text></button>
+      </view>
+    </view>
+    <view wx:else class="empty-state">尚无本地学习记录。</view>
+  </view>
+
+  <view class="progress-footer">
+    <button class="footer-link" bindtap="goHome">返回</button>
+  </view>
 </view>

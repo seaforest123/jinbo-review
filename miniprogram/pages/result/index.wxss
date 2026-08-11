@@ -56,22 +56,22 @@
 .share-copy { margin-top: 12rpx; color: rgba(255,248,232,.55); font-size: 20rpx; line-height: 1.7; }
 .poster-button { display: flex; align-items: center; justify-content: space-between; height: 88rpx; margin-top: 28rpx; padding: 0 26rpx; color: #25160d; background: linear-gradient(100deg, #d8aa43, #f5dc8c); font-size: 22rpx; font-weight: 700; }
 .poster-button text { font-size: 34rpx; }
-.friend-share-button { height: 68rpx; margin-top: 12rpx; border: 1rpx solid rgba(255,255,255,.13); color: rgba(255,248,232,.62); background: transparent; font-size: 19rpx; }
+.friend-share-button { display: flex; align-items: center; justify-content: center; height: 68rpx; margin-top: 12rpx; border: 1rpx solid rgba(255,255,255,.13); color: rgba(255,248,232,.62); background: transparent; font-size: 19rpx; }
 .poster-overlay { position: fixed; z-index: 30; inset: 0; display: flex; align-items: center; justify-content: center; padding: 30rpx; background: rgba(8,5,3,.86); backdrop-filter: blur(12rpx); }
 .poster-dialog { position: relative; width: 100%; max-width: 650rpx; max-height: 92vh; padding: 28rpx; overflow-y: auto; border: 1rpx solid rgba(244,215,123,.32); border-radius: 30rpx; background: #24170f; box-shadow: 0 40rpx 100rpx rgba(0,0,0,.58); }
 .poster-heading { display: flex; align-items: center; justify-content: space-between; margin-bottom: 22rpx; }
 .poster-title { margin-top: 5rpx; font-family: serif; font-size: 34rpx; }
-.poster-close { width: 62rpx; min-height: 62rpx; margin: 0; padding: 0; border: 1rpx solid rgba(255,255,255,.16); border-radius: 50%; color: #fff8e8; background: transparent; font-size: 34rpx; line-height: 60rpx; }
+.poster-close { display: flex; align-items: center; justify-content: center; width: 62rpx; min-height: 62rpx; margin: 0; padding: 0; border: 1rpx solid rgba(255,255,255,.16); border-radius: 50%; color: #fff8e8; background: transparent; font-size: 34rpx; }
 .share-poster-canvas { position: absolute; left: -10000px; width: 600px; height: 900px; }
 .poster-preview { display: block; width: 100%; border: 1rpx solid rgba(244,215,123,.28); border-radius: 18rpx; }
 .poster-loading { display: grid; min-height: 620rpx; border: 1rpx solid rgba(244,215,123,.2); border-radius: 18rpx; color: rgba(255,248,232,.55); background: #17100c; font-size: 20rpx; place-items: center; }
-.poster-save { height: 86rpx; margin-top: 22rpx; color: #25160d; background: linear-gradient(100deg, #d8aa43, #f5dc8c); font-weight: 700; }
+.poster-save { display: flex; align-items: center; justify-content: center; height: 86rpx; margin-top: 22rpx; color: #25160d; background: linear-gradient(100deg, #d8aa43, #f5dc8c); font-weight: 700; }
 .poster-save[disabled] { opacity: .42; }
 .poster-tip { margin-top: 12rpx; color: rgba(255,248,232,.38); font-size: 17rpx; text-align: center; }
 .primary-button { display: flex; align-items: center; justify-content: space-between; height: 100rpx; margin-top: 42rpx; padding: 0 34rpx; color: #25160d; background: linear-gradient(100deg, #d8aa43, #f5dc8c, #c48c27); font-weight: 700; letter-spacing: 3rpx; }
 .primary-button text { font-size: 40rpx; font-weight: 300; }
 .action-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14rpx; margin-top: 18rpx; }
-.action-grid button { min-height: 78rpx; border: 1rpx solid rgba(255,255,255,.13); color: rgba(255,248,232,.6); background: rgba(255,255,255,.04); font-size: 20rpx; }
+.action-grid button { display: flex; align-items: center; justify-content: center; min-height: 78rpx; border: 1rpx solid rgba(255,255,255,.13); color: rgba(255,248,232,.6); background: rgba(255,255,255,.04); font-size: 20rpx; }
 .result-glow { position: absolute; top: 400rpx; right: -200rpx; width: 440rpx; height: 440rpx; border-radius: 50%; background: rgba(201,154,50,.1); filter: blur(100rpx); }
 @keyframes mark-arrive { from { opacity: 0; transform: scale(.6) rotate(-8deg); } to { opacity: 1; transform: none; } }
 @keyframes star-drift { from { opacity: .2; transform: translateY(0) scale(.7); } to { opacity: 1; transform: translateY(-20rpx) scale(1.2); } }

@@ -1,5 +1,8 @@
 const routes = require('../../data/routes');
 const { createExperienceController } = require('../../domain/experience-controller');
+const { createLearningRepository } = require('../../services/learning-repository');
+const { createLearningSession } = require('../../services/learning-session');
+const { createWxLearningStorage } = require('../../services/wx-learning-storage');
 const { getKnowledgeCard } = require('../../data/knowledge-cards');
 const { getStepVideo } = require('../../data/candidate-videos');
 const { createTrialAnalytics } = require('../../services/trial-analytics');
@@ -12,6 +15,10 @@ const {
 } = require('../../domain/craft-interaction');
 
 const HAMMER_BEAT_MS = 900;
+
+function createIdFactory() {
+  return () => `${Date.now().toString(16)}${Math.random().toString(16).slice(2)}`.slice(-16).padStart(16, '0');
+}
 
 const STEP_COPY = {
   twist: { kicker: '01 · 做捻子', title: '校准尺寸，稳稳裁下三片', instruction: '按住裁刀沿尺线匀速推进；看金条切口和接片盘判断结果' },
@@ -190,6 +197,19 @@ Page({
         this.setData({ navRightPadding: Math.max(0, windowInfo.windowWidth - capsule.left + 8) });
       } catch (error) { /* use the normal safe-area padding */ }
     }
+    this.learningSession = null;
+    if (!demoMode) {
+      try {
+        this.learningSession = createLearningSession({
+          repository: createLearningRepository({
+            routes,
+            storage: createWxLearningStorage(wx),
+            now: () => Date.now(),
+            idFactory: createIdFactory(),
+          }),
+        });
+      } catch (error) { this.learningSession = null; }
+    }
     this.analytics = null;
     if (!demoMode) {
       try {
@@ -209,6 +229,7 @@ Page({
       capabilities: { continuousDrag: true },
       now: () => Date.now(),
       track: demoMode ? () => undefined : (name, properties) => this.analytics && this.analytics.track(name, properties),
+      learningSession: this.learningSession,
     });
     this.render();
   },
@@ -382,9 +403,12 @@ Page({
       this.render();
     }, 320);
   },
-  exitExperience() {
+  async exitExperience() {
+    if (this.isExiting) return;
+    this.isExiting = true;
     this.controller.exit();
     clearInterval(this.demoTimer);
+    await this.controller.whenLearningSettled();
     if (this.data.demoMode && wx.reLaunch) wx.reLaunch({ url: '/pages/home/index' });
     else wx.navigateBack({ delta: 1 });
   },
@@ -1056,7 +1080,7 @@ Page({
     });
   },
 
-  finishExperience() {
+  async finishExperience() {
     if (!this.data.finishReady || this.data.isCelebrating) return;
     clearInterval(this.demoTimer);
     this.controller.completeStep();
@@ -1064,7 +1088,9 @@ Page({
     wx.setStorageSync(this.data.demoMode ? 'latest_foil_demo_result' : 'latest_foil_result', result);
     this.setData({ isCelebrating: true });
     if (wx.vibrateShort) wx.vibrateShort({ type: 'heavy' });
+    const report = this.data.demoMode ? null : await this.controller.whenLearningSettled();
     const modeQuery = this.data.demoMode ? '&mode=demo' : '';
-    this.completionTimer = setTimeout(() => wx.redirectTo({ url: `/pages/result/index?routeId=${this.controller.getView().route.id}${modeQuery}` }), 650);
+    const reportQuery = report && typeof report.reportId === 'string' ? `&reportId=${encodeURIComponent(report.reportId)}` : '';
+    this.completionTimer = setTimeout(() => wx.redirectTo({ url: `/pages/result/index?routeId=${this.controller.getView().route.id}${modeQuery}${reportQuery}` }), 650);
   },
 });
