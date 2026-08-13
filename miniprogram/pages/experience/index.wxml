@@ -1,4 +1,4 @@
-<view class="experience-shell">
+<view class="experience-shell" style="padding-top:{{navTopPadding}}px">
   <view class="ambient-gold" aria-hidden="true"><view class="ambient-piece p1"></view><view class="ambient-piece p2"></view><view class="ambient-piece p3"></view></view>
   <view class="topbar" style="padding-right:{{navRightPadding}}px">
     <view><text class="eyebrow">JIN · BO / PROCESS LAB</text><view class="brand">{{routeName}}</view></view>
@@ -166,7 +166,7 @@
       <view class="utility"><button bindtap="showHint">显示提示</button><button bindtap="retryStep">记录一次调整</button></view>
     </view>
   </view>
-  <view class="moment-toast tone-{{momentTone}} {{momentVisible ? 'is-visible' : ''}}">{{momentText}}</view>
+  <view class="moment-toast tone-{{momentTone}} {{momentVisible ? 'is-visible' : ''}}" style="top:calc({{navTopPadding}}px + 70rpx)">{{momentText}}</view>
   <view wx:if="{{isCelebrating}}" class="completion-overlay">
     <view class="celebration-particles"><view wx:for="{{celebrationParticles}}" wx:key="*this" class="cp-{{item}}"></view></view>
     <view class="seal">成</view><view>{{demoMode ? '核心三步已完成 · 演示成品正在显影' : '五道工序已合 · 你的箔叶正在显影'}}</view><small>{{demoMode ? '演示数据不会覆盖你的正常体验记录' : '正在为你生成独一无二的箔叶'}}</small>

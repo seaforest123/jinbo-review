@@ -1,7 +1,7 @@
 <view class="home-page">
   <view class="ambient-gold" aria-hidden="true"><view class="ambient-piece one"></view><view class="ambient-piece two"></view></view>
 
-  <view class="home-topbar" style="padding-right:{{navRightPadding}}px">
+  <view class="home-topbar" style="padding-top:{{navTopPadding}}px;padding-right:{{navRightPadding}}px">
     <view><view class="home-eyebrow">JIN · BO / PROCESS LAB</view><view class="home-brand">金箔工艺</view></view>
     <view class="topbar-state">候选内容</view>
   </view>

@@ -1,4 +1,5 @@
 const { getCoverVisual } = require('../../data/candidate-visuals');
+const { getNavRightPadding, getNavTopPadding } = require('../../services/navigation-layout');
 
 function navigateTo(url) {
   wx.navigateTo({ url });
@@ -8,15 +9,11 @@ Page({
   data: {
     coverVisual: getCoverVisual(),
     navRightPadding: 18,
+    navTopPadding: 68,
   },
 
   onLoad() {
-    if (!wx.getMenuButtonBoundingClientRect) return;
-    try {
-      const capsule = wx.getMenuButtonBoundingClientRect();
-      const windowInfo = wx.getWindowInfo ? wx.getWindowInfo() : wx.getSystemInfoSync();
-      this.setData({ navRightPadding: Math.max(18, windowInfo.windowWidth - capsule.left + 12) });
-    } catch (error) { /* Keep the default safe spacing. */ }
+    this.setData({ navRightPadding: getNavRightPadding(wx), navTopPadding: getNavTopPadding(wx) });
   },
 
   onVisualError(event) {

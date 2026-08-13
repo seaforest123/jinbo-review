@@ -133,10 +133,117 @@ test('archive presents one spacious route exhibit while retaining learning actio
   assert.match(markup, /data-route-id="\{\{item\.id\}\}" bindtap="toggleFavorite"/);
   assert.match(styles, /grid-template-columns: 178rpx minmax\(0, 1fr\)/);
   assert.match(styles, /@media \(max-width: 360px\)/);
+  assert.equal(JSON.parse(read('archive', 'json')).navigationStyle, 'custom');
+});
+
+test('static exhibit pages use one bottom return action instead of a top navigation row', () => {
+  for (const page of ['archive', 'progress', 'activity']) {
+    assert.equal(JSON.parse(read(page, 'json')).navigationStyle, 'custom');
+    assert.match(read(page), /class="(?:archive|progress|activity)-footer"[\s\S]*bindtap="goHome"/);
+    assert.doesNotMatch(read(page), /(?:archive|progress|activity)-topbar|class="back-button"/);
+    assert.equal(typeof load(page).applyNavRightPadding, 'undefined');
+  }
+});
+
+test('dark exhibit shells use canonical tokens and a non-repeating navigation bar', () => {
+  const appStyles = fs.readFileSync(path.join(root, 'miniprogram/app.wxss'), 'utf8');
+  assert.match(appStyles, /--exhibit-bg-radial:/);
+  assert.match(appStyles, /--exhibit-gold: #f4d77b;/);
+  assert.doesNotMatch(appStyles, /--gold-bright/);
+
+  for (const page of ['home', 'media', 'archive', 'activity', 'progress', 'result']) {
+    const styles = read(page, 'wxss');
+    assert.match(styles, /var\(--exhibit-bg-radial\)/);
+    assert.match(styles, /var\(--exhibit-gold\)/);
+  }
+  for (const page of ['archive', 'activity', 'progress']) {
+    const markup = read(page);
+    const styles = read(page, 'wxss');
+    assert.match(markup, /class="(?:archive|activity|progress)-footer"[\s\S]*bindtap="goHome"/);
+    assert.doesNotMatch(markup, /topbar|back-button|navRightPadding/);
+    assert.match(styles, /\.footer-link \{[^}]*color: var\(--exhibit-gold\)/);
+  }
+  const mediaMarkup = read('media');
+  const mediaStyles = read('media', 'wxss');
+  const mediaSource = read('media', 'js');
+  assert.match(mediaMarkup, /class="media-footer"[\s\S]*bindtap="goHome">返回首页<\/button>/);
+  assert.doesNotMatch(mediaMarkup, /media-topbar|back-button|navRightPadding/);
+  assert.doesNotMatch(mediaSource, /getNavRightPadding|navRightPadding/);
+  assert.match(mediaStyles, /\.media-page \{[^}]*margin: -32rpx/);
+  const galleryMarkup = fs.readFileSync(path.join(root, 'miniprogram/components/media-gallery/index.wxml'), 'utf8');
+  const galleryStyles = fs.readFileSync(path.join(root, 'miniprogram/components/media-gallery/index.wxss'), 'utf8');
+  const gallerySource = fs.readFileSync(path.join(root, 'miniprogram/components/media-gallery/index.js'), 'utf8');
+  assert.match(galleryMarkup, /class="gallery-footer"[\s\S]*bindtap="goBack">返回影像记录<\/button>/);
+  assert.doesNotMatch(galleryMarkup, /category-topbar|back-button|navRightPadding/);
+  assert.doesNotMatch(gallerySource, /getNavRightPadding|navRightPadding/);
+  assert.match(galleryStyles, /\.category-page \{[^}]*margin: -32rpx/);
+  assert.match(galleryStyles, /background: var\(--exhibit-bg-radial\)/);
+});
+
+test('short pages grow their content to fill the screen instead of leaving a dead gap', () => {
+  for (const page of ['activity', 'progress']) {
+    const styles = read(page, 'wxss');
+    assert.match(styles, new RegExp(`\\.${page}-page \\{[^}]*flex-direction: column`));
+    assert.match(styles, new RegExp(`\\.${page}-footer \\{[^}]*margin-top: auto`));
+  }
+
+  // media/index tried both an unbounded auto-fill (grows with device height, no cap) and an
+  // unbounded gap-before-footer; both looked disproportionate on taller screens. It now uses
+  // fixed, bounded spacing throughout, matching the page's normal rhythm: cards keep their
+  // natural height, the gap between them stays a normal fixed value, and any true leftover
+  // space (on a screen taller than the content) settles below the footer button instead of
+  // stretching something into an oversized gap.
+  const mediaMarkup = read('media');
+  const mediaStyles = read('media', 'wxss');
+  assert.match(mediaMarkup, /<view class="category-list">/);
+  assert.doesNotMatch(mediaStyles, /\.media-content \{[^}]*flex: 1/);
+  assert.doesNotMatch(mediaStyles, /\.category-list \{[^}]*flex: 1/);
+  assert.match(mediaStyles, /\.category-list \{[^}]*gap: 18rpx/);
+  assert.doesNotMatch(mediaStyles, /\.category-list \{[^}]*justify-content: space-between/);
+  assert.doesNotMatch(mediaStyles, /\.category-card \{[^}]*flex: 1/);
+  assert.match(mediaStyles, /\.category-footer \{[^}]*margin-top: 21rpx/);
+  assert.match(mediaStyles, /\.media-footer \{[^}]*margin-top: 56rpx/);
+
+  const galleryStyles = fs.readFileSync(path.join(root, 'miniprogram/components/media-gallery/index.wxss'), 'utf8');
+  assert.match(galleryStyles, /\.category-page \{[^}]*flex-direction: column/);
+  assert.match(galleryStyles, /\.gallery-footer \{[^}]*margin-top: auto/);
+  assert.match(galleryStyles, /\.video-content \{[^}]*flex: 1/);
+  assert.match(galleryStyles, /\.video-card \{[^}]*flex: 1/);
+  assert.match(galleryStyles, /\.video-cover \{[^}]*flex: 1/);
+  // A growing cover must keep the poster filling it, so the image is pinned to all four edges.
+  assert.match(galleryStyles, /\.video-cover image \{[^}]*position: absolute/);
+
+  const homeStyles = read('home', 'wxss');
+  assert.match(homeStyles, /\.home-page \{[^}]*flex-direction: column/);
+  assert.match(homeStyles, /\.home-content \{[^}]*flex: 1/);
+  assert.match(homeStyles, /\.home-hero \{[^}]*flex-shrink: 0/);
+});
+
+test('custom-navigation pages clear the capsule using its real position, not env(safe-area-inset-top)', () => {
+  // env(safe-area-inset-top) reports 0 on notchless devices and the simulator, and even its 44px
+  // notched-device value still lands above the capsule's bottom edge — either way content collides
+  // with the capsule. getNavTopPadding() measures the capsule directly instead.
+  for (const page of ['home', 'media', 'activity', 'archive', 'progress', 'result', 'experience']) {
+    const source = read(page, 'js');
+    const styles = read(page, 'wxss');
+    assert.match(source, /getNavTopPadding/);
+    assert.doesNotMatch(styles, /env\(safe-area-inset-top\)/);
+    assert.match(read(page), /navTopPadding/);
+  }
+
+  const gallerySource = fs.readFileSync(path.join(root, 'miniprogram/components/media-gallery/index.js'), 'utf8');
+  const galleryMarkup = fs.readFileSync(path.join(root, 'miniprogram/components/media-gallery/index.wxml'), 'utf8');
+  const galleryStyles = fs.readFileSync(path.join(root, 'miniprogram/components/media-gallery/index.wxss'), 'utf8');
+  assert.match(gallerySource, /getNavTopPadding/);
+  assert.match(galleryMarkup, /navTopPadding/);
+  assert.doesNotMatch(galleryStyles, /env\(safe-area-inset-top\)/);
 });
 
 test('experience visual system exposes grid states, risk, scan, and final trace', () => {
   const styles = read('experience', 'wxss');
+  assert.match(styles, /\.experience-shell \{[^}]*background: var\(--exhibit-bg-radial\)/);
+  assert.match(styles, /\.eyebrow \{[^}]*color: var\(--exhibit-gold\)/);
+  assert.match(styles, /\.gold-button \{[^}]*background: var\(--exhibit-gold-button\)/);
   for (const token of ['cell.risk', 'inspection-surface', 'scan-light', 'final-foil', 'app-progress', 'moment-toast', 'combo-badge', 'celebration-particles', '@media (max-width: 360px)', '@media (min-width: 900px)']) {
     assert.match(styles, new RegExp(token.replace(/[().]/g, '\\$&')));
   }
@@ -269,6 +376,25 @@ test('result shows grid-derived quality and sharing actions', () => {
   for (const text of ['foilResult.metrics.coverage', 'foilQualityLabel', '生成我的体验海报', '保存到相册', '再体验一次']) assert.match(markup, new RegExp(text.replace('.', '\\.')));
   assert.match(read('result', 'js'), /latest_foil_result/);
   assert.match(read('result', 'js'), /latest_foil_demo_result/);
+});
+
+test('result uses immersive navigation and closes back to its caller instead of the footer home link', () => {
+  assert.equal(JSON.parse(read('result', 'json')).navigationStyle, 'custom');
+  assert.match(read('result'), /class="close" bindtap="closeResult"/);
+  const page = load('result');
+  assert.equal(typeof page.closeResult, 'function');
+  assert.equal(typeof page.applyNavRightPadding, 'function');
+
+  const calls = [];
+  const previousWx = global.wx;
+  global.wx = { navigateBack: (options) => calls.push(options) };
+  try {
+    page.closeResult();
+    assert.deepEqual(calls, [{ delta: 1 }]);
+  } finally {
+    if (previousWx === undefined) delete global.wx;
+    else global.wx = previousWx;
+  }
 });
 
 test('all registered page modules and artifacts compile', () => {

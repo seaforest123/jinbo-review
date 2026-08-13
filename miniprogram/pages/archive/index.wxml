@@ -1,5 +1,5 @@
 <view class="archive-page">
-  <view class="archive-intro">
+  <view class="archive-intro" style="padding-top:{{navTopPadding}}px">
     <view class="archive-kicker">JIN · BO / CRAFT ARCHIVE</view>
     <view class="archive-title">金箔志</view>
     <view class="archive-lead">把一次次亲手完成的工艺判断，留成可以回看的展签。</view>

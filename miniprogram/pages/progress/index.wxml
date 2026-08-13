@@ -1,5 +1,5 @@
 <view class="progress-page">
-  <view class="progress-intro">
+  <view class="progress-intro" style="padding-top:{{navTopPadding}}px">
     <view class="progress-kicker">JIN · BO / MY RECORDS</view>
     <view class="progress-title">我的进度</view>
     <view class="progress-lead">记录仅保存在当前设备，用于候选内测回看。</view>

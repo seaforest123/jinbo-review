@@ -1,13 +1,17 @@
 const routes = require('../../data/routes');
 const { createLearningRepository } = require('../../services/learning-repository');
 const { createWxLearningStorage } = require('../../services/wx-learning-storage');
+const { getNavTopPadding } = require('../../services/navigation-layout');
 
 function createRepository() {
   return createLearningRepository({ routes, storage: createWxLearningStorage(wx), now: () => Date.now(), idFactory: () => Date.now().toString(16) });
 }
 
 Page({
-  data: { reports: [], favorites: [] },
+  data: { reports: [], favorites: [], navTopPadding: 68 },
+  onLoad() {
+    this.setData({ navTopPadding: getNavTopPadding(wx) });
+  },
   async onShow() {
     try {
       const repository = createRepository();

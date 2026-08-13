@@ -5,6 +5,7 @@ const { createWxLearningStorage } = require('../../services/wx-learning-storage'
 const { listKnowledgeCards } = require('../../data/knowledge-cards');
 const { getStepVisual } = require('../../data/candidate-visuals');
 const { createFoilVisual } = require('../../domain/foil-visual');
+const { getNavRightPadding, getNavTopPadding } = require('../../services/navigation-layout');
 
 function createStorage() {
   return {
@@ -42,9 +43,13 @@ Page({
     foilResult: null,
     foilVisual: [],
     foilQualityLabel: '工艺记录未读取',
+    navRightPadding: 18,
+    navTopPadding: 68,
   },
 
   async onLoad(options = {}) {
+    this.applyNavRightPadding();
+    this.setData({ navTopPadding: getNavTopPadding(wx) });
     const demoMode = options.mode === 'demo';
     const routeId = routes.some((route) => route.id === options.routeId)
       ? options.routeId
@@ -106,6 +111,15 @@ Page({
         this.analytics = null;
       }
     }
+  },
+
+  applyNavRightPadding() {
+    this.setData({ navRightPadding: getNavRightPadding(wx) });
+  },
+
+  closeResult() {
+    this.trackAction('close');
+    wx.navigateBack({ delta: 1 });
   },
 
   trackAction(action) {

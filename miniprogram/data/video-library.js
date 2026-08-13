@@ -4,6 +4,7 @@ const { CRAFT_SOURCE, listCraftSteps } = require('./craft-steps');
 
 const CLOUD_ROOT = 'gold-foil-trial/video-centre/2026-08';
 const CLOUD_FILE_PREFIX = 'cloud://cloud1-d5gsryg0q3834cccc.636c-cloud1-d5gsryg0q3834cccc-1456702624/';
+const INTERVIEW_NOTICE = '经授权的传承人访谈影像；仅用于本项目内测展示。';
 const PROCESS_NOTICE = `工艺解说影像；仅用于本项目内测展示。${CRAFT_SOURCE}`;
 const EXTENSION_NOTICE = '授权影像资料；仅用于本项目内测展示。';
 const CRAFT_STEPS_BY_ORDER = new Map(listCraftSteps().map((step) => [step.order, step]));
@@ -59,6 +60,17 @@ function processVideo(index, duration) {
   });
 }
 
+function artisanInterviewVideo({ id, title, duration, sourceFileName }) {
+  return Object.freeze({
+    id,
+    title,
+    duration,
+    description: '传承人访谈片段，供内测阶段补充工艺与传承理解。',
+    notice: INTERVIEW_NOTICE,
+    source: cloudMedia({ sourceFileName, slug: id }),
+  });
+}
+
 function extensionVideo({ id, title, duration, sourceFileName }) {
   return Object.freeze({
     id,
@@ -75,9 +87,12 @@ const sections = Object.freeze([
     id: 'artisan-interviews',
     title: '非遗传承人访谈',
     eyebrow: 'ARTISAN VOICES',
-    description: '传承人访谈内容将在取得相应授权后接入。',
-    emptyCopy: '访谈影像待接入',
-    videos: Object.freeze([]),
+    description: '两段经授权的传承人访谈影像，仅供本项目内测观看。',
+    emptyCopy: '',
+    videos: Object.freeze([
+      artisanInterviewVideo({ id: 'artisan-second-generation', title: '第二代传承人介绍', duration: '00:12', sourceFileName: '第二代传承人介绍.mp4' }),
+      artisanInterviewVideo({ id: 'artisan-third-generation', title: '第三代传承人介绍', duration: '00:19', sourceFileName: '第三代传承人介绍.mp4' }),
+    ]),
   }),
   Object.freeze({
     id: 'craft-explanations',

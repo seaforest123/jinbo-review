@@ -1,12 +1,12 @@
-.activity-page { min-height: 100vh; margin: -32rpx; padding: 62rpx 30rpx calc(56rpx + env(safe-area-inset-bottom)); box-sizing: border-box; color: var(--exhibit-text); background: var(--exhibit-bg-radial); }
-.activity-intro { max-width: 620rpx; padding: 16rpx 8rpx 0; }
+.activity-page { display: flex; min-height: 100vh; margin: -32rpx; padding: 0 30rpx calc(56rpx + env(safe-area-inset-bottom)); box-sizing: border-box; flex-direction: column; color: var(--exhibit-text); background: var(--exhibit-bg-radial); }
+.activity-intro { max-width: 620rpx; padding: 0 8rpx 0; }
 .activity-kicker { color: var(--exhibit-gold); font-size: 18rpx; letter-spacing: var(--exhibit-font-kicker-tracking); }
 .activity-title { margin-top: 13rpx; font-family: var(--exhibit-font-display); font-size: 52rpx; font-weight: 700; }
 .activity-status { margin-top: 20rpx; color: var(--exhibit-gold); font-size: 21rpx; letter-spacing: 1rpx; }
 .activity-description { margin-top: 14rpx; color: var(--exhibit-text-soft-64); font-size: 23rpx; line-height: 1.8; }
 
-.activity-footer { margin-top: 48rpx; }
-.footer-link { display: flex; align-items: center; justify-content: center; width: 100%; min-height: 82rpx; margin: 0; padding: 0 18rpx; border: 1rpx solid rgba(255, 255, 255, .1); border-radius: 0; color: var(--exhibit-text-soft-64); background: transparent; font-size: 21rpx; }
+.activity-footer { margin-top: auto; padding-top: 48rpx; }
+.footer-link { display: flex; align-items: center; justify-content: center; width: 100%; min-height: 82rpx; margin: 0; padding: 0 18rpx; border: 1rpx solid var(--exhibit-gold-line); border-radius: 0; color: var(--exhibit-gold); background: transparent; font-size: 21rpx; }
 
 @media (max-width: 360px) {
   .activity-page { padding-right: 22rpx; padding-left: 22rpx; }

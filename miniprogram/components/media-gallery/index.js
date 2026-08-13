@@ -1,5 +1,6 @@
 const { listVideoSections, getVideoPlayback } = require('../../data/video-library');
 const { createCloudVideoSource } = require('../../services/cloud-video-source');
+const { getNavTopPadding } = require('../../services/navigation-layout');
 
 function withPlaybackState(section) {
   return {
@@ -25,31 +26,22 @@ Component({
     activeVideoSource: '',
     activeVideoPoster: '',
     loadingVideoId: '',
-    navRightPadding: 18,
+    navTopPadding: 68,
   },
 
   lifetimes: {
     attached() {
+      this.setData({ navTopPadding: getNavTopPadding(wx) });
       const section = listVideoSections().find((candidate) => candidate.id === this.data.sectionId);
       if (!section) return;
       const preparedSection = withPlaybackState(section);
       this.setData({ section: preparedSection });
       this.cloudVideoSource = this.createCloudVideoSource();
       this.resolveCloudPosters(preparedSection);
-      this.applyNavRightPadding();
     },
   },
 
   methods: {
-    applyNavRightPadding() {
-      if (!wx.getMenuButtonBoundingClientRect) return;
-      try {
-        const capsule = wx.getMenuButtonBoundingClientRect();
-        const windowInfo = wx.getWindowInfo ? wx.getWindowInfo() : wx.getSystemInfoSync();
-        this.setData({ navRightPadding: Math.max(18, windowInfo.windowWidth - capsule.left + 12) });
-      } catch (error) { /* Keep the default safe spacing. */ }
-    },
-
     createCloudVideoSource() {
       if (!wx.cloud || typeof wx.cloud.getTempFileURL !== 'function') return null;
       return createCloudVideoSource({ getTempFileURL: wx.cloud.getTempFileURL.bind(wx.cloud) });

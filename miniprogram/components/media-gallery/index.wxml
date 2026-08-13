@@ -1,17 +1,10 @@
 <view class="category-page">
-  <view class="category-topbar" style="padding-right:{{navRightPadding}}px">
-    <view>
-      <view class="eyebrow">JIN · BO / FILM ARCHIVE</view>
-      <view class="brand">{{section.title}}</view>
-    </view>
-    <button class="back-button" bindtap="goBack">分类首页</button>
-  </view>
-
-  <view class="category-hero">
+  <view class="category-hero" style="margin-top:{{navTopPadding}}px">
     <view class="hero-shape one"></view><view class="hero-shape two"></view>
     <view class="eyebrow">{{section.eyebrow}}</view>
     <view class="hero-title">{{section.title}}</view>
     <view class="hero-copy">{{section.description}}</view>
+    <view wx:if="{{section.videos.length}}" class="section-notice">{{section.videos[0].notice}}</view>
   </view>
 
   <view class="video-content">
@@ -29,9 +22,12 @@
       <view class="video-body">
         <view class="video-title">{{video.title}}</view>
         <view class="video-description">{{video.description}}</view>
-        <view class="video-notice">{{video.notice}}</view>
       </view>
     </view>
+  </view>
+
+  <view class="gallery-footer">
+    <button class="footer-link" bindtap="goBack">返回影像记录</button>
   </view>
 
   <view wx:if="{{activeVideoId}}" class="player-sheet">

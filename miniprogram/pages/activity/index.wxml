@@ -1,5 +1,5 @@
 <view class="activity-page">
-  <view class="activity-intro">
+  <view class="activity-intro" style="padding-top:{{navTopPadding}}px">
     <view class="activity-kicker">JIN · BO / ACTIVITY</view>
     <view class="activity-title">活动</view>
     <view class="activity-status">候选内测进行中</view>

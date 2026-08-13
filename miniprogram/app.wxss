@@ -1,6 +1,5 @@
 page {
   --gold: #c99a32;
-  --gold-bright: #f4d77b;
   --deep-brown: #241710;
   --warm-white: #fbf4e7;
   --muted-gold: #e4c987;

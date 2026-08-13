@@ -3,6 +3,7 @@ const { createLearningRepository } = require('../../services/learning-repository
 const { createWxLearningStorage } = require('../../services/wx-learning-storage');
 const { listKnowledgeCards } = require('../../data/knowledge-cards');
 const { getRouteVisual, getStepVisual } = require('../../data/candidate-visuals');
+const { getNavTopPadding } = require('../../services/navigation-layout');
 const publicRoutes = routes.filter((route) => route.id === 'foil_making_candidate');
 
 function createRepository() {
@@ -10,7 +11,11 @@ function createRepository() {
 }
 
 Page({
-  data: { routes: [] },
+  data: { routes: [], navTopPadding: 68 },
+
+  onLoad() {
+    this.setData({ navTopPadding: getNavTopPadding(wx) });
+  },
 
   async onShow() {
     try {

@@ -1,4 +1,5 @@
 const { listVideoSections } = require('../../data/video-library');
+const { getNavTopPadding } = require('../../services/navigation-layout');
 
 const CATEGORY_PAGES = Object.freeze({
   'artisan-interviews': '/pages/media/interviews/index',
@@ -9,10 +10,11 @@ const CATEGORY_PAGES = Object.freeze({
 Page({
   data: {
     categories: [],
-    navRightPadding: 18,
+    navTopPadding: 68,
   },
 
   onLoad() {
+    this.setData({ navTopPadding: getNavTopPadding(wx) });
     const categories = listVideoSections().map((section, index) => ({
       ...section,
       order: String(index + 1).padStart(2, '0'),
@@ -20,12 +22,6 @@ Page({
       countLabel: section.videos.length ? `${section.videos.length} 条影像` : '内容待接入',
     }));
     this.setData({ categories });
-    if (!wx.getMenuButtonBoundingClientRect) return;
-    try {
-      const capsule = wx.getMenuButtonBoundingClientRect();
-      const windowInfo = wx.getWindowInfo ? wx.getWindowInfo() : wx.getSystemInfoSync();
-      this.setData({ navRightPadding: Math.max(18, windowInfo.windowWidth - capsule.left + 12) });
-    } catch (error) { /* Keep the default safe spacing. */ }
   },
 
   openCategory(event) {

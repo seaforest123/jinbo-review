@@ -1,4 +1,7 @@
 <view class="result-shell">
+  <view class="topbar" style="padding-top:{{navTopPadding}}px;padding-right:{{navRightPadding}}px">
+    <button class="close" bindtap="closeResult" aria-label="关闭">×</button>
+  </view>
   <view class="result-glow"></view>
   <view class="celebration-hero">
     <view class="star-field">

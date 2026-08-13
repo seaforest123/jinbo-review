@@ -6,6 +6,7 @@ const { createWxLearningStorage } = require('../../services/wx-learning-storage'
 const { getKnowledgeCard } = require('../../data/knowledge-cards');
 const { getStepVideo } = require('../../data/candidate-videos');
 const { createTrialAnalytics } = require('../../services/trial-analytics');
+const { getNavTopPadding } = require('../../services/navigation-layout');
 const {
   PLACEMENT_TARGET_THRESHOLD,
   evaluateCutGesture,
@@ -180,6 +181,7 @@ Page({
     nextHammerHintId: '',
     inspectDiscoveryCount: 0,
     navRightPadding: 0,
+    navTopPadding: 68,
     celebrationParticles: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
   },
 
@@ -189,7 +191,7 @@ Page({
       ? options.routeId
       : demoMode ? 'foil_making_candidate' : null;
     if (!routeId) { wx.navigateBack({ delta: 1 }); return; }
-    this.setData({ demoMode, displayStepTotal: demoMode ? 3 : 5 });
+    this.setData({ demoMode, displayStepTotal: demoMode ? 3 : 5, navTopPadding: getNavTopPadding(wx) });
     if (wx.getMenuButtonBoundingClientRect) {
       try {
         const capsule = wx.getMenuButtonBoundingClientRect();

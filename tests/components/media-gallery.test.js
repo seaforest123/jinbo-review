@@ -29,6 +29,8 @@ test('uses one gallery component for all media categories and playback', () => {
   const markup = fs.readFileSync(path.join(componentRoot, 'index.wxml'), 'utf8');
   assert.match(markup, /class="video-cover video-cover-action" data-video-id="{{video.id}}" bindtap="playVideo"/);
   assert.match(markup, /<video-player/);
+  assert.match(markup, /class="section-notice">{{section.videos\[0\].notice}}<\/view>/);
+  assert.doesNotMatch(markup, /class="video-notice"/);
   const styles = fs.readFileSync(path.join(componentRoot, 'index.wxss'), 'utf8');
-  for (const token of ['align-items: center', 'justify-content: center', 'max-width: 680rpx']) assert.match(styles, new RegExp(token));
+  for (const token of ['align-items: center', 'justify-content: center', 'max-width: 680rpx', '.section-notice']) assert.match(styles, new RegExp(token.replace('.', '\\.')));
 });
