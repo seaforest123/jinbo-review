@@ -342,6 +342,24 @@ test('experience visual system exposes grid states, risk, scan, and final trace'
   }
 });
 
+test('experience keeps long copy contained on narrow screens and reuses exhibit chrome tokens', () => {
+  const styles = read('experience', 'wxss');
+  const narrowRuleIndex = styles.lastIndexOf('@media (max-width: 360px)');
+  assert.ok(narrowRuleIndex > styles.lastIndexOf('@keyframes ready-button'));
+  assert.match(styles, /\.experience-shell,\.experience-shell view,\.experience-shell button \{ box-sizing: border-box;/);
+  for (const rule of [
+    '.material-memory { grid-template-columns: 1fr;',
+    '.material-memory text { overflow: visible; text-overflow: clip; white-space: normal;',
+    '.guard-action button { width: 100%; max-width: none;',
+    '.decision-row { grid-template-columns: 1fr;',
+    '.gesture-meter { grid-template-columns: 86rpx minmax(0,1fr) 88rpx;',
+  ]) assert.ok(styles.indexOf(rule, narrowRuleIndex) >= narrowRuleIndex);
+  assert.match(styles, /\.hero-copy \{[^}]*color: var\(--exhibit-text-soft-64\)/);
+  assert.match(styles, /\.panel \{[^}]*border: 1rpx solid var\(--exhibit-gold-line\)[^}]*background: var\(--exhibit-bg-panel\)/);
+  assert.match(styles, /\.topbar \{[^}]*background: var\(--exhibit-bg-panel\)/);
+  assert.match(styles, /\.app-progress \{[^}]*background: var\(--exhibit-bg-panel\)/);
+});
+
 test('experience uses non-blocking game feedback instead of a hammer overlay', () => {
   const markup = read('experience');
   const source = read('experience', 'js');
