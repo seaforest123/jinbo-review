@@ -126,11 +126,20 @@
 --exhibit-gold: #f4d77b;
 --exhibit-gold-line: rgba(244,215,123,.2);
 --exhibit-gold-button: linear-gradient(100deg, #c9912e, #f3d984, #bd7d1f);
---exhibit-font-display: serif; /* 标题 */
+--exhibit-demo-accent: #cce7c9; /* 演示模式标签文字色 */
+--exhibit-demo-accent-line: rgba(185,221,185,.38); /* 演示模式标签描边 */
+--exhibit-demo-accent-bg: rgba(78,126,83,.17); /* 演示模式标签底色 */
+--exhibit-gold-soft-60: rgba(244,215,123,.6); /* 金色文字的弱化态，如任务 rail 已完成项 */
+--exhibit-memory-accent: rgba(244,218,145,.72); /* 材料记忆条正文色 */
+--exhibit-memory-accent-line: rgba(239,207,119,.13); /* 材料记忆条描边 */
+--exhibit-memory-accent-bg: rgba(239,207,119,.035); /* 材料记忆条底色 */
+--exhibit-font-display: 'STKaiti', 'KaiTi', 'Kai', serif; /* 标题，楷体优先，命中系统字体则使用，否则退回默认衬线 */
 --exhibit-font-kicker-tracking: 4rpx; /* 小标签字间距 */
 ```
 
-来源页面：`pages/home`、`pages/archive`、`pages/media/*`、`pages/result`（2026-08-11 收敛）。
+来源页面：`pages/home`、`pages/archive`、`pages/media/*`、`pages/result`（2026-08-11 收敛）。`--exhibit-demo-accent*` 三个变量收敛自 `pages/experience` 的"90秒演示"标签色值（2026-08-16）。`pages/home` 此前另有 4 处相近但不同的文字不透明度字面值（.75/.58/.52/.38），已就近并入 `--exhibit-text-soft-64`/`--exhibit-text-soft-42`，未新增变量（2026-08-26）。`--exhibit-gold-soft-60`、`--exhibit-memory-accent*` 收敛自 `pages/experience` 任务 rail 已完成态与"材料记忆条"的既有色值，数值原样保留、未做近似合并（2026-08-26）。
+
+`pages/experience` 页面 chrome（背景、标题、正文、卡片边框、按钮）必须用 `--exhibit-*` token；但"手势反馈/游戏状态提示"这一层（如捶打 combo 色、警告色、"新手护航"横幅 `.beginner-guard` 一整套绿色 `#b9ddb9`/`#c9efc9` 等）提示的是"当前操作对不对/处于哪种辅助状态"，不是展厅氛围，允许保留独立配色，不要求改用 `--exhibit-*` token；以后做视觉审查时不必再把这类颜色当作遗漏项。
 
 ### 6.2 自定义导航约定
 
