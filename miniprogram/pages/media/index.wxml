@@ -20,8 +20,4 @@
       </view>
     </view>
   </view>
-
-  <view class="media-footer">
-    <button class="footer-link" bindtap="goHome">返回首页</button>
-  </view>
 </view>

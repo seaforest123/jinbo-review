@@ -1,6 +1,4 @@
 .result-shell { position: relative; min-height: 100vh; margin: -32rpx; padding: 0 34rpx calc(48rpx + env(safe-area-inset-bottom)); overflow: hidden; color: var(--exhibit-text); background: var(--exhibit-bg-radial); }
-.topbar { position: relative; z-index: 2; display: flex; justify-content: flex-end; }
-.close { display: flex; align-items: center; justify-content: center; width: 66rpx; min-height: 66rpx; margin: 0; padding: 0; border: 1rpx solid var(--exhibit-gold-line); border-radius: 50%; color: var(--exhibit-text); background: transparent; font-size: 34rpx; }
 .celebration-hero { position: relative; display: flex; min-height: 590rpx; flex-direction: column; align-items: center; justify-content: center; text-align: center; }
 .completion-mark { position: relative; z-index: 2; display: grid; width: 174rpx; height: 174rpx; border: 1rpx solid rgba(244,215,123,.45); border-radius: 50%; place-items: center; animation: mark-arrive .7s cubic-bezier(.2,.8,.2,1) both; }
 .completion-mark::before, .completion-mark::after { position: absolute; content: ""; border: 1rpx solid rgba(244,215,123,.18); border-radius: 50%; }
@@ -74,6 +72,7 @@
 .primary-button text { font-size: 40rpx; font-weight: 300; }
 .action-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14rpx; margin-top: 18rpx; }
 .action-grid button { display: flex; align-items: center; justify-content: center; min-height: 78rpx; border: 1rpx solid rgba(255,255,255,.13); color: rgba(255,248,232,.6); background: rgba(255,255,255,.04); font-size: 20rpx; }
+.action-grid button.is-disabled { border-color: var(--exhibit-text-soft-20); color: var(--exhibit-text-soft-42); background: transparent; }
 .result-glow { position: absolute; top: 400rpx; right: -200rpx; width: 440rpx; height: 440rpx; border-radius: 50%; background: rgba(201,154,50,.1); filter: blur(100rpx); }
 @keyframes mark-arrive { from { opacity: 0; transform: scale(.6) rotate(-8deg); } to { opacity: 1; transform: none; } }
 @keyframes star-drift { from { opacity: .2; transform: translateY(0) scale(.7); } to { opacity: 1; transform: translateY(-20rpx) scale(1.2); } }

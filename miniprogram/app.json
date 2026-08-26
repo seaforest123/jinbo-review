@@ -14,5 +14,18 @@
   "window": {
     "navigationBarTitleText": "金箔数字轻体验"
   },
+  "tabBar": {
+    "custom": true,
+    "color": "#8a7a63",
+    "selectedColor": "#f4d77b",
+    "backgroundColor": "#150d08",
+    "borderStyle": "black",
+    "list": [
+      { "pagePath": "pages/home/index", "text": "首页" },
+      { "pagePath": "pages/archive/index", "text": "金箔志" },
+      { "pagePath": "pages/media/index", "text": "影像记录" },
+      { "pagePath": "pages/activity/index", "text": "活动" }
+    ]
+  },
   "style": "v2"
 }

@@ -94,7 +94,7 @@ Page({
     demoExpired: false,
     displayStepNumber: 1,
     displayStepTotal: 5,
-    routeName: '金箔锻制体验（候选内容）',
+    routeName: '金箔锻制体验',
     step: null,
     taskMap: [],
     session: null,

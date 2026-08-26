@@ -1,9 +1,12 @@
 <view class="home-page">
   <view class="ambient-gold" aria-hidden="true"><view class="ambient-piece one"></view><view class="ambient-piece two"></view></view>
 
-  <view class="home-topbar" style="padding-top:{{navTopPadding}}px;padding-right:{{navRightPadding}}px">
+  <view class="home-topbar" style="padding-top:{{navTopPadding}}px">
     <view><view class="home-eyebrow">JIN · BO / PROCESS LAB</view><view class="home-brand">金箔工艺</view></view>
-    <view class="topbar-state">候选内容</view>
+    <view class="progress-entry" bindtap="openProgress">
+      <image class="progress-entry-icon" src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCI+PGNpcmNsZSBjeD0iMTIiIGN5PSIxMiIgcj0iOSIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjZjRkNzdiIiBzdHJva2Utd2lkdGg9IjIiLz48cGF0aCBkPSJNMTIgN3Y1bDMgMyIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjZjRkNzdiIiBzdHJva2Utd2lkdGg9IjIiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCIvPjwvc3ZnPg==" mode="aspectFit"></image>
+      <text>我的进度</text>
+    </view>
   </view>
 
   <view class="home-hero">
@@ -35,18 +38,19 @@
       <view class="process-item"><text>05</text><view>成叶</view></view>
     </view>
 
-    <view class="entry-panel" bindtap="startExperience">
-      <view class="entry-seal">箔</view>
-      <view class="entry-copy"><view class="entry-kicker">CONTINUOUS CRAFT</view><view class="entry-title">从做捻子开始</view><view class="entry-desc">约 3 分钟 · 新手引导可随时开启</view></view>
-      <view class="entry-arrow">→</view>
+    <view class="route-list">
+      <view wx:for="{{routeEntries}}" wx:key="id" class="route-entry" data-route-id="{{item.id}}" bindtap="startExperience">
+        <view class="route-entry-seal">箔</view>
+        <view class="route-entry-copy">
+          <view class="route-entry-kicker">CONTINUOUS CRAFT</view>
+          <view class="route-entry-heading">
+            <view class="route-entry-title">{{item.displayName}}</view>
+            <view wx:if="{{item.statusLabel}}" class="route-entry-status">{{item.statusLabel}}</view>
+          </view>
+          <view class="route-entry-desc">{{item.summary}}</view>
+        </view>
+        <view class="route-entry-arrow">→</view>
+      </view>
     </view>
-    <button class="gold-button" bindtap="startExperience">开始五步体验</button>
-
-    <view class="home-links">
-      <text bindtap="openArchive">金箔志</text><view></view>
-      <text bindtap="openMedia">影像记录</text><view></view>
-      <text bindtap="openActivity">活动</text>
-    </view>
-    <view class="source-note">候选内容，用于体验与讨论；实际合作对象与城市待专业访谈确认。</view>
   </view>
 </view>

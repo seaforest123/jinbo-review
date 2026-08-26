@@ -24,12 +24,14 @@ Page({
     this.setData({ categories });
   },
 
+  onShow() {
+    if (typeof this.getTabBar === 'function' && this.getTabBar()) {
+      this.getTabBar().setData({ selected: 2 });
+    }
+  },
+
   openCategory(event) {
     const url = event.currentTarget.dataset.pagePath;
     if (url) wx.navigateTo({ url });
-  },
-
-  goHome() {
-    wx.navigateBack({ delta: 1 });
   },
 });

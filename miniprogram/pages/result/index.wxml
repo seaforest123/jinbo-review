@@ -1,7 +1,4 @@
-<view class="result-shell">
-  <view class="topbar" style="padding-top:{{navTopPadding}}px;padding-right:{{navRightPadding}}px">
-    <button class="close" bindtap="closeResult" aria-label="关闭">×</button>
-  </view>
+<view class="result-shell" style="padding-top:{{navTopPadding}}px">
   <view class="result-glow"></view>
   <view class="celebration-hero">
     <view class="star-field">
@@ -83,7 +80,7 @@
   <view class="action-grid">
     <button bindtap="openArchive">金箔志</button>
     <button bindtap="openActivity">活动</button>
-    <button wx:if="{{!demoMode}}" bindtap="openProgress">查看我的进度</button>
+    <button class="{{demoMode ? 'is-disabled' : ''}}" aria-disabled="{{demoMode}}" bindtap="openProgress">查看我的进度</button>
     <button bindtap="goHome">返回首页</button>
   </view>
 

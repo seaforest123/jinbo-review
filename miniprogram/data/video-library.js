@@ -88,7 +88,7 @@ const sections = Object.freeze([
     title: '非遗传承人访谈',
     eyebrow: 'ARTISAN VOICES',
     description: '两段经授权的传承人访谈影像，仅供本项目内测观看。',
-    emptyCopy: '',
+    emptyCopy: '内容待接入',
     videos: Object.freeze([
       artisanInterviewVideo({ id: 'artisan-second-generation', title: '第二代传承人介绍', duration: '00:12', sourceFileName: '第二代传承人介绍.mp4' }),
       artisanInterviewVideo({ id: 'artisan-third-generation', title: '第三代传承人介绍', duration: '00:19', sourceFileName: '第三代传承人介绍.mp4' }),
@@ -99,7 +99,7 @@ const sections = Object.freeze([
     title: '金箔制作过程解说',
     eyebrow: 'CRAFT IN MOTION',
     description: '十二段工序影像，供内测阶段补充工艺理解。',
-    emptyCopy: '',
+    emptyCopy: '内容待接入',
     videos: Object.freeze([
       processVideo(1, '00:12'),
       processVideo(2, '00:18'),
@@ -120,7 +120,7 @@ const sections = Object.freeze([
     title: '拓展影像',
     eyebrow: 'EXTENDED ARCHIVE',
     description: '经授权的佛山金箔技术参照影像，仅供本项目内测观看。',
-    emptyCopy: '',
+    emptyCopy: '内容待接入',
     videos: Object.freeze([
       extensionVideo({ id: 'foshan-craft', title: '佛山金箔锻造工艺（授权影像资料）', duration: '00:19', sourceFileName: '佛山金箔锻造工艺.mp4' }),
       extensionVideo({ id: 'foshan-exhibits', title: '佛山金箔工艺展品（授权影像资料）', duration: '00:04', sourceFileName: '佛山金箔工艺展品.mp4' }),

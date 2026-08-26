@@ -5,7 +5,7 @@ const { createWxLearningStorage } = require('../../services/wx-learning-storage'
 const { listKnowledgeCards } = require('../../data/knowledge-cards');
 const { getStepVisual } = require('../../data/candidate-visuals');
 const { createFoilVisual } = require('../../domain/foil-visual');
-const { getNavRightPadding, getNavTopPadding } = require('../../services/navigation-layout');
+const { getNavTopPadding } = require('../../services/navigation-layout');
 
 function createStorage() {
   return {
@@ -43,12 +43,10 @@ Page({
     foilResult: null,
     foilVisual: [],
     foilQualityLabel: '工艺记录未读取',
-    navRightPadding: 18,
     navTopPadding: 68,
   },
 
   async onLoad(options = {}) {
-    this.applyNavRightPadding();
     this.setData({ navTopPadding: getNavTopPadding(wx) });
     const demoMode = options.mode === 'demo';
     const routeId = routes.some((route) => route.id === options.routeId)
@@ -113,15 +111,6 @@ Page({
     }
   },
 
-  applyNavRightPadding() {
-    this.setData({ navRightPadding: getNavRightPadding(wx) });
-  },
-
-  closeResult() {
-    this.trackAction('close');
-    wx.navigateBack({ delta: 1 });
-  },
-
   trackAction(action) {
     if (this.analytics) this.analytics.track('result_action', { action });
   },
@@ -160,7 +149,7 @@ Page({
     context.setFillStyle('#fff8e8');
     context.setFontSize(48);
     context.fillText('我完成了一次', 58, 170);
-    context.fillText('金箔锻制体验（候选内容）', 58, 232);
+    context.fillText('金箔锻制体验', 58, 232);
     context.setFillStyle('rgba(255,248,232,.62)');
     context.setFontSize(24);
     context.fillText('从乌金纸，到万次锤击中的一叶金光', 58, 282);
@@ -205,7 +194,7 @@ Page({
     context.fillText('一叶金箔，藏着千次锤炼', 58, 738);
     context.setFillStyle('rgba(255,248,232,.5)');
     context.setFontSize(20);
-    context.fillText('金箔锻制技艺（候选内容）', 58, 800);
+    context.fillText('金箔锻制技艺', 58, 800);
     context.fillText('首批国家级非物质文化遗产代表性项目', 58, 834);
     context.setStrokeStyle('#a94f39');
     context.setLineWidth(3);
@@ -262,22 +251,26 @@ Page({
 
   openArchive() {
     this.trackAction('archive');
-    wx.navigateTo({ url: '/pages/archive/index' });
+    wx.switchTab({ url: '/pages/archive/index' });
   },
 
   openActivity() {
     this.trackAction('activity');
-    wx.navigateTo({ url: '/pages/activity/index' });
+    wx.switchTab({ url: '/pages/activity/index' });
   },
 
   openProgress() {
+    if (this.data.demoMode) {
+      wx.showToast({ title: '完整体验后可查看', icon: 'none' });
+      return;
+    }
     this.trackAction('archive');
     wx.navigateTo({ url: '/pages/progress/index' });
   },
 
   goHome() {
     this.trackAction('home');
-    wx.navigateTo({ url: '/pages/home/index' });
+    wx.switchTab({ url: '/pages/home/index' });
   },
 });
 

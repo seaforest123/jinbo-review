@@ -10,6 +10,17 @@ function createRepository() {
   return createLearningRepository({ routes, storage: createWxLearningStorage(wx), now: () => Date.now(), idFactory: () => Date.now().toString(16) });
 }
 
+function createRouteSummary(route, { favorite = false, progress = { completedCount: 0 } } = {}) {
+  return {
+    ...route,
+    displayName: '金箔锻制体验',
+    visual: getRouteVisual(route.id),
+    cards: listKnowledgeCards(route.id).map((card) => ({ ...card, visual: getStepVisual(card.stepId) })),
+    favorite,
+    progress,
+  };
+}
+
 Page({
   data: { routes: [], navTopPadding: 68 },
 
@@ -18,28 +29,20 @@ Page({
   },
 
   async onShow() {
+    if (typeof this.getTabBar === 'function' && this.getTabBar()) {
+      this.getTabBar().setData({ selected: 1 });
+    }
     try {
       const repository = createRepository();
       const favorites = await repository.listFavorites();
-      const summaries = await Promise.all(publicRoutes.map(async (route) => ({
-        ...route,
-        displayName: '金箔锻制体验（候选内容）',
-        visual: getRouteVisual(route.id),
-        cards: listKnowledgeCards(route.id).map((card) => ({ ...card, visual: getStepVisual(card.stepId) })),
+      const summaries = await Promise.all(publicRoutes.map(async (route) => createRouteSummary(route, {
         favorite: favorites.includes(route.id),
         progress: await repository.getRouteProgress(route.id),
       })));
       this.setData({ routes: summaries });
     } catch (error) {
       this.setData({
-        routes: publicRoutes.map((route) => ({
-          ...route,
-          displayName: '金箔锻制体验（候选内容）',
-          visual: getRouteVisual(route.id),
-          cards: listKnowledgeCards(route.id).map((card) => ({ ...card, visual: getStepVisual(card.stepId) })),
-          favorite: false,
-          progress: { completedCount: 0 },
-        })),
+        routes: publicRoutes.map((route) => createRouteSummary(route)),
       });
     }
   },
@@ -49,8 +52,6 @@ Page({
     try { await createRepository().toggleFavorite(event.currentTarget.dataset.routeId); } catch (error) { /* Empty state remains safe. */ }
     this.onShow();
   },
-  openProgress() { wx.navigateTo({ url: '/pages/progress/index' }); },
-  goHome() {
-    wx.navigateBack({ delta: 1 });
-  },
 });
+
+module.exports = { createRouteSummary };
