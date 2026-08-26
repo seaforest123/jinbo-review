@@ -20,13 +20,24 @@ function load(page) {
 
 test('home exposes the five-step route as its primary navigation', () => {
   const page = load('home');
+  const markup = read('home');
   assert.equal(typeof page.startExperience, 'function');
-  assert.match(read('home'), /五道工序/);
-  assert.match(read('home'), /process-rail/);
-  assert.match(read('home'), /五道工序，一次完成/);
-  assert.match(read('home'), /实际合作对象与城市待专业访谈确认/);
+  assert.match(markup, /五道工序/);
+  assert.match(markup, /process-rail/);
+  assert.match(markup, /五道工序，一次完成/);
+  assert.match(markup, /实际合作对象与城市待专业访谈确认/);
   assert.equal(JSON.parse(read('home', 'json')).navigationStyle, 'custom');
-  assert.match(read('home'), /PROCESS LAB/);
+  assert.match(markup, /PROCESS LAB/);
+  assert.match(markup, /wx:for="\{\{routeEntries\}\}"/);
+  assert.match(markup, /data-route-id="\{\{item\.id\}\}" bindtap="startExperience"/);
+  assert.match(markup, /class="route-entry-status">\{\{item\.statusLabel\}\}/);
+  assert.equal((markup.match(/bindtap="startExperience"/g) || []).length, 1);
+
+  const source = read('home', 'js');
+  assert.match(source, /routeEntries: routes\.map\(\(route\) => \(\{/);
+  assert.match(source, /displayName: ROUTE_DISPLAY_NAMES\[route\.id\] \|\| route\.displayName/);
+  assert.match(source, /statusLabel: route\.status === 'internal_placeholder' \? '候选内容' : ''/);
+  assert.doesNotMatch(source, /routes\.filter\(\(route\) => route\.id === 'foil_making_candidate'\)/);
 });
 
 test('the public main flow links home to the five-step experience', () => {
@@ -34,7 +45,7 @@ test('the public main flow links home to the five-step experience', () => {
   const previousWx = global.wx;
   global.wx = { navigateTo: ({ url }) => calls.push(url) };
   try {
-    load('home').startExperience();
+    load('home').startExperience({ currentTarget: { dataset: { routeId: 'foil_making_candidate' } } });
     assert.deepEqual(calls, ['/pages/experience/index?routeId=foil_making_candidate']);
   } finally {
     if (previousWx === undefined) delete global.wx;
@@ -42,16 +53,30 @@ test('the public main flow links home to the five-step experience', () => {
   }
 });
 
-test('home links to the image and video record centre', () => {
+test('the custom tab bar lists home, archive, media and activity in order and switches tabs', () => {
+  const target = require.resolve(path.join(root, 'miniprogram/custom-tab-bar/index.js'));
+  const previousComponent = global.Component;
+  let definition;
+  global.Component = (value) => { definition = value; };
+  delete require.cache[target];
+  require(target);
+  if (previousComponent === undefined) delete global.Component; else global.Component = previousComponent;
+
+  assert.deepEqual(definition.data.list.map((item) => [item.pagePath, item.text]), [
+    ['/pages/home/index', '首页'],
+    ['/pages/archive/index', '金箔志'],
+    ['/pages/media/index', '影像记录'],
+    ['/pages/activity/index', '活动'],
+  ]);
+
   const calls = [];
   const previousWx = global.wx;
-  global.wx = { navigateTo: ({ url }) => calls.push(url) };
+  global.wx = { switchTab: ({ url }) => calls.push(url) };
   try {
-    const page = load('home');
-    assert.equal(typeof page.openMedia, 'function');
-    page.openMedia();
+    const context = { data: { selected: 0 }, setData(patch) { Object.assign(this.data, patch); } };
+    definition.methods.switchTab.call(context, { currentTarget: { dataset: { index: 2 } } });
     assert.deepEqual(calls, ['/pages/media/index']);
-    assert.match(read('home'), /影像记录/);
+    assert.equal(context.data.selected, 2);
   } finally {
     if (previousWx === undefined) delete global.wx;
     else global.wx = previousWx;
@@ -64,7 +89,8 @@ test('media centre separates the three video collections into dedicated routes',
     assert.match(markup, new RegExp(text.replace(/[<>]/g, '\\$&')));
   }
   const page = load('media');
-  for (const handler of ['openCategory', 'goHome']) assert.equal(typeof page[handler], 'function');
+  assert.equal(typeof page.openCategory, 'function');
+  assert.equal(typeof page.goHome, 'undefined');
   assert.equal(JSON.parse(read('media', 'json')).navigationStyle, 'custom');
   const calls = [];
   const previousWx = global.wx;
@@ -121,14 +147,43 @@ test('normal experience persists a report and progress can open its detail page'
   }
 });
 
+test('progress shows a readable route name in session log and an empty-collection message when there are no favorites', async () => {
+  const progress = load('progress');
+  const markup = read('progress');
+  assert.doesNotMatch(markup, /class="report-route">\{\{item\.routeId\}\}/);
+  assert.match(markup, /class="report-route">\{\{item\.routeDisplayName\}\}/);
+  assert.match(markup, /wx:else class="empty-state">还没有收藏内容。<\/view>/);
+
+  const previousWx = global.wx;
+  const snapshot = {
+    version: 1,
+    sessions: [{ reportId: 'local_1', sessionId: 'local_1', routeId: 'foil_making_candidate', startedAt: 0, status: 'completed', completedAt: 100, elapsedMs: 100, steps: [] }],
+    favorites: [],
+  };
+  global.wx = {
+    getStorage: ({ success }) => success({ data: snapshot }),
+    setStorage: ({ complete }) => complete(),
+  };
+  const context = { data: { reports: [], favorites: [], navTopPadding: 68 }, setData(patch) { Object.assign(this.data, patch); } };
+  try {
+    await progress.onShow.call(context);
+  } finally {
+    if (previousWx === undefined) delete global.wx;
+    else global.wx = previousWx;
+  }
+  assert.equal(context.data.reports[0].routeDisplayName, '金箔锻制体验');
+  assert.equal(context.data.favorites.length, 0);
+});
+
 test('archive presents one spacious route exhibit while retaining learning actions and every knowledge card', () => {
   const markup = read('archive');
   const styles = read('archive', 'wxss');
   const page = load('archive');
-  for (const token of ['route-exhibit', 'route-hero', 'knowledge-section', 'knowledge-list', 'item.cards[0].notice']) {
+  for (const token of ['route-exhibit', 'route-hero', 'knowledge-section', 'knowledge-list']) {
     assert.match(markup, new RegExp(token.replace(/[.[\]]/g, '\\$&')));
   }
-  for (const handler of ['startExperience', 'toggleFavorite', 'openProgress', 'goHome']) assert.equal(typeof page[handler], 'function');
+  for (const handler of ['startExperience', 'toggleFavorite']) assert.equal(typeof page[handler], 'function');
+  for (const handler of ['openProgress', 'goHome']) assert.equal(typeof page[handler], 'undefined');
   assert.match(markup, /data-route-id="\{\{item\.id\}\}" bindtap="startExperience"/);
   assert.match(markup, /data-route-id="\{\{item\.id\}\}" bindtap="toggleFavorite"/);
   assert.match(styles, /grid-template-columns: 178rpx minmax\(0, 1fr\)/);
@@ -136,12 +191,43 @@ test('archive presents one spacious route exhibit while retaining learning actio
   assert.equal(JSON.parse(read('archive', 'json')).navigationStyle, 'custom');
 });
 
+test('archive renders the same route fields whether the repository call succeeds or fails', () => {
+  load('archive');
+  const { createRouteSummary } = require(path.join(root, 'miniprogram/pages/archive/index.js'));
+  const [route] = require(path.join(root, 'miniprogram/data/routes.js'));
+  const fallback = createRouteSummary(route);
+  const populated = createRouteSummary(route, {
+    favorite: true,
+    progress: { routeId: route.id, completedCount: 2, lastCompletedAt: 10, lastElapsedMs: 20 },
+  });
+
+  for (const field of ['id', 'displayName', 'visual', 'cards']) {
+    assert.deepEqual(populated[field], fallback[field]);
+  }
+  assert.equal(fallback.favorite, false);
+  assert.deepEqual(fallback.progress, { completedCount: 0 });
+  assert.equal(populated.favorite, true);
+  assert.equal(populated.progress.completedCount, 2);
+
+  const source = read('archive', 'js');
+  assert.match(source, /publicRoutes\.map\(async \(route\) => createRouteSummary\(route/);
+  assert.match(source, /publicRoutes\.map\(\(route\) => createRouteSummary\(route\)\)/);
+});
+
 test('static exhibit pages use one bottom return action instead of a top navigation row', () => {
-  for (const page of ['archive', 'progress', 'activity']) {
+  for (const page of ['progress']) {
     assert.equal(JSON.parse(read(page, 'json')).navigationStyle, 'custom');
-    assert.match(read(page), /class="(?:archive|progress|activity)-footer"[\s\S]*bindtap="goHome"/);
-    assert.doesNotMatch(read(page), /(?:archive|progress|activity)-topbar|class="back-button"/);
+    assert.match(read(page), /class="(?:archive|progress)-footer"[\s\S]*bindtap="goHome"/);
+    assert.doesNotMatch(read(page), /(?:archive|progress)-topbar|class="back-button"/);
     assert.equal(typeof load(page).applyNavRightPadding, 'undefined');
+  }
+});
+
+test('activity, media and archive rely on the persistent tab bar instead of their own return button', () => {
+  for (const page of ['activity', 'media', 'archive']) {
+    assert.equal(JSON.parse(read(page, 'json')).navigationStyle, 'custom');
+    assert.doesNotMatch(read(page), /(?:activity|media|archive)-footer|footer-link|bindtap="goHome"|class="back-button"|topbar/);
+    assert.equal(typeof load(page).goHome, 'undefined');
   }
 });
 
@@ -156,18 +242,20 @@ test('dark exhibit shells use canonical tokens and a non-repeating navigation ba
     assert.match(styles, /var\(--exhibit-bg-radial\)/);
     assert.match(styles, /var\(--exhibit-gold\)/);
   }
-  for (const page of ['archive', 'activity', 'progress']) {
+  for (const page of ['progress']) {
     const markup = read(page);
     const styles = read(page, 'wxss');
-    assert.match(markup, /class="(?:archive|activity|progress)-footer"[\s\S]*bindtap="goHome"/);
+    assert.match(markup, /class="(?:archive|progress)-footer"[\s\S]*bindtap="goHome"/);
     assert.doesNotMatch(markup, /topbar|back-button|navRightPadding/);
     assert.match(styles, /\.footer-link \{[^}]*color: var\(--exhibit-gold\)/);
+  }
+  for (const page of ['activity', 'archive']) {
+    assert.doesNotMatch(read(page), /(?:activity|archive)-footer|footer-link|topbar|back-button|navRightPadding/);
   }
   const mediaMarkup = read('media');
   const mediaStyles = read('media', 'wxss');
   const mediaSource = read('media', 'js');
-  assert.match(mediaMarkup, /class="media-footer"[\s\S]*bindtap="goHome">返回首页<\/button>/);
-  assert.doesNotMatch(mediaMarkup, /media-topbar|back-button|navRightPadding/);
+  assert.doesNotMatch(mediaMarkup, /media-footer|footer-link|media-topbar|back-button|navRightPadding/);
   assert.doesNotMatch(mediaSource, /getNavRightPadding|navRightPadding/);
   assert.match(mediaStyles, /\.media-page \{[^}]*margin: -32rpx/);
   const galleryMarkup = fs.readFileSync(path.join(root, 'miniprogram/components/media-gallery/index.wxml'), 'utf8');
@@ -181,11 +269,17 @@ test('dark exhibit shells use canonical tokens and a non-repeating navigation ba
 });
 
 test('short pages grow their content to fill the screen instead of leaving a dead gap', () => {
-  for (const page of ['activity', 'progress']) {
+  for (const page of ['progress']) {
     const styles = read(page, 'wxss');
     assert.match(styles, new RegExp(`\\.${page}-page \\{[^}]*flex-direction: column`));
     assert.match(styles, new RegExp(`\\.${page}-footer \\{[^}]*margin-top: auto`));
   }
+
+  const activityStyles = read('activity', 'wxss');
+  assert.match(activityStyles, /\.activity-page \{[^}]*flex-direction: column/);
+  assert.match(activityStyles, /\.activity-intro \{[^}]*flex: 1/);
+  assert.doesNotMatch(activityStyles, /\.activity-intro \{[^}]*justify-content: space-between/);
+  assert.match(activityStyles, /padding: 0 30rpx calc\(56rpx \+ env\(safe-area-inset-bottom\)\)/);
 
   // media/index tried both an unbounded auto-fill (grows with device height, no cap) and an
   // unbounded gap-before-footer; both looked disproportionate on taller screens. It now uses
@@ -202,7 +296,6 @@ test('short pages grow their content to fill the screen instead of leaving a dea
   assert.doesNotMatch(mediaStyles, /\.category-list \{[^}]*justify-content: space-between/);
   assert.doesNotMatch(mediaStyles, /\.category-card \{[^}]*flex: 1/);
   assert.match(mediaStyles, /\.category-footer \{[^}]*margin-top: 21rpx/);
-  assert.match(mediaStyles, /\.media-footer \{[^}]*margin-top: 56rpx/);
 
   const galleryStyles = fs.readFileSync(path.join(root, 'miniprogram/components/media-gallery/index.wxss'), 'utf8');
   assert.match(galleryStyles, /\.category-page \{[^}]*flex-direction: column/);
@@ -378,19 +471,49 @@ test('result shows grid-derived quality and sharing actions', () => {
   assert.match(read('result', 'js'), /latest_foil_demo_result/);
 });
 
-test('result uses immersive navigation and closes back to its caller instead of the footer home link', () => {
-  assert.equal(JSON.parse(read('result', 'json')).navigationStyle, 'custom');
-  assert.match(read('result'), /class="close" bindtap="closeResult"/);
+test('result keeps progress visible in demo mode but explains why it is unavailable', () => {
+  const markup = read('result');
+  const styles = read('result', 'wxss');
   const page = load('result');
-  assert.equal(typeof page.closeResult, 'function');
-  assert.equal(typeof page.applyNavRightPadding, 'function');
+  assert.doesNotMatch(markup, /wx:if="\{\{!demoMode\}\}"[^>]*openProgress/);
+  assert.match(markup, /class="\{\{demoMode \? 'is-disabled' : ''\}\}" aria-disabled="\{\{demoMode\}\}" bindtap="openProgress">查看我的进度<\/button>/);
+  assert.match(styles, /\.action-grid button\.is-disabled \{[^}]*color: var\(--exhibit-text-soft-42\)/);
 
   const calls = [];
   const previousWx = global.wx;
-  global.wx = { navigateBack: (options) => calls.push(options) };
+  global.wx = {
+    navigateTo: ({ url }) => calls.push(['navigate', url]),
+    showToast: (options) => calls.push(['toast', options]),
+  };
   try {
-    page.closeResult();
-    assert.deepEqual(calls, [{ delta: 1 }]);
+    page.openProgress.call({ data: { demoMode: true }, trackAction: () => calls.push(['track']) });
+    assert.deepEqual(calls, [['toast', { title: '完整体验后可查看', icon: 'none' }]]);
+
+    calls.length = 0;
+    page.openProgress.call({ data: { demoMode: false }, trackAction: (action) => calls.push(['track', action]) });
+    assert.deepEqual(calls, [
+      ['track', 'archive'],
+      ['navigate', '/pages/progress/index'],
+    ]);
+  } finally {
+    if (previousWx === undefined) delete global.wx;
+    else global.wx = previousWx;
+  }
+});
+
+test('result uses immersive navigation and relies on its footer actions instead of a top close button', () => {
+  assert.equal(JSON.parse(read('result', 'json')).navigationStyle, 'custom');
+  assert.doesNotMatch(read('result'), /class="close"|closeResult/);
+  const page = load('result');
+  assert.equal(typeof page.closeResult, 'undefined');
+  assert.equal(typeof page.applyNavRightPadding, 'undefined');
+
+  const calls = [];
+  const previousWx = global.wx;
+  global.wx = { switchTab: ({ url }) => calls.push(url) };
+  try {
+    page.goHome();
+    assert.deepEqual(calls, ['/pages/home/index']);
   } finally {
     if (previousWx === undefined) delete global.wx;
     else global.wx = previousWx;

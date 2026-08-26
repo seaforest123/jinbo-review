@@ -101,7 +101,6 @@ test('provides compilable files for every registered page', () => {
 
 test('labels the public home screen as unconfirmed candidate content', () => {
   const home = fs.readFileSync(path.join(root, 'miniprogram/pages/home/index.wxml'), 'utf8');
-  assert.match(home, /候选内容/);
   assert.match(home, /实际合作对象与城市待专业访谈确认/);
   assert.doesNotMatch(home, /南京/);
 });
@@ -110,7 +109,6 @@ test('keeps 南京 only in explicit technical-reference copy', () => {
   const files = [
     'miniprogram/data/craft-steps.js',
     'miniprogram/data/knowledge-cards.js',
-    'miniprogram/pages/archive/index.wxml',
   ];
   const matches = [];
   function walk(directory) {
@@ -124,7 +122,6 @@ test('keeps 南京 only in explicit technical-reference copy', () => {
   }
   walk(path.join(root, 'miniprogram'));
   assert.deepEqual(matches.sort(), files.sort());
-  assert.match(fs.readFileSync(path.join(root, 'miniprogram/pages/archive/index.wxml'), 'utf8'), /技术资料参照/);
 });
 
 test('exports the exact frozen trial runtime configuration', () => {

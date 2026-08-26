@@ -34,3 +34,16 @@ test('uses one gallery component for all media categories and playback', () => {
   const styles = fs.readFileSync(path.join(componentRoot, 'index.wxss'), 'utf8');
   for (const token of ['align-items: center', 'justify-content: center', 'max-width: 680rpx', '.section-notice']) assert.match(styles, new RegExp(token.replace('.', '\\.')));
 });
+
+test('every video section carries a non-blank empty-state copy for the zero-video fallback', () => {
+  const { listVideoSections } = require(path.join(root, 'miniprogram/data/video-library'));
+  const sections = listVideoSections();
+  assert.ok(sections.length > 0);
+  for (const section of sections) {
+    assert.equal(typeof section.emptyCopy, 'string');
+    assert.notEqual(section.emptyCopy.trim(), '');
+  }
+  const markup = fs.readFileSync(path.join(componentRoot, 'index.wxml'), 'utf8');
+  assert.match(markup, /wx:if="\{\{!section\.videos\.length\}\}" class="empty-video-state"/);
+  assert.match(markup, /<text>\{\{section\.emptyCopy\}\}<\/text>/);
+});
