@@ -7,6 +7,7 @@ const trackerModulePath = '../../miniprogram/services/event-tracker';
 const runtimeConfig = require('../../miniprogram/config/runtime-config');
 const ANONYMOUS_ID = `anon_${'b'.repeat(32)}`;
 const OCCURRED_AT = '2026-07-20T01:02:03.000Z';
+const STEP_IDS = ['twist', 'pack', 'hammer', 'inspect', 'finish'];
 let uniqueEventIdCounter = 0;
 const ALLOWED_EVENT_NAMES = [
   'home_cta_click',
@@ -17,6 +18,7 @@ const ALLOWED_EVENT_NAMES = [
   'step_hint',
   'step_retry',
   'step_complete',
+  'inspection_decision',
   'experience_exit',
   'experience_complete',
   'result_action',
@@ -100,14 +102,14 @@ function createQueuedEvent(index) {
     delivery: 'at-least-once',
     name: 'step_start',
     occurredAt: OCCURRED_AT,
-    properties: { stepId: `step-${index}` },
+    properties: { stepId: STEP_IDS[(index - 1) % STEP_IDS.length] },
   };
 }
 
 test('creates a complete immutable event record from test context', async () => {
   const sent = [];
   const context = createContext();
-  const properties = { stepId: 'step-1', elapsedMs: 1250, hintCount: 0 };
+  const properties = { stepId: 'twist', elapsedMs: 1250, hintCount: 0 };
   const { tracker, generatedIds } = createTrackerFixture({
     context,
     transport: (event) => sent.push(event),
@@ -131,7 +133,7 @@ test('creates a complete immutable event record from test context', async () => 
     delivery: 'at-least-once',
     name: 'step_start',
     occurredAt: OCCURRED_AT,
-    properties: { stepId: 'step-1', elapsedMs: 1250, hintCount: 0 },
+    properties: { stepId: 'twist', elapsedMs: 1250, hintCount: 0 },
   });
   assert.equal(sent[0], event);
   assert.ok(Object.isFrozen(event));
@@ -255,7 +257,7 @@ test('rejects non-enumerable fields that bypass ordinary key enumeration', async
   await assert.rejects(tracker.track('result_action', properties), /invalid event properties/);
 });
 
-test('accepts exactly the eleven specified event names', async () => {
+test('accepts exactly the twelve specified event names', async () => {
   const { tracker } = createTrackerFixture();
 
   for (const name of ALLOWED_EVENT_NAMES) {
@@ -393,19 +395,21 @@ test('drops queued non-string anonymous and session IDs without invoking coercio
 test('accepts only explicit scalar property keys', async () => {
   const { tracker } = createTrackerFixture();
   const properties = {
-    stepId: 'step-1',
-    adapter: 'continuous-drag',
+    stepId: 'twist',
+    adapter: 'cut',
     reason: 'user_exit',
     action: 'retry',
     elapsedMs: 1250,
     hintCount: 2,
     retryCount: 1,
+    decision: 'accept',
+    quality: 'minor',
   };
 
   assert.deepEqual((await tracker.track('experience_exit', properties)).properties, properties);
   for (const invalid of [
     { extra: true },
-    { stepId: ['step-1'] },
+    { stepId: ['twist'] },
     { elapsedMs: Number.NaN },
     { action: { type: 'retry' } },
   ]) {
@@ -416,13 +420,15 @@ test('accepts only explicit scalar property keys', async () => {
 test('enforces closed per-field property enums, ID formats, and numeric ranges', async () => {
   const { tracker } = createTrackerFixture();
   const validProperties = {
-    stepId: 'observe',
-    adapter: 'xr-frame',
+    stepId: 'hammer',
+    adapter: 'hammer',
     reason: 'capability_unavailable',
     action: 'archive',
     elapsedMs: 86400000,
     hintCount: 100,
     retryCount: 100,
+    decision: 'rehammer',
+    quality: 'obvious',
   };
   assert.deepEqual((await tracker.track('result_action', validProperties)).properties, validProperties);
 
@@ -432,6 +438,8 @@ test('enforces closed per-field property enums, ID formats, and numeric ranges',
     { stepId: 'nobody@example.invalid' },
     { adapter: 'xr-frame with free text' },
     { adapter: 'nobody@example.invalid' },
+    { decision: 'retry-hammering' },
+    { quality: 'excellent' },
     { reason: 'Fictional Person' },
     { reason: 'fictional_address' },
     { action: '000-0000-0000' },
@@ -487,7 +495,7 @@ test('queues events in order after synchronous and asynchronous transport failur
     },
   });
 
-  const first = await tracker.track('video_play', { adapter: 'select' });
+  const first = await tracker.track('video_play', { adapter: 'cut' });
   const second = await tracker.track('video_skip', { reason: 'user_skip' });
 
   assert.deepEqual(fixture.readQueue(), [first, second]);
@@ -519,7 +527,7 @@ test('requires explicit positive transport acknowledgement', async () => {
     'step_retry',
     'step_complete',
   ]) {
-    queued.push(await tracker.track(name, name.startsWith('step_') ? { stepId: 'observe' } : {}));
+    queued.push(await tracker.track(name, name.startsWith('step_') ? { stepId: 'twist' } : {}));
   }
   assert.deepEqual(fixture.readQueue(), queued);
 
@@ -542,7 +550,7 @@ test('reuses the stable queued eventId when retrying delivery', async () => {
     },
   });
 
-  const event = await tracker.track('video_play', { adapter: 'select' });
+  const event = await tracker.track('video_play', { adapter: 'cut' });
   online = true;
   assert.equal(await tracker.flush(), 1);
 
@@ -627,8 +635,8 @@ test('serializes concurrent failed writes without losing or duplicating events',
   });
 
   const events = await Promise.all([
-    tracker.track('step_hint', { stepId: 'step-1' }),
-    tracker.track('step_retry', { stepId: 'step-1' }),
+    tracker.track('step_hint', { stepId: 'twist' }),
+    tracker.track('step_retry', { stepId: 'twist' }),
   ]);
 
   assert.deepEqual(fixture.readQueue(), events);
@@ -654,8 +662,8 @@ test('coordinates failed writes across tracker instances sharing one storage', a
   }).tracker;
 
   const events = await Promise.all([
-    first.track('step_hint', { stepId: 'observe' }),
-    second.track('step_retry', { stepId: 'observe' }),
+    first.track('step_hint', { stepId: 'twist' }),
+    second.track('step_retry', { stepId: 'twist' }),
   ]);
 
   assert.deepEqual(fixture.readQueue(), events);
@@ -683,8 +691,8 @@ test('coordinates different storage wrappers that share the same backing queue',
   }).tracker;
 
   const events = await Promise.all([
-    first.track('step_hint', { stepId: 'observe' }),
-    second.track('step_retry', { stepId: 'observe' }),
+    first.track('step_hint', { stepId: 'twist' }),
+    second.track('step_retry', { stepId: 'twist' }),
   ]);
 
   assert.deepEqual(backing.get('goldFoilEventQueue'), events);
@@ -716,7 +724,7 @@ test('does not let a flush snapshot delete an event queued by another tracker in
 
   const flushPromise = flushing.flush();
   await started;
-  const trackPromise = tracking.track('step_hint', { stepId: 'observe' });
+  const trackPromise = tracking.track('step_hint', { stepId: 'twist' });
   await Promise.resolve();
   await Promise.resolve();
   releaseTransport();

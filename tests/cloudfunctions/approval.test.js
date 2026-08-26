@@ -18,9 +18,11 @@ function confirmedRouteReplacement(overrides = {}) {
     displayName: '制箔工艺路线',
     banner: '专业审核通过的制箔数字体验',
     steps: [
-      { id: 'observe', order: 1, adapter: 'select', title: '认识制箔材料与工具' },
-      { id: 'motion', order: 2, adapter: 'continuous-drag', title: '体验关键制箔动作' },
-      { id: 'inspect', order: 3, adapter: 'inspect', title: '观察并检查金箔效果' },
+      { id: 'twist', order: 1, adapter: 'cut', title: '做捻子' },
+      { id: 'pack', order: 2, adapter: 'place', title: '装家生' },
+      { id: 'hammer', order: 3, adapter: 'hammer', title: '打箔' },
+      { id: 'inspect', order: 4, adapter: 'inspect', title: '出具检查' },
+      { id: 'finish', order: 5, adapter: 'finish', title: '切箔成叶' },
     ],
     ...overrides,
   };
@@ -49,9 +51,11 @@ function candidateRoute(overrides = {}) {
     allowedEnvironments: ['development', 'trial'],
     banner: '候选示意，尚未经专业确认',
     steps: [
-      { id: 'observe', order: 1, adapter: 'select', title: '认识材料与目标（候选示意）' },
-      { id: 'motion', order: 2, adapter: 'continuous-drag', title: '模拟关键动作（候选示意）' },
-      { id: 'inspect', order: 3, adapter: 'inspect', title: '检查数字结果（候选示意）' },
+      { id: 'twist', order: 1, adapter: 'cut', title: '做捻子（候选示意）' },
+      { id: 'pack', order: 2, adapter: 'place', title: '装家生（候选示意）' },
+      { id: 'hammer', order: 3, adapter: 'hammer', title: '打箔（候选示意）' },
+      { id: 'inspect', order: 4, adapter: 'inspect', title: '出具检查（候选示意）' },
+      { id: 'finish', order: 5, adapter: 'finish', title: '切箔成叶（候选示意）' },
     ],
     ...overrides,
   };
@@ -82,38 +86,36 @@ test('existing placeholder contributes only stable route policy fields', () => {
   });
 });
 
-test('accepts only the analytics-compatible named and numbered confirmed step IDs', () => {
+test('accepts the exact analytics-compatible five-step route contract', () => {
   const candidate = { routeId: 'foil_making_candidate', contentItemId: 'content-foil-making' };
-  for (const stepIds of [
-    ['observe', 'motion', 'inspect'],
-    ['step-1', 'step-10', 'step-999'],
-  ]) {
-    const steps = confirmedRouteReplacement().steps.map((step, index) => ({
-      ...step,
-      id: stepIds[index],
-    }));
-    const confirmed = buildConfirmedRoute(
-      candidate,
-      reviewedContent({ confirmedRoute: confirmedRouteReplacement({ steps }) }),
-      candidateRoute(),
-      approvalAudit(),
-    );
+  const confirmed = buildConfirmedRoute(
+    candidate,
+    reviewedContent(),
+    candidateRoute(),
+    approvalAudit(),
+  );
 
-    assert.deepEqual(confirmed.steps.map(({ id }) => id), stepIds);
-    assert.equal(validateRoute(confirmed).status, 'confirmed');
-  }
+  assert.deepEqual(confirmed.steps.map(({ id, order, adapter }) => ({ id, order, adapter })), [
+    { id: 'twist', order: 1, adapter: 'cut' },
+    { id: 'pack', order: 2, adapter: 'place' },
+    { id: 'hammer', order: 3, adapter: 'hammer' },
+    { id: 'inspect', order: 4, adapter: 'inspect' },
+    { id: 'finish', order: 5, adapter: 'finish' },
+  ]);
+  assert.equal(validateRoute(confirmed).status, 'confirmed');
 });
 
-test('rejects internal, arbitrary, uppercase, and out-of-range confirmed step IDs', () => {
+test('rejects legacy, arbitrary, uppercase, and reordered confirmed step IDs', () => {
   const candidate = { routeId: 'foil_making_candidate', contentItemId: 'content-foil-making' };
   for (const stepId of [
     'internal_placeholder',
+    'observe',
+    'motion',
+    'step-1',
     'hammering',
-    'Observe',
+    'Twist',
     'STEP-1',
-    'step-0',
-    'step-01',
-    'step-1000',
+    'finish',
   ]) {
     const steps = confirmedRouteReplacement().steps.map((step, index) => (
       index === 0 ? { ...step, id: stepId } : step
@@ -136,7 +138,7 @@ test('rejects coercible confirmed step IDs without invoking coercion hooks', () 
   const coercibleStepId = {
     toString() {
       coercions += 1;
-      return 'observe';
+      return 'twist';
     },
   };
   const steps = confirmedRouteReplacement().steps.map((step, index) => (
@@ -203,11 +205,9 @@ test('accepts related professional copy without applying loose marker substrings
       confirmedRoute: confirmedRouteReplacement({
         displayName: '候选纹样研究成果',
         banner: '内容已经专业确认并完成审核',
-        steps: [
-          { id: 'observe', order: 1, adapter: 'select', title: '认识制箔材料与工具' },
-          { id: 'motion', order: 2, adapter: 'continuous-drag', title: '体验关键制箔动作' },
-          { id: 'inspect', order: 3, adapter: 'inspect', title: '记录 preinternal_placeholderpost 术语' },
-        ],
+        steps: confirmedRouteReplacement().steps.map((step, index) => (
+          index === 4 ? { ...step, title: '记录 preinternal_placeholderpost 术语' } : step
+        )),
       }),
     }),
     candidateRoute(),
@@ -230,12 +230,12 @@ test('rejects missing, malformed, and out-of-bounds confirmed route replacements
     confirmedRouteReplacement({ displayName: '名'.repeat(81) }),
     confirmedRouteReplacement({ banner: ' ' }),
     confirmedRouteReplacement({ banner: '文'.repeat(201) }),
-    confirmedRouteReplacement({ steps: validSteps.slice(0, 2) }),
+    confirmedRouteReplacement({ steps: validSteps.slice(0, 4) }),
     confirmedRouteReplacement({
-      steps: validSteps.map((step, index) => ({ ...step, order: index === 2 ? 2 : step.order })),
+      steps: validSteps.map((step, index) => ({ ...step, order: index === 4 ? 4 : step.order })),
     }),
     confirmedRouteReplacement({
-      steps: validSteps.map((step, index) => ({ ...step, id: index === 2 ? 'observe' : step.id })),
+      steps: validSteps.map((step, index) => ({ ...step, id: index === 4 ? 'twist' : step.id })),
     }),
     confirmedRouteReplacement({
       steps: validSteps.map((step, index) => (
@@ -419,7 +419,7 @@ test('fails closed for missing, malformed, wrong, or non-placeholder route docum
     candidateRoute({ allowedEnvironments: ['development', 'production'] }),
     candidateRoute({ displayName: '' }),
     candidateRoute({ banner: '' }),
-    candidateRoute({ steps: candidateRoute().steps.slice(0, 2) }),
+    candidateRoute({ steps: candidateRoute().steps.slice(0, 4) }),
     candidateRoute({ rawOpenid: 'forbidden' }),
   ];
 

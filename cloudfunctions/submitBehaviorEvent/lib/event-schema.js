@@ -7,13 +7,13 @@ const MAX_COUNTER = 100;
 const ANONYMOUS_ID_PATTERN = /^anon_[a-f0-9]{32}$/;
 const EVENT_ID_PATTERN = /^event_[a-f0-9]{16,64}$/;
 const SESSION_ID_PATTERN = /^session_[a-f0-9]{16,64}$/;
-const STEP_ID_PATTERN = /^(?:observe|motion|inspect|step-[1-9][0-9]{0,2})$/;
+const STEP_ID_PATTERN = /^(?:twist|pack|hammer|inspect|finish)$/;
 
 const ALLOWED_ROUTE_IDS = new Set(['foil_making_candidate']);
 const ALLOWED_ENVIRONMENTS = new Set(['trial', 'test']);
 const ALLOWED_TEST_ACCOUNT_TAGS = new Set(['team', 'teacher', 'invitee', null]);
 const ALLOWED_NETWORK_TYPES = new Set(['wifi', '2g', '3g', '4g', '5g', 'none', 'unknown']);
-const ALLOWED_ADAPTERS = new Set(['xr-frame', 'continuous-drag', 'select', 'inspect']);
+const ALLOWED_ADAPTERS = new Set(['cut', 'place', 'hammer', 'inspect', 'finish']);
 const ALLOWED_REASONS = new Set([
   'user_exit',
   'user_skip',
@@ -22,6 +22,8 @@ const ALLOWED_REASONS = new Set([
   'timeout',
 ]);
 const ALLOWED_ACTIONS = new Set(['retry', 'home', 'archive', 'activity', 'share']);
+const ALLOWED_DECISIONS = new Set(['rehammer', 'accept']);
+const ALLOWED_QUALITIES = new Set(['perfect', 'minor', 'obvious']);
 const ALLOWED_EVENT_NAMES = new Set([
   'home_cta_click',
   'experience_start',
@@ -31,6 +33,7 @@ const ALLOWED_EVENT_NAMES = new Set([
   'step_hint',
   'step_retry',
   'step_complete',
+  'inspection_decision',
   'experience_exit',
   'experience_complete',
   'result_action',
@@ -43,6 +46,8 @@ const ALLOWED_PROPERTY_KEYS = new Set([
   'elapsedMs',
   'hintCount',
   'retryCount',
+  'decision',
+  'quality',
 ]);
 
 const EVENT_CONTRACT = Object.freeze({
@@ -55,6 +60,8 @@ const EVENT_CONTRACT = Object.freeze({
   adapters: Object.freeze([...ALLOWED_ADAPTERS]),
   reasons: Object.freeze([...ALLOWED_REASONS]),
   actions: Object.freeze([...ALLOWED_ACTIONS]),
+  decisions: Object.freeze([...ALLOWED_DECISIONS]),
+  qualities: Object.freeze([...ALLOWED_QUALITIES]),
   eventNames: Object.freeze([...ALLOWED_EVENT_NAMES]),
   propertyKeys: Object.freeze([...ALLOWED_PROPERTY_KEYS]),
   maxElapsedMs: MAX_ELAPSED_MS,
@@ -118,6 +125,8 @@ const PROPERTY_VALIDATORS = Object.freeze({
   elapsedMs: (value) => isBoundedInteger(value, MAX_ELAPSED_MS),
   hintCount: (value) => isBoundedInteger(value, MAX_COUNTER),
   retryCount: (value) => isBoundedInteger(value, MAX_COUNTER),
+  decision: (value) => ALLOWED_DECISIONS.has(value),
+  quality: (value) => ALLOWED_QUALITIES.has(value),
 });
 
 function copyDeviceCapabilities(value) {

@@ -11,14 +11,16 @@ const valid = {
   allowedEnvironments: ['development', 'trial'],
   banner: '候选示意，尚未经专业确认',
   steps: [
-    { id: 'observe', order: 1, adapter: 'select', title: '认识材料与目标（候选示意）' },
-    { id: 'motion', order: 2, adapter: 'continuous-drag', title: '模拟关键动作（候选示意）' },
-    { id: 'inspect', order: 3, adapter: 'inspect', title: '检查数字结果（候选示意）' },
+    { id: 'twist', order: 1, adapter: 'cut', title: '做捻子（候选示意）' },
+    { id: 'pack', order: 2, adapter: 'place', title: '装家生（候选示意）' },
+    { id: 'hammer', order: 3, adapter: 'hammer', title: '打箔（候选示意）' },
+    { id: 'inspect', order: 4, adapter: 'inspect', title: '出具检查（候选示意）' },
+    { id: 'finish', order: 5, adapter: 'finish', title: '切箔成叶（候选示意）' },
   ],
 };
 
-test('accepts exactly three ordered internal candidate steps', () => {
-  assert.equal(validateRoute(valid).steps.length, 3);
+test('accepts the ordered five-step internal candidate route', () => {
+  assert.equal(validateRoute(valid).steps.length, 5);
 });
 
 test('rejects a route with duplicate or unordered step order', () => {
@@ -65,7 +67,7 @@ test('rejects incomplete step objects with RouteConfigError', () => {
   ];
 
   for (const step of invalidSteps) {
-    const route = { ...valid, steps: [step, valid.steps[1], valid.steps[2]] };
+    const route = { ...valid, steps: valid.steps.map((candidate, index) => (index === 0 ? step : candidate)) };
     assert.throws(() => validateRoute(route), RouteConfigError);
   }
 });

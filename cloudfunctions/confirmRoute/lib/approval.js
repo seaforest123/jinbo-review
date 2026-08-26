@@ -5,12 +5,18 @@ const CONTENT_ITEM_ID_PATTERN = /^[a-z0-9][a-z0-9_-]{0,127}$/;
 const CONTENT_VERSION_PATTERN = /^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$/;
 const ALLOWED_ROUTE_IDS = new Set(['foil_making_candidate']);
 const ALLOWED_ENVIRONMENTS = new Set(['development', 'trial', 'production']);
-const ALLOWED_ADAPTERS = new Set(['select', 'continuous-drag', 'inspect', 'xr-frame']);
+const ROUTE_STEP_CONTRACT = Object.freeze([
+  Object.freeze({ id: 'twist', order: 1, adapter: 'cut' }),
+  Object.freeze({ id: 'pack', order: 2, adapter: 'place' }),
+  Object.freeze({ id: 'hammer', order: 3, adapter: 'hammer' }),
+  Object.freeze({ id: 'inspect', order: 4, adapter: 'inspect' }),
+  Object.freeze({ id: 'finish', order: 5, adapter: 'finish' }),
+]);
 const CANDIDATE_KEYS = ['routeId', 'contentItemId'];
 const AUDIT_KEYS = ['reviewerAnonymousId', 'approvedAt'];
 const STEP_KEYS = ['id', 'order', 'adapter', 'title'];
 const CONFIRMED_ROUTE_KEYS = ['displayName', 'banner', 'steps'];
-const STEP_ID_PATTERN = /^(?:observe|motion|inspect|step-[1-9][0-9]{0,2})$/;
+const STEP_ID_PATTERN = /^(?:twist|pack|hammer|inspect|finish)$/;
 const APPROVAL_CONTRACT = Object.freeze({
   patterns: Object.freeze({
     stepId: STEP_ID_PATTERN.source,
@@ -167,28 +173,23 @@ function readRouteDataProperties(existingRoute) {
 }
 
 function copyAndValidateSteps(steps) {
-  if (!Array.isArray(steps) || steps.length !== 3) {
+  if (!Array.isArray(steps) || steps.length !== ROUTE_STEP_CONTRACT.length) {
     throw new TypeError('invalid route steps');
   }
-  const copied = steps.map((step) => {
+  const copied = steps.map((step, index) => {
     const snapshot = readExactDataProperties(step, STEP_KEYS);
+    const expected = ROUTE_STEP_CONTRACT[index];
     if (
       !snapshot
-      || !hasText(snapshot.id)
-      || !Number.isInteger(snapshot.order)
-      || !ALLOWED_ADAPTERS.has(snapshot.adapter)
+      || snapshot.id !== expected.id
+      || snapshot.order !== expected.order
+      || snapshot.adapter !== expected.adapter
       || !hasText(snapshot.title)
     ) {
       throw new TypeError('invalid route step');
     }
     return Object.freeze({ ...snapshot });
   });
-  if (copied.map(({ order }) => order).join(',') !== '1,2,3') {
-    throw new TypeError('invalid route step order');
-  }
-  if (new Set(copied.map(({ id }) => id)).size !== 3) {
-    throw new TypeError('invalid route step ids');
-  }
   return Object.freeze(copied);
 }
 
@@ -210,16 +211,18 @@ function validateConfirmedRouteReplacement(contentItem) {
   ) {
     throw new TypeError('invalid confirmed route banner');
   }
-  const steps = readExactDataArray(replacement.steps, 3);
+  const steps = readExactDataArray(replacement.steps, ROUTE_STEP_CONTRACT.length);
   if (!steps) throw new TypeError('invalid confirmed route steps');
-  const copiedSteps = steps.map((step) => {
+  const copiedSteps = steps.map((step, index) => {
     const snapshot = readExactDataProperties(step, STEP_KEYS);
+    const expected = ROUTE_STEP_CONTRACT[index];
     if (
       !snapshot
       || typeof snapshot.id !== 'string'
       || !STEP_ID_PATTERN.test(snapshot.id)
-      || !Number.isInteger(snapshot.order)
-      || !ALLOWED_ADAPTERS.has(snapshot.adapter)
+      || snapshot.id !== expected.id
+      || snapshot.order !== expected.order
+      || snapshot.adapter !== expected.adapter
       || !hasBoundedText(snapshot.title, MAX_STEP_TITLE_LENGTH)
       || hasForbiddenCopyMarker(snapshot.title)
     ) {
@@ -227,12 +230,6 @@ function validateConfirmedRouteReplacement(contentItem) {
     }
     return Object.freeze({ ...snapshot });
   });
-  if (copiedSteps.map(({ order }) => order).join(',') !== '1,2,3') {
-    throw new TypeError('invalid confirmed route step order');
-  }
-  if (new Set(copiedSteps.map(({ id }) => id)).size !== 3) {
-    throw new TypeError('invalid confirmed route step ids');
-  }
   return Object.freeze({
     displayName: replacement.displayName,
     banner: replacement.banner,

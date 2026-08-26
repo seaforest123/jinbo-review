@@ -20,7 +20,7 @@ test('creates one anonymous session tracker and forwards allowed experience even
   });
 
   await analytics.track('experience_start', {});
-  await analytics.track('step_start', { stepId: 'observe', adapter: 'select' });
+  await analytics.track('step_start', { stepId: 'twist', adapter: 'cut' });
   assert.equal(calls.length, 2);
   assert.equal(calls[0].anonymousId, anonymousId);
   assert.equal(calls[0].sessionId, calls[1].sessionId);

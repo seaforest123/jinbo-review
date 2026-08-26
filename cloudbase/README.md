@@ -10,12 +10,12 @@
 
 `seed-data/` 是可复核的离线候选数据包，不含任何真实环境标识或密钥。仅在已创建的专用内测环境中，按以下顺序导入：
 
-1. `app_config.json`：两条候选路线；同时保留 CloudBase 查询使用的 `allowedEnvironment: "trial"` 和客户端路线校验使用的 `allowedEnvironments: ["development", "trial"]`。
-2. `content_items.json`：两条通用候选内容记录；不含 `confirmedRoute`，不得将其改写为已确认内容。
+1. `app_config.json`：一条五步制箔候选路线；同时保留 CloudBase 查询使用的 `allowedEnvironment: "trial"` 和客户端路线校验使用的 `allowedEnvironments: ["development", "trial"]`。
+2. `content_items.json`：一条通用候选内容记录；不含 `confirmedRoute`，不得将其改写为已确认内容。
 3. `media_assets.json`：仅本地候选占位路径；导入前须替换为经专业审核且授权可用的素材，或保持不可公开状态。
 4. `behavior_events.json`：必须保持空数组；行为事件只能由 `submitBehaviorEvent` 云函数在运行时写入。
 
-导入后复核：集合名恰好四个、三类可读取记录均为 `allowedEnvironment == "trial"` 与 `reviewStatus == "internal_approved"`、两条路线仍为 `internal_placeholder`、没有 `confirmedRoute`、没有 OpenID、UnionID、联系方式、真实姓名、AppID、环境 ID、盐值或审批人 ID。不得把种子包视作专业审核结果或正式发布数据。
+导入后复核：集合名恰好四个、三类可读取记录均为 `allowedEnvironment == "trial"` 与 `reviewStatus == "internal_approved"`、五步制箔路线仍为 `internal_placeholder`、没有 `confirmedRoute`、没有 OpenID、UnionID、联系方式、真实姓名、AppID、环境 ID、盐值或审批人 ID。不得把种子包视作专业审核结果或正式发布数据。
 
 经用户批准的冲突解决采用方案 A（Option A）：`behavior_events` 的 client read/create/update/delete=false。客户端对该集合没有任何直接权限，所有正式事件写入只能通过 `submitBehaviorEvent` 云函数的服务端事务完成。`app_config`、`content_items`、`media_assets` 只允许读取已审核且 `allowedEnvironment == 'trial'` 的记录，客户端写入始终关闭；`confirmRoute` 是唯一专业审批写入口。
 
@@ -50,14 +50,16 @@ CloudBase 函数权限规则只能约束客户端 SDK 的 `callFunction` 调用�
   "displayName": "已审核路线名称",
   "banner": "已审核路线说明",
   "steps": [
-    { "id": "observe", "order": 1, "adapter": "select", "title": "已审核步骤一" },
-    { "id": "motion", "order": 2, "adapter": "continuous-drag", "title": "已审核步骤二" },
-    { "id": "inspect", "order": 3, "adapter": "inspect", "title": "已审核步骤三" }
+    { "id": "twist", "order": 1, "adapter": "cut", "title": "已审核的做捻子名称" },
+    { "id": "pack", "order": 2, "adapter": "place", "title": "已审核的装家生名称" },
+    { "id": "hammer", "order": 3, "adapter": "hammer", "title": "已审核的打箔名称" },
+    { "id": "inspect", "order": 4, "adapter": "inspect", "title": "已审核的出具检查名称" },
+    { "id": "finish", "order": 5, "adapter": "finish", "title": "已审核的切箔成叶名称" }
   ]
 }
 ```
 
-`displayName` 最长 80 字符，`banner` 最长 200 字符；每个 step 必须精确包含 `id/order/adapter/title`，`id` 必须匹配 `/^(?:observe|motion|inspect|step-[1-9][0-9]{0,2})$/`，即只能是 `observe`、`motion`、`inspect` 或无前导零的 `step-1` 至 `step-999`，`title` 最长 120 字符。步骤必须恰好三个、顺序为 1/2/3、ID 唯一，adapter 只能是 `select`、`continuous-drag`、`inspect` 或 `xr-frame`。所有文本须为无首尾空白的非空字符串。
+`displayName` 最长 80 字符，`banner` 最长 200 字符；每个 step 必须精确包含 `id/order/adapter/title`，`id` 必须匹配 `/^(?:twist|pack|hammer|inspect|finish)$/`。步骤必须恰好五个，并保持上例固定的 ID、顺序和 adapter；专业审核只能替换标题等展示文案，不能改变页面状态机依赖的运行时标识。`title` 最长 120 字符，所有文本须为无首尾空白的非空字符串。
 
 已审核替换文案不得包含“候选示意”“尚未经专业确认”“待专业确认”“内部测试”，也不得包含作为独立标记的 `internal_placeholder`（Latin 大小写不敏感）。不得只把 `reviewStatus` 改为 `reviewed` 而遗漏 `confirmedRoute`，也不得把 placeholder 文案或素材字段复制进该对象。
 

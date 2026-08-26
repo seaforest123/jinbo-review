@@ -15,6 +15,8 @@ const {
 const {
   APPROVAL_CONTRACT: approvalContract,
 } = require('../../cloudfunctions/confirmRoute/lib/approval');
+const routes = require('../../miniprogram/data/routes');
+const { createExperienceController } = require('../../miniprogram/domain/experience-controller');
 
 const ANONYMOUS_ID = `anon_${'a'.repeat(32)}`;
 
@@ -32,7 +34,7 @@ function validEvent(overrides = {}) {
     delivery: 'at-least-once',
     name: 'step_complete',
     occurredAt: '2026-07-20T01:02:03.000Z',
-    properties: { stepId: 'step-1', elapsedMs: 1200, hintCount: 0, retryCount: 0 },
+    properties: { stepId: 'twist', adapter: 'cut', elapsedMs: 1200, hintCount: 0, retryCount: 0 },
     ...overrides,
   };
 }
@@ -44,7 +46,7 @@ test('exports an exact client/server contract snapshot to prevent deployment-cop
 });
 
 test('keeps approval and both independently deployed event validators on the exact step ID pattern', () => {
-  const expectedPattern = '^(?:observe|motion|inspect|step-[1-9][0-9]{0,2})$';
+  const expectedPattern = '^(?:twist|pack|hammer|inspect|finish)$';
 
   assert.equal(approvalContract.patterns.stepId, expectedPattern);
   assert.equal(approvalContract.patterns.stepId, clientContract.patterns.stepId);
@@ -53,7 +55,7 @@ test('keeps approval and both independently deployed event validators on the exa
   assert.ok(Object.isFrozen(approvalContract.patterns));
 });
 
-test('accepts and normalizes a real Task 6 client event', async () => {
+test('accepts and normalizes a real five-step client event', async () => {
   let sent;
   const tracker = createEventTracker({
     storage: { get: () => undefined, set: () => undefined },
@@ -74,7 +76,7 @@ test('accepts and normalizes a real Task 6 client event', async () => {
     },
   });
 
-  await tracker.track('step_complete', { stepId: 'step-1', elapsedMs: 1200 });
+  await tracker.track('step_complete', { stepId: 'twist', adapter: 'cut', elapsedMs: 1200 });
   const normalized = validateEventEnvelope(sent);
 
   assert.deepEqual(normalized, sent);
@@ -84,7 +86,7 @@ test('accepts and normalizes a real Task 6 client event', async () => {
   assert.ok(Object.isFrozen(normalized.properties));
 });
 
-test('server revalidates the closed Task 6 event shape and nested data properties', () => {
+test('server revalidates the closed five-step event shape and nested data properties', () => {
   const extraTopLevel = validEvent({ openid: 'caller-controlled-openid' });
   const extraCapability = validEvent({
     deviceCapabilities: {
@@ -154,7 +156,7 @@ test('rejects non-string anonymousId and sessionId without invoking coercion hoo
   }
 });
 
-test('accepts every Task 6 event name while preserving exact source semantics', () => {
+test('accepts every five-step event name while preserving exact source semantics', () => {
   for (const name of serverContract.eventNames) {
     assert.equal(validateEventEnvelope(validEvent({ name })).name, name);
   }
@@ -162,4 +164,66 @@ test('accepts every Task 6 event name while preserving exact source semantics', 
     validateEventEnvelope(validEvent({ environment: 'trial', source: 'internal_trial' })).source,
     'internal_trial',
   );
+});
+
+test('delivers every real five-step controller event through the client and server contracts', async () => {
+  const sent = [];
+  const pending = [];
+  let rawEventId = 0;
+  let currentTime = 0;
+  const tracker = createEventTracker({
+    storage: { get: () => undefined, set: () => undefined },
+    transport: (event) => {
+      sent.push(validateEventEnvelope(event));
+      return { acknowledged: true };
+    },
+    clock: () => new Date('2026-07-20T01:02:03.000Z'),
+    idFactory: () => `${(++rawEventId).toString(16).padStart(16, '0')}`,
+    context: {
+      anonymousId: ANONYMOUS_ID,
+      sessionId: 'session_abcdef0123456789',
+      routeId: 'foil_making_candidate',
+      appVersion: runtimeConfig.appVersion,
+      deviceCapabilities: { xrFrame: false, continuousDrag: true, networkType: 'wifi' },
+      testAccountTag: 'team',
+      environment: 'test',
+    },
+  });
+  const controller = createExperienceController({
+    routes,
+    routeId: 'foil_making_candidate',
+    capabilities: { xrFrame: false, continuousDrag: true, networkType: 'wifi' },
+    now: () => { currentTime += 1000; return currentTime; },
+    track: (name, properties) => {
+      const delivery = tracker.track(name, properties);
+      pending.push(delivery);
+      return delivery;
+    },
+  });
+
+  controller.start();
+  controller.endIntro();
+  for (let index = 0; index < 5; index += 1) controller.assistStep();
+  await Promise.all(pending);
+
+  const expectedSteps = [
+    { stepId: 'twist', adapter: 'cut' },
+    { stepId: 'pack', adapter: 'place' },
+    { stepId: 'hammer', adapter: 'hammer' },
+    { stepId: 'inspect', adapter: 'inspect' },
+    { stepId: 'finish', adapter: 'finish' },
+  ];
+  assert.deepEqual(
+    sent.filter(({ name }) => name === 'step_start').map(({ properties }) => properties),
+    expectedSteps,
+  );
+  assert.deepEqual(
+    sent.filter(({ name }) => name === 'step_complete').map(({ properties }) => properties),
+    expectedSteps,
+  );
+  const decision = sent.find(({ name }) => name === 'inspection_decision');
+  assert.equal(decision.properties.decision, 'accept');
+  assert.ok(clientContract.qualities.includes(decision.properties.quality));
+  const completion = sent.find(({ name }) => name === 'experience_complete');
+  assert.ok(clientContract.qualities.includes(completion.properties.quality));
 });

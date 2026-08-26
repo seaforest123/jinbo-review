@@ -27,7 +27,7 @@ function validEvent(overrides = {}) {
     delivery: 'at-least-once',
     name: 'step_complete',
     occurredAt: '2026-07-20T01:02:03.000Z',
-    properties: { stepId: 'step-1', elapsedMs: 1200 },
+    properties: { stepId: 'twist', elapsedMs: 1200 },
     ...overrides,
   };
 }
@@ -111,7 +111,7 @@ function createTransactionalDatabase({ pauseFirstTransaction = false } = {}) {
 test('canonicalizes object key order and hashes the complete envelope deterministically', () => {
   const event = validEvent();
   const reordered = {
-    properties: { elapsedMs: 1200, stepId: 'step-1' },
+    properties: { elapsedMs: 1200, stepId: 'twist' },
     occurredAt: event.occurredAt,
     name: event.name,
     delivery: event.delivery,
@@ -318,7 +318,7 @@ test('acknowledges a cross-restart replay of the same canonical payload without 
   const event = validEvent();
 
   assert.deepEqual(await firstStore.submit(event), { acknowledged: true });
-  assert.deepEqual(await restartedStore.submit({ ...event, properties: { elapsedMs: 1200, stepId: 'step-1' } }), {
+  assert.deepEqual(await restartedStore.submit({ ...event, properties: { elapsedMs: 1200, stepId: 'twist' } }), {
     acknowledged: true,
   });
   assert.equal(fixture.records.size, 1);
