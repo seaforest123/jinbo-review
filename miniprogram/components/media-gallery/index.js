@@ -97,6 +97,11 @@ Component({
       this.setData({ activeVideoId: '', activeVideoSource: '', activeVideoPoster: '' });
     },
 
+    handlePlaybackError() {
+      this.setData({ activeVideoId: '', activeVideoSource: '', activeVideoPoster: '' });
+      wx.showToast({ title: '视频加载失败，请稍后重试', icon: 'none' });
+    },
+
     goBack() {
       wx.navigateBack({ delta: 1 });
     },

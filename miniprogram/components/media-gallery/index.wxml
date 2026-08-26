@@ -34,7 +34,7 @@
     <view class="player-mask" bindtap="closePlayer"></view>
     <view class="player-panel">
       <view class="player-heading"><text>正在播放</text><button bindtap="closePlayer" aria-label="关闭播放器">×</button></view>
-      <video-player class="video-player" src="{{activeVideoSource}}" poster="{{activeVideoPoster}}" height="390rpx" controls autoplay show-center-play-btn></video-player>
+      <video-player class="video-player" src="{{activeVideoSource}}" poster="{{activeVideoPoster}}" height="390rpx" controls autoplay show-center-play-btn bind:error="handlePlaybackError"></video-player>
     </view>
   </view>
 </view>

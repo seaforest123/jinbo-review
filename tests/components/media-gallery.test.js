@@ -25,7 +25,7 @@ test('uses one gallery component for all media categories and playback', () => {
   }
   const definition = loadComponent();
   assert.equal(definition.properties.sectionId.value, '');
-  for (const method of ['playVideo', 'closePlayer', 'goBack']) assert.equal(typeof definition.methods[method], 'function');
+  for (const method of ['playVideo', 'closePlayer', 'handlePlaybackError', 'goBack']) assert.equal(typeof definition.methods[method], 'function');
   const markup = fs.readFileSync(path.join(componentRoot, 'index.wxml'), 'utf8');
   assert.match(markup, /class="video-cover video-cover-action" data-video-id="{{video.id}}" bindtap="playVideo"/);
   assert.match(markup, /<video-player/);
@@ -46,4 +46,26 @@ test('every video section carries a non-blank empty-state copy for the zero-vide
   const markup = fs.readFileSync(path.join(componentRoot, 'index.wxml'), 'utf8');
   assert.match(markup, /wx:if="\{\{!section\.videos\.length\}\}" class="empty-video-state"/);
   assert.match(markup, /<text>\{\{section\.emptyCopy\}\}<\/text>/);
+
+  const temporarilyEmptySection = { ...sections[0], videos: [] };
+  assert.equal(temporarilyEmptySection.videos.length, 0);
+  assert.notEqual(temporarilyEmptySection.emptyCopy.trim(), '');
+  assert.ok(listVideoSections()[0].videos.length > 0);
+});
+
+test('closes the player and shows a retry prompt after native video loading fails', () => {
+  const definition = loadComponent();
+  const updates = [];
+  const toasts = [];
+  const previousWx = global.wx;
+  global.wx = { showToast: (options) => toasts.push(options) };
+  try {
+    definition.methods.handlePlaybackError.call({ setData: (update) => updates.push(update) });
+  } finally {
+    if (previousWx === undefined) delete global.wx; else global.wx = previousWx;
+  }
+  assert.deepEqual(updates, [{ activeVideoId: '', activeVideoSource: '', activeVideoPoster: '' }]);
+  assert.deepEqual(toasts, [{ title: '视频加载失败，请稍后重试', icon: 'none' }]);
+  const markup = fs.readFileSync(path.join(componentRoot, 'index.wxml'), 'utf8');
+  assert.match(markup, /<video-player[^>]+bind:error="handlePlaybackError"/);
 });
