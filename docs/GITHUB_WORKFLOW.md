@@ -1,25 +1,37 @@
 # GitHub 协作与分支规范
 
-本仓库以 GitHub `main` 作为**经过验收的集成基准**，不以长期存在的单个开发分支储存所有开发历史；每次变更由 Git commit 保留记录。产品设计及审批约束以 `PRODUCT_DESIGN.md` 与 `AGENTS.md` 为准；多文件改动须履行其事先确认流程。
+本仓库以 GitHub `main` 作为已合并的正式代码基准，以 PR 和 Git 提交记录跟踪开发及交接；**已合并不等于微信开发者工具、真机或 CloudBase 已验收**。
 
-## 分支约定
-- `main`：仅存放经过评审与验证、已合并的代码；默认不直接提交或强推。
-- `codex/<task>`、`claude/<task>`、`chatgpt/<task>`：各自从最新 `main` 建立的**任务分支**，开发完成后通过 Pull Request 合并，必要时可删除远程任务分支。
-- 一项任务原则上一个分支；多人/多 AI 不同时写同一分支。重要开发前先同步 `main`，不要在未保存的工作区直接切换或拉取。
+本文件是 GitHub 协作操作规范，不能覆盖 `PRODUCT_DESIGN.md`（产品、视觉、需求）和 `AGENTS.md`（工程角色、事前审批、测试和验收）的现行约束。用户对具体范围的最新明确批准优先，仅在该范围有效。
 
-## 开发与合并
-1. 开工前先检查 `git status`，本地未提交改动先提交或安全暂存。
-2. 执行 `git fetch origin`，在 `main` 上执行 `git pull --ff-only origin main`；从最新 `main` 建立任务分支。
-3. 小步提交并推送任务分支，PR 写明目的、改动范围、测试结果和风险。
-4. 在 PR 中检查差异、运行项目适用的测试，再合并到 `main`。不使用 `git push --force` 覆盖协作分支。
-5. 合并后本地同步 `main`。遇到冲突时人工核对，不以强制覆盖代替冲突解决。
+## 分支与权限
 
-## 仓库基准引入的过渡阶段（2026-10-11 实查）
-- `main` 当前为初始代码基准（HEAD `4dc7dd33d0b8ba4955c185dacd0354bd7c3e696c`），**尚不包含完整小程序**；从 `main` 开始正式功能开发前须重新确认 PR #2 是否已合并。
-- `codex/seven-page-optimization`（HEAD `8ac7433f80656ba6acb3b5ca09424a9638d5fbb6`）保留原始 Codex 历史；`integration/codex-baseline-20261011`（HEAD `3f668b9d501d933f2458cfa24945e63c50fef1b1`）已用双父提交连接此前不相关的历史，PR #2 为待验收草稿，不能视为已完成合并。
-- [PR #4](https://github.com/seaforest123/jinbo-review/pull/4) 提议排除误跟踪的 `.claude/settings.local.json`；应在合入正式基准前审查该安全修复。PR #3（交接文档）和本 PR #1（协作规范）同样未进入 main。
-- **过渡阶段的任务可以基于整合分支提出审查 PR，但不得假装其已经进入 main。** 正式基准确认后，新任务统一从最新 main 建立分支。严禁强推、重置、删除 Codex 原分支。
-- 2026-10-11 GitHub API 返回 `main` `protected=false`；branch protection / ruleset 读取受权限或仓库功能限制。本文档不是保护规则；GitHub 上的真实限制须另行核验。
+- `main`：正式基准，仅通过 PR 提交，不直接推送、强推或删除。
+- `chatgpt/<task>`、`claude/<task>`、`codex/<task>`：分别为每个 AI 建立单任务分支，从最新 `main` 创建。一项任务原则上一个分支；不同 AI 不同时修改同一工作区或分支上的同一文件。
+- 特殊整合分支 `integration/codex-baseline-20261011` 用于历史迁移，PR #2 已正式合入 main；**后续正常开发不继续把该整合分支当默认基准**。
+- `codex/seven-page-optimization` 是原始开发历史，禁止删除、强推、重置；旧 Git 提交可追溯。
+- [Protect main Ruleset](https://github.com/seaforest123/jinbo-review/rules/24882306) 已 Active，目标为默认分支，要求 PR、禁止删除与强推、要求解决审查讨论。Required approvals 为 0；尚未强制 CI checks。新对话需实时核验，不能假定规则永不变化。
 
-## 建议的 GitHub 保护规则
-在 Settings → Rules → Rulesets 为 `main` 创建规则：要求 Pull Request 后才能合并、阻止强推和删除；待持续集成测试配置可靠后，再要求对应状态检查通过。管理员绕过权限需单独审视。
+## 标准流程
+
+1. 先读取远程 `main`、所有相关 PR、任务分支和状态；本地确认 `git status`，保留其他 AI 的未交接改动。先完整阅读 `PRODUCT_DESIGN.md` 和 `AGENTS.md`。
+2. 对涉及多文件或页面的任务，按 `AGENTS.md` 分析现状、拟改及不改文件，等用户明确确认后开始。不得自行新增功能、改产品布局、接口或依赖。
+3. 开发前 `git fetch origin`，同步本地 `main`（`git pull --ff-only origin main`），再创建任务分支。每个提交保持小范围、可追溯。
+4. 运行主项目测试与资源审计（参照 `AGENTS.md`）；检查变更 `git diff --check`，依据实际设备验收记录未验证项。严禁把历史基线数字冒充本次运行结果。
+5. 通过 PR 提交，写明任务、范围、准确测试结果、风险及审批证据；确认 CI 运行状态，审查通过后再合并。若项目要求人工验收但未完成，只能在用户明确批准验收口径时继续，且必须标记未验证。
+6. 每次完成任务须同步更新 `docs/PROJECT_HANDOFF.md`（同任务 PR 或独立文档 PR），记录 commit SHA、PR、检查证据、未完成工作、下一接手事项。若文档版本与 GitHub 实时状态不符，以远程 refs/PR 为准并修正文档。
+7. 合并后本地重新同步 `main`。严禁 `git push --force`，不覆盖未交接工作区；遇冲突逐文件审查，不采取强制覆盖。
+
+## CI 和主分支保护
+
+- 现有 `.github/workflows/baseline-validation.yml` 运行根目录 `tests/` 的 Node.js 测试、`npm run audit:assets` 和差异格式检查。
+- 应当检查每一个待合并 PR 的最新 GitHub Actions 运行结果。CI 成功不能替代微信开发者工具、iOS/Android 真机、CloudBase 或专业内容审核。
+- 在现有 CI 持续稳定后，可由仓库管理员审查后将对应 status check 加入 Ruleset 必选检查，避免将错误或缺失的检查锁死主分支。
+- 本地特殊权限文件、Token、Cookie 和密钥不得进入仓库或交接文档。公开历史中的旧文件不能仅靠新提交删除来消除泄露风险。
+
+## 交接文档入口
+
+- `PRODUCT_DESIGN.md`：产品与视觉事实来源。
+- `AGENTS.md`：项目工程协作与审批的约束。
+- `docs/PROJECT_HANDOFF.md`：跨对话最新工作状态摘要，接手时必须核对实时 GitHub。
+- 本文件：GitHub 分支和 PR 的标准操作规程。
