@@ -39,6 +39,13 @@
 - `main` 分支列表 `protected=false`；读取 branch protection 因连接器权限返回 403；读取 rulesets 因仓库功能限制返回 403。不能据此声称保护已经启用。
 - 依赖顺序：审查并合入安全修复 PR #4 → 在更新后的整合分支完成自动化与适用人工验收 → PR #2 获准后合并 main → 重新核对/合并 PR #3 和 #1，更新过期分支表述。以上均不自动视为已获产品或设计批准。
 
+## 1B. 2026-10-11 后续执行记录（实时核验）
+- main 已创建 Active Ruleset Protect main（ID 24882306），要求 PR、禁止强推及删除、要求解决审查讨论；最低 approvals 为 0；尚未要求 CI 状态检查。
+- PR #4 已合并至整合分支，merge SHA 0c4a6443e4895dd95f82002b501f61ea786d9e8a；从当前树移除 .claude/settings.local.json 并加入 gitignore，但原始历史仍可访问。
+- PR #5 已合并（849ae03325d727e7a66fae641dc5b5521f47a25a），建立 GitHub Actions 流水线。运行 38148805973 日志确认主项目 259/259 项测试通过、资源审计通过（package=1577635 bytes，videos=284362 bytes），但因浅克隆导致 git diff --check HEAD^ HEAD 失败，整个 job 失败。
+- PR #6 已合并（244f8a030929e9d48d5c803f594b5e277405549e），CI 检出深度改为 2；下一轮运行结果待确认。
+- PR #2 仍待正式验收，微信开发者工具、真机及 CloudBase 均未验证。
+
 ## 2. 当前阻塞与待办（按优先级）
 
 - [ ] P0：已静态检查 `.claude/settings.local.json` 并提出 PR #4 删除与忽略；待人工审查/合并，并评估历史中是否有需要轮换的凭据。
