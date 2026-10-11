@@ -49,6 +49,9 @@
 
 - 后续最新 CI [run 38148908157](https://github.com/seaforest123/jinbo-review/actions/runs/38148908157) 仍为 failure：主测试与资源审计均通过，`git diff --check HEAD^ HEAD` 已真正执行，并发现旧文档与云函数等基准引入文件存在 trailing whitespace / EOF blank line；不是运行环境问题。**不要因测试已通过而宣称 PR #2 具备全套验收证据。**需决定将这批历史格式问题作为专项最小修复，或以明确的基准例外政策处理，不能暗中跳过。
 
+
+- 已按明确批准完成格式专项修复 [PR #7](https://github.com/seaforest123/jinbo-review/pull/7)：在 9 个历史文件中修正尾随空白与多余 EOF 空行，Markdown 硬换行保留原语义。PR #7 的 [Actions run 38149182336](https://github.com/seaforest123/jinbo-review/actions/runs/38149182336) 主项目测试、资源审计、差异检查均通过；已通过 merge commit 5d42a7c390a6af80e7844b84945cc916c64c7f26 合入 integration 分支。PR #2 基准 HEAD 已更新为该 SHA，**需核对其新一轮 CI 运行后才能记为通过**。
+
 ## 2. 当前阻塞与待办（按优先级）
 
 - [ ] P0：已静态检查 `.claude/settings.local.json` 并提出 PR #4 删除与忽略；待人工审查/合并，并评估历史中是否有需要轮换的凭据。
