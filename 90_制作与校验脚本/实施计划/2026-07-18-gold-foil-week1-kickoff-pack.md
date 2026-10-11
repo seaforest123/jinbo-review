@@ -60,4 +60,3 @@
 - [ ] If LibreOffice is unavailable, export through Microsoft Word and rasterize with Poppler.
 - [ ] Inspect every page for clipping, overlap, blank pages, broken forms, and awkward wrapping.
 - [ ] Revise and repeat rendering until every page passes.
-
