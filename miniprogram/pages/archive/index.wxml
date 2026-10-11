@@ -1,0 +1,39 @@
+<view class="archive-page">
+  <view class="archive-intro" style="padding-top:{{navTopPadding}}px">
+    <view class="archive-kicker">JIN · BO / CRAFT ARCHIVE</view>
+    <view class="archive-title">金箔志</view>
+    <view class="archive-lead">把一次次亲手完成的工艺判断，留成可以回看的展签。</view>
+  </view>
+
+  <view wx:for="{{routes}}" wx:key="id" class="route-exhibit">
+    <view class="route-hero">
+      <image class="route-image" src="{{item.visual.path}}" mode="aspectFill" />
+      <view class="route-shade"></view>
+      <view class="route-copy">
+        <view class="route-name">{{item.displayName}}</view>
+        <view class="route-progress"><text>{{item.progress.completedCount}}</text> 次完整体验</view>
+      </view>
+    </view>
+
+    <view class="route-actions">
+      <button class="route-primary" data-route-id="{{item.id}}" bindtap="startExperience">从做捻子开始 <text>→</text></button>
+      <button class="route-secondary" data-route-id="{{item.id}}" bindtap="toggleFavorite">{{item.favorite ? '已收藏 · 取消' : '收藏此路线'}}</button>
+    </view>
+
+    <view class="knowledge-section">
+      <view class="section-kicker">FIVE CRAFT NOTES</view>
+      <view class="section-title">工艺知识卡</view>
+
+      <view class="knowledge-list">
+        <view wx:for="{{item.cards}}" wx:for-item="card" wx:key="id" class="knowledge-card">
+          <image class="card-image" src="{{card.visual.path}}" mode="aspectFill" />
+          <view class="card-copy">
+            <view class="card-index">0{{index + 1}}</view>
+            <view class="card-title">{{card.title}}</view>
+            <view class="card-description">{{card.description}}</view>
+          </view>
+        </view>
+      </view>
+    </view>
+  </view>
+</view>

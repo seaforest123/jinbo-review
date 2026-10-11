@@ -1,0 +1,10 @@
+[
+  {
+    "id": "candidate-media-foil-making",
+    "routeId": "foil_making_candidate",
+    "allowedEnvironment": "trial",
+    "reviewStatus": "internal_approved",
+    "path": "local://candidate/foil-making-placeholder",
+    "label": "候选路线本地占位素材"
+  }
+]

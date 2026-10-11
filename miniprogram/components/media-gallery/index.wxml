@@ -1,0 +1,40 @@
+<view class="category-page">
+  <view class="category-hero" style="margin-top:{{navTopPadding}}px">
+    <view class="hero-shape one"></view><view class="hero-shape two"></view>
+    <view class="eyebrow">{{section.eyebrow}}</view>
+    <view class="hero-title">{{section.title}}</view>
+    <view class="hero-copy">{{section.description}}</view>
+    <view wx:if="{{section.videos.length}}" class="section-notice">{{section.videos[0].notice}}</view>
+  </view>
+
+  <view class="video-content">
+    <view wx:if="{{!section.videos.length}}" class="empty-video-state">
+      <text>{{section.emptyCopy}}</text><small>授权完成后将在此展示</small>
+    </view>
+    <view wx:for="{{section.videos}}" wx:for-item="video" wx:key="id" class="video-card">
+      <view class="video-cover video-cover-action" data-video-id="{{video.id}}" bindtap="playVideo">
+        <image wx:if="{{video.source.posterPath}}" src="{{video.source.posterPath}}" mode="aspectFill" />
+        <view wx:else class="cover-placeholder"><text>影</text><view></view><view></view></view>
+        <view class="cover-gradient"></view>
+        <view class="duration">{{video.duration}}</view>
+        <view class="play-mark">▶</view>
+      </view>
+      <view class="video-body">
+        <view class="video-title">{{video.title}}</view>
+        <view class="video-description">{{video.description}}</view>
+      </view>
+    </view>
+  </view>
+
+  <view class="gallery-footer">
+    <button class="footer-link" bindtap="goBack">返回影像记录</button>
+  </view>
+
+  <view wx:if="{{activeVideoId}}" class="player-sheet">
+    <view class="player-mask" bindtap="closePlayer"></view>
+    <view class="player-panel">
+      <view class="player-heading"><text>正在播放</text><button bindtap="closePlayer" aria-label="关闭播放器">×</button></view>
+      <video-player class="video-player" src="{{activeVideoSource}}" poster="{{activeVideoPoster}}" height="390rpx" controls autoplay show-center-play-btn bind:error="handlePlaybackError"></video-player>
+    </view>
+  </view>
+</view>

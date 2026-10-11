@@ -1,0 +1,100 @@
+<view class="result-shell" style="padding-top:{{navTopPadding}}px">
+  <view class="result-glow"></view>
+  <view class="celebration-hero">
+    <view class="star-field">
+      <view wx:for="{{celebrationStars}}" wx:key="*this" class="gold-star star-{{index}}"></view>
+    </view>
+    <view class="completion-mark"><view class="mark-inner">成</view></view>
+    <view class="result-kicker">{{demoMode ? 'DEMO COMPLETE' : 'JOURNEY COMPLETE'}}</view>
+    <view class="title">{{demoMode ? '核心三步完成，金箔已经显影' : '一叶金光，已经落在你的手中'}}</view>
+    <view class="result-lead">{{demoMode ? '这是 90 秒演示结果，不会覆盖你的正常学习进度。' : '你完成的是数字化轻量体验，不代表已经掌握真实工艺。'}}</view>
+  </view>
+
+  <view wx:if="{{foilResult}}" class="foil-outcome">
+    <view class="outcome-copy">
+      <view class="result-kicker">YOUR ACTUAL FOIL</view>
+      <view class="report-title">{{foilQualityLabel}}</view>
+      <view class="outcome-note">合格覆盖 {{foilResult.metrics.coverage}}% · 风险格 {{foilResult.metrics.riskCount}} · {{demoMode ? '这是演示模式三道核心操作的结果' : '这是你前序操作留下的真实结果'}}</view>
+    </view>
+    <view class="result-foil quality-{{foilResult.metrics.quality}}">
+      <view wx:for="{{foilVisual}}" wx:key="id" class="result-patch {{item.state}}" style="left:{{item.left}}%;top:{{item.top}}%;{{item.surfaceStyle}}">
+        <view class="result-patch-sheen"></view><view class="result-patch-texture texture-{{item.seed}}"></view><view class="result-patch-flaw"></view>
+      </view>
+      <view class="result-foil-gloss"></view><view class="result-edge-light"></view>
+    </view>
+  </view>
+
+  <view class="report-card">
+    <view class="report-heading">
+      <view>
+        <view class="report-kicker">YOUR VISIT</view>
+        <view class="report-title">{{demoMode ? '演示报告' : '学习报告'}}</view>
+      </view>
+      <view class="report-duration">{{reportDuration}}</view>
+    </view>
+    <view class="jinling-stamp"><text>金陵</text><text>金箔</text></view>
+    <view class="report-path">
+      <view wx:for="{{knowledgeCards}}" wx:key="id" class="path-item {{item.completed ? 'is-complete' : ''}}">
+        <view class="path-dot">{{index + 1}}</view>
+        <view class="path-copy">
+          <view>{{item.title}}</view>
+          <text>{{item.demoPreset ? '演示预置状态' : item.completed ? '已完成互动' : '可再次学习'}}</text>
+        </view>
+      </view>
+    </view>
+    <view wx:if="{{demoMode}}" class="report-footnote">本次只记录打箔、检查和出箔三个演示环节；正常学习记录保持不变。</view>
+    <view wx:elif="{{report}}" class="report-footnote">提示 {{reportStats.hintCount}} 次 · 重试 {{reportStats.retryCount}} 次 · 状态：已完成，可再次练习</view>
+    <view wx:else class="report-footnote">学习报告暂不可用，你仍可再次体验。</view>
+  </view>
+
+  <view class="review-heading">
+    <view class="review-kicker">EXHIBIT NOTES</view>
+    <view class="review-title">回看学习节点</view>
+  </view>
+  <view class="review-scroll">
+    <view wx:for="{{knowledgeCards}}" wx:key="id" class="knowledge-card">
+      <image class="review-image" src="{{item.visual.path}}" mode="aspectFill" />
+      <view class="review-shade"></view>
+      <view class="card-number">0{{index + 1}}</view>
+      <view class="card-copy">
+        <view class="knowledge-title">{{item.title}}</view>
+        <view wx:if="{{item.completed}}" class="completion-tag">本次已完成 · 已完成互动</view>
+        <view class="card-description">{{item.description}}</view>
+        <view class="card-tip">{{item.observationTip}}</view>
+      </view>
+      <view class="knowledge-notice">{{item.notice}}</view>
+    </view>
+  </view>
+
+  <view class="share-card">
+    <view>
+      <view class="share-kicker">PASS THE GOLDEN LIGHT</view>
+      <view class="share-title">让更多人看见一叶金的来路</view>
+      <view class="share-copy">生成带有本次学习数据的专属海报，保存或转发给朋友。</view>
+    </view>
+    <button class="poster-button" bindtap="generateSharePoster">生成我的体验海报 <text>→</text></button>
+    <button class="friend-share-button" open-type="share">直接转发给朋友</button>
+  </view>
+
+  <button class="primary-button" bindtap="restartExperience">{{demoMode ? '再次演示' : '再体验一次'}} <text>→</text></button>
+  <view class="action-grid">
+    <button bindtap="openArchive">金箔志</button>
+    <button bindtap="openActivity">活动</button>
+    <button class="{{demoMode ? 'is-disabled' : ''}}" aria-disabled="{{demoMode}}" bindtap="openProgress">查看我的进度</button>
+    <button bindtap="goHome">返回首页</button>
+  </view>
+
+  <view wx:if="{{posterVisible}}" class="poster-overlay" catchtouchmove="noop">
+    <view class="poster-dialog">
+      <view class="poster-heading">
+        <view><view class="share-kicker">MY GOLD FOIL JOURNEY</view><view class="poster-title">我的体验海报</view></view>
+        <button class="poster-close" bindtap="closeSharePoster">×</button>
+      </view>
+      <canvas canvas-id="share-poster" class="share-poster-canvas"></canvas>
+      <image wx:if="{{posterPath}}" class="poster-preview" src="{{posterPath}}" mode="widthFix" />
+      <view wx:else class="poster-loading">正在把你的金箔旅程绘成海报…</view>
+      <button class="poster-save" disabled="{{!posterPath || posterSaving}}" bindtap="saveSharePoster">{{posterSaving ? '正在保存…' : '保存到相册'}}</button>
+      <view class="poster-tip">保存后可发布到朋友圈或发送给朋友</view>
+    </view>
+  </view>
+</view>

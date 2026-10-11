@@ -1,0 +1,15 @@
+.worktrees/
+.superpowers/
+project.config.json
+project.private.config.json
+miniprogram/config/runtime-config.local.js
+node_modules/
+cloudfunctions/**/node_modules/
+coverage/
+.tmp*/
+artifacts/
+/视频/
+/ZoabyU565S7H2ed86209e3dccf0fecaec342ca22e1d8.png
+
+# Machine-specific Claude tool permissions
+.claude/settings.local.json

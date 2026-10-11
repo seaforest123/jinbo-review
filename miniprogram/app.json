@@ -1,0 +1,31 @@
+{
+  "pages": [
+    "pages/home/index",
+    "pages/experience/index",
+    "pages/result/index",
+    "pages/archive/index",
+    "pages/activity/index",
+    "pages/progress/index",
+    "pages/media/index",
+    "pages/media/interviews/index",
+    "pages/media/process/index",
+    "pages/media/extended/index"
+  ],
+  "window": {
+    "navigationBarTitleText": "金箔数字轻体验"
+  },
+  "tabBar": {
+    "custom": true,
+    "color": "#8a7a63",
+    "selectedColor": "#f4d77b",
+    "backgroundColor": "#150d08",
+    "borderStyle": "black",
+    "list": [
+      { "pagePath": "pages/home/index", "text": "首页" },
+      { "pagePath": "pages/archive/index", "text": "金箔志" },
+      { "pagePath": "pages/media/index", "text": "影像记录" },
+      { "pagePath": "pages/activity/index", "text": "活动" }
+    ]
+  },
+  "style": "v2"
+}

@@ -1,0 +1,9 @@
+{
+  "name": "gold-foil-heritage-mini-program",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "test": "node --test",
+    "audit:assets": "node scripts/audit-mini-program-assets.js"
+  }
+}
