@@ -46,6 +46,9 @@
 - PR #6 已合并（244f8a030929e9d48d5c803f594b5e277405549e），CI 检出深度改为 2；下一轮运行结果待确认。
 - PR #2 仍待正式验收，微信开发者工具、真机及 CloudBase 均未验证。
 
+
+- 后续最新 CI [run 38148908157](https://github.com/seaforest123/jinbo-review/actions/runs/38148908157) 仍为 failure：主测试与资源审计均通过，`git diff --check HEAD^ HEAD` 已真正执行，并发现旧文档与云函数等基准引入文件存在 trailing whitespace / EOF blank line；不是运行环境问题。**不要因测试已通过而宣称 PR #2 具备全套验收证据。**需决定将这批历史格式问题作为专项最小修复，或以明确的基准例外政策处理，不能暗中跳过。
+
 ## 2. 当前阻塞与待办（按优先级）
 
 - [ ] P0：已静态检查 `.claude/settings.local.json` 并提出 PR #4 删除与忽略；待人工审查/合并，并评估历史中是否有需要轮换的凭据。
