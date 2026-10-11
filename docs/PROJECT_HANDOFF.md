@@ -28,9 +28,20 @@
 | PR #2 | 整合代码 → `main`，open draft | 先做测试和安全检查，仍不得声称验收通过 |
 | `main` 分支保护 | 未确认启用 | 由仓库管理者检查 GitHub Rulesets 是否实际生效 |
 
+
+## 1A. 2026-10-11 实时补充审计（仅静态检查）
+
+- 2026-10-11 GitHub 连接器复核：`main`=`4dc7dd33d0b8ba4955c185dacd0354bd7c3e696c`；整合分支=`3f668b9d501d933f2458cfa24945e63c50fef1b1`；Codex 原始分支=`8ac7433f80656ba6acb3b5ca09424a9638d5fbb6`。
+- PR #1 / #2 / #3 均为 open draft 且未合并；另外新建安全修复 [PR #4](https://github.com/seaforest123/jinbo-review/pull/4)，`chatgpt/remove-local-claude-config-20261011` → `integration/codex-baseline-20261011`，仍待审查合并。
+- 256 个 Git 树文件（树未截断），`miniprogram/` 90 个文件共 **1,577,635 字节**；3 个视频共 **284,362 字节**；主项目 `tests/` 找到 37 个 `.test.js`。字节统计属于 GitHub 树静态核算，**不等于** `npm run audit:assets` 或 `node --test` 运行通过。
+- 读取 `.claude/settings.local.json`：87 个 `permissions.allow` 规则，有本机路径；本次常见密钥模式筛查未命中，不代表完整泄露排查。PR #4 从新分支删除此文件并更新 `.gitignore`；**旧 Git 历史仍保留它**。
+- CI：PR #2 当前 HEAD 未发现 PR 触发的 Actions runs，也未发现 commit status 检查；完整自动化测试、`npm run audit:assets`、`git diff --check`、微信开发者工具、真机和 CloudBase **均未在本次执行或验收**。
+- `main` 分支列表 `protected=false`；读取 branch protection 因连接器权限返回 403；读取 rulesets 因仓库功能限制返回 403。不能据此声称保护已经启用。
+- 依赖顺序：审查并合入安全修复 PR #4 → 在更新后的整合分支完成自动化与适用人工验收 → PR #2 获准后合并 main → 重新核对/合并 PR #3 和 #1，更新过期分支表述。以上均不自动视为已获产品或设计批准。
+
 ## 2. 当前阻塞与待办（按优先级）
 
-- [ ] P0：安全审查被跟踪的 `.claude/settings.local.json`；若有秘密先采取正确的凭据轮换/清理流程。
+- [ ] P0：已静态检查 `.claude/settings.local.json` 并提出 PR #4 删除与忽略；待人工审查/合并，并评估历史中是否有需要轮换的凭据。
 - [ ] P0：在基准候选分支执行 `AGENTS.md` 规定的主项目测试、资源审计、`git diff --check`，记录运行环境、日期、命令和结果；失败不得隐瞒。
 - [ ] P1：人工审查 PR #2 的变化范围，并在微信开发者工具验证；真机和云函数无法测试则标记「未验证」。
 - [ ] P1：经批准并具备证据后合并 PR #2 到 `main`，同步本交接文档的快照与 SHA。
