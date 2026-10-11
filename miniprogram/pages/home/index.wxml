@@ -1,0 +1,56 @@
+<view class="home-page">
+  <view class="ambient-gold" aria-hidden="true"><view class="ambient-piece one"></view><view class="ambient-piece two"></view></view>
+
+  <view class="home-topbar" style="padding-top:{{navTopPadding}}px">
+    <view><view class="home-eyebrow">JIN · BO / PROCESS LAB</view><view class="home-brand">金箔工艺</view></view>
+    <view class="progress-entry" bindtap="openProgress">
+      <image class="progress-entry-icon" src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCI+PGNpcmNsZSBjeD0iMTIiIGN5PSIxMiIgcj0iOSIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjZjRkNzdiIiBzdHJva2Utd2lkdGg9IjIiLz48cGF0aCBkPSJNMTIgN3Y1bDMgMyIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjZjRkNzdiIiBzdHJva2Utd2lkdGg9IjIiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCIvPjwvc3ZnPg==" mode="aspectFit"></image>
+      <text>我的进度</text>
+    </view>
+  </view>
+
+  <view class="home-hero">
+    <image wx:if="{{!coverVisual.failed}}" class="hero-image" src="{{coverVisual.path}}" mode="aspectFill" binderror="onVisualError" />
+    <view wx:else class="hero-image hero-image-fallback"></view>
+    <view class="hero-mask"></view>
+    <view class="hero-copy">
+      <view class="hero-eyebrow">ONE MATERIAL · FIVE CONSEQUENCES</view>
+      <view class="hero-title">不是观看金色<br />而是亲手让金成箔</view>
+      <view class="hero-subtitle">裁切、装家生、打箔、检查、成叶。五个连续任务，共用同一张箔面状态。</view>
+      <view class="hero-notice">实际合作对象与城市待专业访谈确认</view>
+    </view>
+  </view>
+
+  <view class="home-content">
+    <view class="section-kicker">THE EXPERIENCE</view>
+    <view class="section-title">五道工序，一次完成</view>
+    <view class="section-copy">你的偏移、落锤和判断都会保留到最后，生成属于你的体验结果。</view>
+
+    <view class="process-rail">
+      <view class="process-item current"><text>01</text><view>做捻子</view></view>
+      <view class="process-line"></view>
+      <view class="process-item"><text>02</text><view>装家生</view></view>
+      <view class="process-line"></view>
+      <view class="process-item"><text>03</text><view>打箔</view></view>
+      <view class="process-line"></view>
+      <view class="process-item"><text>04</text><view>检查</view></view>
+      <view class="process-line"></view>
+      <view class="process-item"><text>05</text><view>成叶</view></view>
+    </view>
+
+    <view class="route-list">
+      <view wx:for="{{routeEntries}}" wx:key="id" class="route-entry" data-route-id="{{item.id}}" bindtap="startExperience">
+        <view class="route-entry-seal">箔</view>
+        <view class="route-entry-copy">
+          <view class="route-entry-kicker">CONTINUOUS CRAFT</view>
+          <view class="route-entry-heading">
+            <view class="route-entry-title">{{item.displayName}}</view>
+            <view wx:if="{{item.statusLabel}}" class="route-entry-status">{{item.statusLabel}}</view>
+          </view>
+          <view class="route-entry-desc">{{item.summary}}</view>
+        </view>
+        <view class="route-entry-arrow">→</view>
+      </view>
+    </view>
+  </view>
+</view>

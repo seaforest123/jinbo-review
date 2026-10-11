@@ -1,0 +1,2 @@
+.player-shell { display: block; width: 100%; }
+.video-player { display: block; width: 100%; background: #000; }

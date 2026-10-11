@@ -1,0 +1,8 @@
+<view class="activity-page">
+  <view class="activity-intro" style="padding-top:{{navTopPadding}}px">
+    <view class="activity-kicker">JIN · BO / ACTIVITY</view>
+    <view class="activity-title">活动</view>
+    <view class="activity-status">候选内测进行中</view>
+    <view class="activity-description">你已完成 {{completedRouteCount}} 条候选路线。公开活动和正式内容尚未开放。</view>
+  </view>
+</view>

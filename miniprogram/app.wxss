@@ -1,0 +1,69 @@
+page {
+  --gold: #c99a32;
+  --deep-brown: #241710;
+  --warm-white: #fbf4e7;
+  --muted-gold: #e4c987;
+  --page-gutter: 32rpx;
+  --card-radius: 20rpx;
+  --paper: #f6eedf;
+  --ink-soft: #735f50;
+  --exhibit-line: #d8b66a;
+  --paper-shadow: 0 14rpx 32rpx rgba(59, 42, 31, .10);
+
+  /* 深色展厅设计令牌，权威定义见 PRODUCT_DESIGN.md §6.1；
+     改深色展厅风格页面时复用这些变量，不要重新写十六进制值。 */
+  --exhibit-bg-radial: radial-gradient(circle at 88% 2%, #54391e, #20140d 38%, #100b08 81%);
+  --exhibit-bg-panel: linear-gradient(180deg, #20140d, #130d09);
+  --exhibit-text: #f9f0da;
+  --exhibit-text-soft-64: rgba(255, 248, 232, .64);
+  --exhibit-text-soft-42: rgba(255, 248, 232, .42);
+  --exhibit-text-soft-20: rgba(255, 248, 232, .20);
+  --exhibit-gold: #f4d77b;
+  --exhibit-gold-line: rgba(244, 215, 123, .2);
+  --exhibit-gold-button: linear-gradient(100deg, #c9912e, #f3d984, #bd7d1f);
+  --exhibit-demo-accent: #cce7c9;
+  --exhibit-demo-accent-line: rgba(185, 221, 185, .38);
+  --exhibit-demo-accent-bg: rgba(78, 126, 83, .17);
+  --exhibit-gold-soft-60: rgba(244, 215, 123, .6);
+  --exhibit-memory-accent: rgba(244, 218, 145, .72);
+  --exhibit-memory-accent-line: rgba(239, 207, 119, .13);
+  --exhibit-memory-accent-bg: rgba(239, 207, 119, .035);
+  --exhibit-font-display: 'STKaiti', 'KaiTi', 'Kai', serif;
+  --exhibit-font-kicker-tracking: 4rpx;
+
+  box-sizing: border-box;
+  min-height: 100%;
+  padding: var(--page-gutter);
+  background: #17100c;
+  color: var(--deep-brown);
+  font-size: 28rpx;
+  line-height: 1.6;
+}
+
+text,
+button,
+input,
+textarea {
+  font-size: 28rpx;
+}
+
+button:focus,
+.focusable:focus {
+  outline: 4rpx solid var(--gold);
+  outline-offset: 4rpx;
+}
+
+button:active,
+.focusable:active {
+  background-color: var(--muted-gold);
+  opacity: 0.85;
+  transform: scale(0.98);
+}
+
+button {
+  border-radius: 999rpx;
+}
+
+button::after {
+  border: 0;
+}

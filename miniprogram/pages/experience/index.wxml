@@ -1,0 +1,177 @@
+<view class="experience-shell" style="padding-top:{{navTopPadding}}px">
+  <view class="ambient-gold" aria-hidden="true"><view class="ambient-piece p1"></view><view class="ambient-piece p2"></view><view class="ambient-piece p3"></view></view>
+  <view class="topbar" style="padding-right:{{navRightPadding}}px">
+    <view><text class="eyebrow">JIN · BO / PROCESS LAB</text><view class="brand">{{routeName}}</view></view>
+    <view wx:if="{{demoMode}}" class="demo-mode-tag">90 秒演示</view>
+    <view wx:else class="route-tag">候选内容</view>
+  </view>
+
+  <view wx:if="{{phase === 'idle'}}" class="opening">
+    <view class="seal">{{demoMode ? '演' : '箔'}}</view>
+    <view class="eyebrow">{{demoMode ? '90 SECOND CORE EXPERIENCE' : '国家级非物质文化遗产代表性项目 · Ⅷ-36'}}</view>
+    <view class="hero-title">{{demoMode ? '三道核心工序' : '不是观看金色'}}<br/>{{demoMode ? '九十秒看见成品' : '而是亲手让金成箔'}}</view>
+    <view class="hero-copy">{{demoMode ? '系统已合法预置裁金片和装箔状态。你将直接体验打箔、检查与出箔，所有判定与正常流程一致。' : '五个连续任务，共用同一张厚度网格。你的偏移、落锤和判断都会留到最后。'}}</view>
+    <view wx:if="{{demoMode}}" class="demo-route-preview"><text>打箔</text><text class="demo-route-arrow">→</text><text>检查</text><text class="demo-route-arrow">→</text><text>出箔</text></view>
+    <button class="gold-button" bindtap="startExperience">{{demoMode ? '开始 90 秒演示' : '开始体验'}}</button>
+  </view>
+
+  <view wx:elif="{{phase === 'intro'}}" class="opening">
+    <view class="eyebrow">ONE MATERIAL · FIVE CONSEQUENCES</view>
+    <view class="hero-title">从一片捻子<br/>到一叶金箔</view>
+    <view class="intro-list"><view>01 做捻子</view><view>02 装家生</view><view>03 打箔</view><view>04 出具检查</view><view>05 切箔成叶</view></view>
+    <button class="gold-button" bindtap="endIntro">进入第一道工序</button>
+  </view>
+
+  <view wx:elif="{{phase === 'step'}}" class="workshop {{sceneAnimating ? 'scene-enter' : ''}}">
+    <view class="app-progress">
+      <view class="progress-copy">
+        <view class="progress-copy-main"><text>{{demoMode ? '演示环节' : '工序'}} {{displayStepNumber}} / {{displayStepTotal}}</text><small wx:if="{{!demoMode}}">本步 {{stepProgress}}%</small><small wx:if="{{demoMode}}" class="{{demoExpired ? 'is-expired' : ''}}">{{demoExpired ? '可继续完成' : '剩余 ' + demoSecondsLeft + ' 秒'}}</small></view>
+        <button class="progress-exit" bindtap="exitExperience" aria-label="退出体验">退出</button>
+      </view>
+      <view class="progress-track"><view style="width:{{overallProgress}}%"></view></view>
+    </view>
+    <scroll-view class="task-rail" scroll-x>
+      <view wx:for="{{taskMap}}" wx:key="stepId" class="task {{item.status}}"><text>0{{index + 1}}</text><view>{{item.title}}</view></view>
+    </scroll-view>
+    <view class="heading"><view class="eyebrow">{{stepCopy.kicker}}</view><view class="step-title">{{stepCopy.title}}</view><view class="instruction">{{stepCopy.instruction}}</view></view>
+    <view class="material-memory"><view><small>本步手势</small><text>{{stepInputLabel}}</text></view><view><small>同一张金箔</small><text>{{materialMemory}}</text></view></view>
+    <view class="beginner-guard">
+      <view class="guard-copy"><view><text>{{demoMode ? '演示护航 · ON' : '新手护航 · ON'}}</text><small>{{demoMode ? '核心路径已加速，所有工艺判定仍与正式体验一致' : '自动吸附，随时可请工艺师接手'}}</small></view></view>
+      <view class="guard-action"><view>{{assistCopy.title}}</view><button disabled="{{assistBusy}}" bindtap="assistCurrentStep">{{assistBusy ? '协助中…' : assistCopy.button}}</button></view>
+    </view>
+    <view wx:if="{{activeVideo && !videoDone}}" class="action-demo">
+      <video-player src="{{activeVideo.src}}" poster="{{activeVideo.poster}}" height="260rpx" autoplay muted controls="{{false}}" show-center-play-btn="{{false}}" bind:ended="onVideoEnded" bind:error="onVideoError"></video-player>
+      <button bindtap="skipVideo">跳过动作示范</button>
+    </view>
+
+    <view wx:if="{{step.id === 'twist'}}" class="panel stage-panel">
+      <view class="cut-bench cut-result-{{cutOutcomeTone}} {{cutSuccessBurst ? 'is-success' : ''}} {{session.sheetCount >= 3 ? 'is-full' : ''}} {{cutMoving ? 'is-moving' : ''}}" bindtouchstart="onCutStart" catchtouchmove="onCutMove" bindtouchend="onCutEnd">
+        <view class="bench-caption"><text>金条裁切台</text><small>以中央尺线为一片标准捻子</small></view>
+        <view class="measure-ruler"><view></view><view></view><view></view><view></view><view></view><view></view><view></view><view></view><view></view></view>
+        <view class="gold-strip"><view class="gold-grain"></view><view class="cut-edge"></view></view><view class="safe-zone"><text>标准</text><small>44—56</small></view>
+        <view class="cutter" style="left: {{cutPosition}}%"><view class="cutter-handle"></view><view class="cutter-blade"></view></view>
+        <view wx:if="{{cutRejectVisible}}" class="cut-local-result result-{{cutOutcomeTone}}"><view></view><text>{{cutOutcomeTone === 'frayed' ? '切口起皱' : cutOutcomeTone === 'short' ? '尺寸偏短' : '尺寸偏长'}}</text></view>
+        <view wx:if="{{cutSuccessBurst}}" class="cut-burst"><view></view><view></view><view></view><view></view><text>尺寸已吸附</text></view>
+        <view wx:if="{{session.sheetCount >= 3}}" class="cut-full-state"><text>3 / 3</text><view>捻子已备齐</view><small>裁切台已锁定，请进入下一步</small></view>
+      </view>
+      <view class="piece-tray"><view class="tray-copy"><text>接片盘</text><small>合格金片会留在这里</small></view><view class="tray-slot {{session.sheetCount > 0 ? 'has-piece' : ''}}"><view></view></view><view class="tray-slot {{session.sheetCount > 1 ? 'has-piece' : ''}}"><view></view></view><view class="tray-slot {{session.sheetCount > 2 ? 'has-piece' : ''}}"><view></view></view></view>
+      <view class="gesture-meter cut-meter"><text>匀速稳定</text><view><view class="gesture-meter-fill" style="width: {{cutStability}}%"></view></view><small>{{cutMoving ? cutStability + '%' : '按住裁刀开始'}}</small></view>
+      <view class="feedback">{{cutFeedback}}</view>
+      <view class="counter"><text>{{session.sheetCount}}</text>/ 3 片合格</view>
+      <button class="gold-button {{session.sheetCount >= 3 ? 'is-ready' : ''}}" disabled="{{session.sheetCount < 3}}" bindtap="completeCurrentStep">{{session.sheetCount >= 3 ? '下一步 · 装家生' : '还需备齐 3 片捻子'}}</button>
+    </view>
+
+    <view wx:elif="{{step.id === 'pack'}}" class="panel stage-panel">
+      <view class="paper-pack {{packSuccessBurst ? 'is-success' : ''}} {{placementRejected ? 'is-rejected' : ''}} {{session.placements.length >= 3 ? 'is-full' : ''}} {{placementSettling ? 'is-settling' : ''}} {{placementReady ? 'is-placement-ready' : ''}}" bindtouchstart="onPlaceStart" catchtouchmove="onPlaceMove" bindtouchend="onPlaceEnd">
+        <view class="pack-status-bar"><view><text>竹镊夹取</text><small>{{placementSpeedLabel}}</small></view><view class="layer-depth"><text>{{session.placements.length}}</text><small>/ 3 层</small></view></view>
+        <view class="paper-layer layer-one"><view class="paper-fibre"></view></view><view class="paper-layer layer-two"><view class="paper-fibre"></view></view><view class="placement-target"><text>{{placementReady ? '已稳住' : placementSettling ? '保持' : '纸心'}}</text><small>{{placementReady ? '松手放入' : placementSettling ? '正在压合' : '减速停住'}}</small></view>
+        <view wx:if="{{session.placements.length > 0}}" class="placed-sheet placed-one"></view><view wx:if="{{session.placements.length > 1}}" class="placed-sheet placed-two"></view><view wx:if="{{session.placements.length > 2}}" class="placed-sheet placed-three"></view>
+        <view class="tweezer-tool {{placementDrift > 6 ? 'is-drifting' : ''}}" style="transform: translate({{placementX}}px, {{placementY}}px) rotate({{placementTilt}}deg)"><view class="tweezer-arm arm-left"></view><view class="tweezer-arm arm-right"></view><view class="loose-sheet" style="--drift:{{placementDrift}}px"><view class="sheet-glint"></view><view class="foil-corner"></view></view></view>
+        <view wx:if="{{packSuccessBurst}}" class="magnet-ring"></view>
+        <view wx:if="{{session.placements.length >= 3}}" class="pack-full-state"><text>3 / 3</text><view>金片已装好</view><small>装填区已锁定，请合上夹层</small></view>
+      </view>
+      <view class="feedback">{{placementFeedback}}</view>
+      <view class="counter"><text>{{session.placements.length}}</text>/ 3 张已放入</view>
+      <button class="gold-button {{session.placements.length >= 3 ? 'is-ready' : ''}}" disabled="{{session.placements.length < 3}}" bindtap="completeCurrentStep">{{session.placements.length >= 3 ? '下一步 · 合上夹层去打箔' : '还需装入 3 张金片'}}</button>
+    </view>
+
+    <view wx:elif="{{step.id === 'hammer'}}" class="panel stage-panel">
+      <view class="hammer-challenge">
+        <view class="hammer-challenge-head"><view><text>看准金点 · 稳住落锤</text><small>金点进入中央亮区时落锤，按住片刻获得“稳劲”</small></view><view class="hammer-score"><text>{{hammerScore}}</text><small>锤炼分</small></view></view>
+        <view class="rhythm-track"><view class="rhythm-target"><text>节拍</text></view><view class="rhythm-cursor"></view></view>
+        <view class="charge-row"><text>按压蓄力</text><view class="charge-track"><view class="charge-ideal"></view><view class="charge-fill" style="width:{{hammerCharge}}%"></view></view><small>{{hammerPressedCellId ? hammerCharge + '%' : '按住落点'}}</small></view>
+      </view>
+      <view class="hammer-workbench {{hammerReady ? 'is-ready' : ''}} {{hammerPressedCellId ? 'is-pressing' : ''}}">
+        <view class="workbench-plaque"><text>箔包 · 侧光观察</text><small>亮处厚，暗处薄</small></view>
+        <view wx:if="{{rhythmIntroActive}}" class="rhythm-coach"><view></view><view></view><view></view><text>跟着节奏落锤</text></view>
+        <view wx:if="{{hammerCombo > 1}}" class="combo-badge">COMBO <text>×{{hammerCombo}}</text></view>
+        <view wx:if="{{hammerGradeVisible}}" class="hammer-grade grade-{{hammerGradeTone}}">{{hammerGradeLabel}}<small wx:if="{{hammerGradeTone === 'perfect'}}">+100</small></view>
+        <view class="pack-paper paper-under"></view>
+        <view class="pack-paper paper-over"></view>
+        <view class="hammer-foil {{isRotating ? 'is-rotating' : ''}}">
+          <button wx:for="{{session.visualCells}}" wx:key="id" class="foil-zone {{item.state}} {{hammeredCellId === item.id ? 'is-hit' : ''}} {{hammerPressedCellId === item.id ? 'is-pressed' : ''}} {{hammerWarningCellId === item.id ? 'is-warning' : ''}} {{nextHammerHintId === item.id ? 'is-suggested' : ''}}" style="{{item.surfaceStyle}}" data-row="{{item.row}}" data-col="{{item.col}}" bindtouchstart="previewHammerCell" bindtouchcancel="cancelHammerPress" bindtap="hammerCell">
+            <view class="zone-sheen"></view><view class="zone-texture texture-{{item.seed}}"></view><view class="zone-flaw"></view>
+            <view wx:if="{{hammeredCellId === item.id}}" class="impact-ring impact-{{hammerImpactTone}}"></view>
+            <view wx:if="{{hammeredCellId === item.id}}" class="impact-sparks"><view></view><view></view><view></view><view></view></view>
+            <text wx:if="{{debugGrid}}">{{item.value}}</text>
+          </button>
+          <view class="foil-unifying-glow"></view>
+        </view>
+        <view class="hammer-shadow hammer-tool {{hammerPressedCellId ? 'is-striking' : ''}}" style="left:{{hammerToolX}}%;top:{{hammerToolY}}%"><view class="hammer-handle"></view><view class="hammer-head"><text>锤</text></view></view>
+        <view wx:if="{{hammerReady}}" class="hammer-ready-state"><text>✓</text><view>本轮打箔已完成</view><small>箔面已锁定，避免继续敲击造成破损</small></view>
+      </view>
+      <view class="feedback">{{hammerMessage}}</view>
+      <view class="hammer-input-readout">
+        <view><small>落锤力度</small><text class="tone-{{hammerPowerTone}}">{{hammerPowerLabel}}</text></view>
+        <view><small>落锤节奏</small><text class="tone-{{hammerRhythmTone}}">{{hammerRhythmLabel}}</text></view>
+      </view>
+      <view class="metric-row"><view>合格覆盖 <text>{{session.metrics.coverage}}%</text></view><view>已处理 <text>{{session.metrics.touchedCount}}/16</text></view><view>暗斑风险 <text>{{session.metrics.riskCount}}</text></view></view>
+      <button class="rotate-button {{rotateUnlockRemaining === 0 && !session.rotated ? 'is-unlocked' : ''}}" disabled="{{session.rotated || rotateUnlockRemaining > 0 || isRotating}}" bindtap="rotatePack">
+        <text>{{session.rotated ? '✓ 箔包已旋转 90°' : '↻ 旋转箔包'}}</text>
+        <small>{{session.rotated ? '本工序只需旋转一次，无需重复操作' : rotateUnlockRemaining > 0 ? '还需处理 ' + rotateUnlockRemaining + ' 个区域解锁' : isRotating ? '正在旋转…' : '已解锁 · 旋转后暴露新的落锤方向'}}</small>
+      </button>
+      <button class="gold-button {{hammerReady ? 'is-ready' : ''}}" disabled="{{!hammerReady}}" bindtap="completeCurrentStep">{{hammerReady ? '下一步 · 展开检查' : session.reworkHitsRemaining > 0 ? '请完成 1 次定点补锤' : '继续处理亮区并完成旋转'}}</button>
+    </view>
+
+    <view wx:elif="{{step.id === 'inspect'}}" class="panel stage-panel">
+      <view class="inspection-surface {{session.inspectionSweeps >= 1 ? 'is-ready' : ''}} {{inspectScanning ? 'is-scanning' : ''}}" bindtouchstart="onInspectStart" catchtouchmove="onInspectMove" bindtouchend="onInspectEnd" bindtouchcancel="onInspectEnd">
+        <view class="discovery-badge">{{session.inspectionSweeps >= 1 ? '✓ 探查完成' : '局部探查 ' + inspectDiscoveryCount + ' / 3'}}</view>
+        <view class="light-instruction"><text>迎光检视</text><small>移动灯 · 反光处停留</small></view>
+        <view class="opened-paper paper-back-a"></view><view class="opened-paper paper-back-b"></view>
+        <view class="inspection-foil">
+          <view wx:for="{{inspectionCells}}" wx:key="id" class="inspection-patch {{item.state}} {{item.inspected ? 'is-probed' : ''}} {{inspectCandidateId === item.id ? 'is-candidate' : ''}}" style="left:{{item.left}}%;top:{{item.top}}%;{{item.surfaceStyle}}" data-row="{{item.row}}" data-col="{{item.col}}">
+            <view class="zone-sheen"></view><view class="zone-texture texture-{{item.seed}}"></view><view class="zone-flaw"></view>
+            <view wx:if="{{item.inspected}}" class="probe-marker">{{item.marker}}</view>
+          </view>
+          <view class="inspection-glaze"></view>
+        </view>
+        <view class="scan-light" style="left: {{inspectGlow}}%; top: {{inspectY}}%"></view>
+        <view class="inspection-lamp" style="left:{{inspectGlow}}%;top:{{inspectY}}%"><view class="lamp-beam"></view><view class="lamp-body"></view><view wx:if="{{inspectCandidateId}}" class="dwell-ring"><view style="width:{{inspectDwell}}%"></view></view></view>
+        <view class="swipe-copy">{{inspectDirectionHint}}</view>
+      </view>
+      <view class="inspection-feedback">{{inspectFeedback}}</view>
+      <view class="metric-row"><view>均匀度 <text>{{session.metrics.coverage}}%</text></view><view>可补锤 <text>{{session.metrics.repairableCount}}</text></view><view>不可修复 <text>{{session.metrics.riskCount}}</text></view></view>
+      <view class="decision-note {{repairSuggested ? 'is-repair-suggested' : ''}}">{{decisionMessage}}</view>
+      <view class="decision-row">
+        <button class="decision-button {{repairSuggested ? 'is-recommended' : ''}}" disabled="{{session.inspectionSweeps < 1 || !repairSuggested}}" bindtap="returnToHammer"><text>返回定点补锤</text><small>{{session.inspectionSweeps < 1 ? '完成 3 次探查后解锁' : !repairSuggested ? '当前没有可补锤厚区' : '只处理高光厚区，避开暗斑'}}</small></button>
+        <button class="decision-button" disabled="{{session.inspectionSweeps < 1}}" bindtap="acceptInspection"><text>接受当前状态</text><small>保留瑕疵，继续切箔</small></button>
+      </view>
+    </view>
+
+    <view wx:elif="{{step.id === 'finish'}}" class="panel stage-panel">
+      <view class="final-foil quality-{{session.metrics.quality}} {{finishWarning ? 'has-new-damage' : ''}} {{finishReady ? 'is-ready' : ''}} {{finishHolding ? 'is-holding' : ''}}" bindtouchstart="onSmoothStart" catchtouchmove="onSmoothMove" bindtouchend="onSmoothEnd">
+        <view class="finish-tool-label"><text>鹅毛抚箔</text><small>{{finishReady ? '方叶已稳定' : '刷过处褶皱会退去'}}</small></view>
+        <view class="continuous-foil">
+          <view wx:for="{{finishCells}}" wx:key="id" class="finish-patch {{item.state}} {{item.smoothed ? 'is-smoothed' : ''}}" style="left:{{item.left}}%;top:{{item.top}}%;{{item.surfaceStyle}}">
+            <view class="zone-sheen"></view><view class="zone-texture texture-{{item.seed}}"></view><view class="zone-flaw"></view>
+            <view class="cell-wrinkle"></view>
+          </view>
+          <view class="foil-edge-mask"></view><view class="finish-gloss"></view>
+          <view class="wrinkle-veil" style="opacity: {{1 - finishProgress / 100}}"></view>
+          <view class="cut-guide-lines"></view>
+        </view>
+        <view class="finish-trail"><view wx:for="{{finishTrail}}" wx:key="id" style="left:{{item.x}}%;top:{{item.y}}%"></view></view>
+        <view class="feather" style="left: {{finishX}}%; top: {{finishY}}%"><view class="feather-shaft"></view><view class="feather-vane vane-a"></view><view class="feather-vane vane-b"></view><view class="feather-vane vane-c"></view><view class="feather-vane vane-d"></view></view>
+        <view class="smooth-trace" style="width: {{finishProgress}}%"><view></view></view>
+        <view wx:if="{{finishReveal}}" class="finished-leaf-seal"><text>叶</text><view>标准方叶已经显出</view><small>前序厚薄与细裂仍被保留</small></view>
+        <view class="finish-percent">{{finishProgress}}%<small wx:if="{{finishProgress >= 100 && !finishReady}}">{{finishHolding ? '保持不动…' : '按住收尾'}}</small><small wx:if="{{finishReady}}">✓ 已稳定</small></view>
+      </view>
+      <view class="feedback {{finishWarning ? 'warning-copy' : ''}}">{{finishFeedback}}</view>
+      <view class="smooth-progress"><view style="width:{{finishProgress}}%"></view></view>
+      <view class="quality-badge">{{session.metrics.quality === 'perfect' ? '匀净成叶' : session.metrics.quality === 'minor' ? '轻微瑕疵' : '明显瑕疵'}} · 前序结果已保留</view>
+      <button class="gold-button {{finishReady ? 'is-ready' : ''}}" disabled="{{!finishReady || isCelebrating}}" bindtap="finishExperience">{{isCelebrating ? '正在生成成品…' : finishReady ? '完成 · 沿线切成标准方叶' : finishProgress >= 100 ? '请按住箔面完成稳定收尾' : '请先抚平整张箔面'}}</button>
+    </view>
+
+    <view wx:if="{{knowledgeFlash}}" class="knowledge-flash">{{knowledgeFlash}}</view>
+    <view class="curator">
+      <button bindtap="toggleKnowledgeCard">查看本节点说明 <text>{{isKnowledgeCardOpen ? '−' : '+'}}</text></button>
+      <view wx:if="{{isKnowledgeCardOpen && activeKnowledgeCard}}" class="placard"><view class="eyebrow">CRAFT NOTE</view><view class="placard-title">{{activeKnowledgeCard.title}}</view><view>{{activeKnowledgeCard.description}}</view><view>{{activeKnowledgeCard.observationTip}}</view><small>{{activeKnowledgeCard.notice}}</small></view>
+      <view class="utility"><button bindtap="showHint">显示提示</button><button bindtap="retryStep">记录一次调整</button></view>
+    </view>
+  </view>
+  <view class="moment-toast tone-{{momentTone}} {{momentVisible ? 'is-visible' : ''}}" style="top:calc({{navTopPadding}}px + 70rpx)">{{momentText}}</view>
+  <view wx:if="{{isCelebrating}}" class="completion-overlay">
+    <view class="celebration-particles"><view wx:for="{{celebrationParticles}}" wx:key="*this" class="cp-{{item}}"></view></view>
+    <view class="seal">成</view><view>{{demoMode ? '核心三步已完成 · 演示成品正在显影' : '五道工序已合 · 你的箔叶正在显影'}}</view><small>{{demoMode ? '演示数据不会覆盖你的正常体验记录' : '正在为你生成独一无二的箔叶'}}</small>
+  </view>
+</view>

@@ -1,0 +1,10 @@
+[
+  {
+    "id": "candidate-content-foil-making",
+    "routeId": "foil_making_candidate",
+    "allowedEnvironment": "trial",
+    "reviewStatus": "internal_approved",
+    "title": "制箔候选路线说明",
+    "summary": "仅用于内部候选体验的通用说明，尚未经专业确认。"
+  }
+]

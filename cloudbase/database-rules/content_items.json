@@ -1,0 +1,4 @@
+{
+  "read": "doc.allowedEnvironment == 'trial' && doc.reviewStatus in ['internal_approved', 'reviewed', 'published']",
+  "write": false
+}

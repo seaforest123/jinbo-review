@@ -1,0 +1,10 @@
+{
+  "navigationStyle": "custom",
+  "disableScroll": false,
+  "enablePullDownRefresh": false,
+  "backgroundColor": "#100b08",
+  "backgroundTextStyle": "dark",
+  "usingComponents": {
+    "video-player": "/components/video-player/index"
+  }
+}
