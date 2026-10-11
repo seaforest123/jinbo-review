@@ -1,0 +1,31 @@
+name: Baseline validation
+
+on:
+  pull_request:
+    branches:
+      - main
+      - integration/codex-baseline-20261011
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  baseline:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Test primary project suite
+        shell: bash
+        run: |
+          mapfile -d '' tests < <(find tests -type f -name '*.test.js' -print0)
+          if (( ${#tests[@]} == 0 )); then echo 'No primary tests found'; exit 1; fi
+          node --test "${tests[@]}"
+      - name: Audit mini-program assets
+        run: npm run audit:assets
+      - name: Check whitespace errors
+        run: git diff --check HEAD^ HEAD
