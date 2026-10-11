@@ -1,99 +1,51 @@
-# PROJECT_HANDOFF · AI 多对话 / 多代理项目交接
+# PROJECT_HANDOFF · AI 协作与跨对话交接
 
-> 本文档是 **GitHub 仓库当前工作状态的人工可核验摘要**，而不是对话历史备份或验收证明。每次接手都必须先核对远程 refs、PR、实际文件和测试证据。**禁止仅凭本文件认定任务完成。**
->
-> 权威顺序：用户对本次任务的明确指令与批准 → `PRODUCT_DESIGN.md`（产品、视觉）和 `AGENTS.md`（工程流程与限制）→ 已合并的代码与 Git 记录 → 本交接摘要。出现矛盾先指出，不自行覆盖已批准边界。本文档不会绕过 `AGENTS.md` 对多文件任务的审批要求。
+> 本文档是项目状态摘要，不是代码、PR 或验收的替代证据。任何新会话必须重新读取 GitHub 最新 refs、PR 和实际测试记录。产品约束以 `PRODUCT_DESIGN.md` 为准，工程和审批要求以 `AGENTS.md` 为准；用户明确批准只在已批准范围内有效。
 
-## 0. 上手速读（接手 AI 必读）
+## 项目与正式基准
 
-- 仓库：`seaforest123/jinbo-review`，原生微信小程序（金箔非遗）。
-- 默认分支：`main`；正常情况下它是已验收的集成基准；**截至 2026-10-11 的实查例外：仍是初始 README，不包含完整项目**。
-- 项目候选基准：`integration/codex-baseline-20261011`，PR [#2](https://github.com/seaforest123/jinbo-review/pull/2) → `main`，仍为 **open draft / 未合并 / 未验收**（核对时间：2026-10-11）。
-- 原始开发分支：`codex/seven-page-optimization`；其 56 条历史提交已通过双父整合提交在基准候选分支中保留；不能删、重置或强推。
-- 协作规则文档：`docs/GITHUB_WORKFLOW.md` 当前由 [PR #1](https://github.com/seaforest123/jinbo-review/pull/1) 提交，**尚未进入 main，也未进入本次基准整合分支**。在合并前仅作待审提案，必须优先遵守已存在的 `AGENTS.md`。
-- 对话交接机制：本文档由独立任务分支提出；未合并前，以所在任务分支版本为准，不声称已部署到 `main`。
-- 目前没有证据证明最新整合提交已通过全套测试、微信开发者工具、真机或 CloudBase 验收。
+- 项目：`seaforest123/jinbo-review`，金箔非遗微信原生小程序。
+- 默认分支：`main`。PR [#2](https://github.com/seaforest123/jinbo-review/pull/2) 已合并，建立正式代码基准；合并 SHA：`9376564a752a93ca97a7a16901c0445545a2a76b`。
+- 原始 Codex 分支：`codex/seven-page-optimization`，保留历史，不重置、不强推、不删除。
+- [Ruleset Protect main](https://github.com/seaforest123/jinbo-review/rules/24882306) 已启用；要求 PR、禁止强推与删除、要求解决审查讨论；批准数量 0；**目前没有强制 CI status check**。
+- PR [#4](https://github.com/seaforest123/jinbo-review/pull/4) 已合并：移除当前树内的 `.claude/settings.local.json` 并加入忽略规则；**旧 Git 历史仍可能被公众访问**。
+- PR [#5](https://github.com/seaforest123/jinbo-review/pull/5)、[#6](https://github.com/seaforest123/jinbo-review/pull/6)、[#7](https://github.com/seaforest123/jinbo-review/pull/7) 已合并，分别引入 CI、修复 shallow checkout 和修复旧文件空白格式。
+- 本交接文档通过 PR [#3](https://github.com/seaforest123/jinbo-review/pull/3) 提出。协作规范 `docs/GITHUB_WORKFLOW.md` 由 PR [#1](https://github.com/seaforest123/jinbo-review/pull/1) 提出。**PR 状态可随合并改变，不以此段文字代替实时复核。**
 
-## 1. 当前开发进度（快照；接手后实时复核）
+## 已验证与未验证
 
-| 内容 | 状态 / 证据 | 后续动作 |
-| --- | --- | --- |
-| Codex 项目文件 | 历史检查返回 256 个文件、57 个目录；原生小程序、云函数、测试和文档齐备 | 按实际代码及文件树复核，不把“齐备”解释为“可部署” |
-| Codex 开发历史 | `codex/seven-page-optimization` 中发现 56 个提交 | 保留原分支；分支后续有新提交时重新比较 |
-| 历史整合 | `integration/codex-baseline-20261011` 基线提交 `3f668b9d501d933f2458cfa24945e63c50fef1b1`；双父提交保留 `main` 初始化历史及 Codex 开发历史 | 审查 PR #2，再决定是否合并 |
-| 测试基线 | `AGENTS.md` 记录 2026-10-10 **259 项**测试（历史证据，非本次测试结果） | 重新执行当前版本的全部主项目测试 |
-| 资源包大小 | `AGENTS.md` 记录 2026-10-10 的离线审计基线 1,578,561 字节（历史证据） | 重新执行 `npm run audit:assets` |
-| 本地专用设置 | `.claude/settings.local.json` 已被纳入版本控制 | 审查敏感信息、机器依赖与是否应继续跟踪；不要公开内容 |
-| PR #1 | `chatgpt/workflow-setup` → `main`，open draft；新增 `docs/GITHUB_WORKFLOW.md` | 待 PR #2 基准稳定后重新核对与合并 |
-| PR #2 | 整合代码 → `main`，open draft | 先做测试和安全检查，仍不得声称验收通过 |
-| `main` 分支保护 | 未确认启用 | 由仓库管理者检查 GitHub Rulesets 是否实际生效 |
+- 2026-10-11 [GitHub Actions run 38149226374](https://github.com/seaforest123/jinbo-review/actions/runs/38149226374) 对整合 HEAD `5d42a7c390a6af80e7844b84945cc916c64c7f26` 运行成功：根目录 `tests/` 主项目测试 259/259 通过；`npm run audit:assets` 通过（package 1,577,635 bytes；videos 284,362 bytes）；`git diff --check` 通过。
+- 该证据属于自动化检查，不是微信工具或实际设备验收。**微信开发者工具、iOS/Android 真机、CloudBase 实际部署和运行仍未验证。**文化素材专业审核与正式发布亦不可推定已完成。
+- PR #2 按用户明确批准，以“自动化测试合格代码基准”口径合入 `main`；不代表全部 P0/P1 手工验收已通过。
 
+## 待办与风险
 
-## 1A. 2026-10-11 实时补充审计（仅静态检查）
+1. 微信开发者工具核查 10 个已注册页面及四项 Tab，重点实测五任务闭环和 `session.grid` 的跨步骤传递；记录模拟器型号、操作、截图/录屏。
+2. 真机、CloudBase 与内容专业审核保持待办；涉及凭据的操作不要写入仓库。
+3. 公开仓库旧历史仍包含本地 Claude permissions 文件；当前静态筛查未匹配常见令牌模式，但不代表完整秘密历史审计。
+4. 持续确认 GitHub Ruleset 是否生效；在 CI 稳定且符合审批后，可评估强制状态检查。
+5. 若 `docs/GITHUB_WORKFLOW.md` 尚未进入 `main`，核查 PR #1 并按审查结果处理。
 
-- 2026-10-11 GitHub 连接器复核：`main`=`4dc7dd33d0b8ba4955c185dacd0354bd7c3e696c`；整合分支=`3f668b9d501d933f2458cfa24945e63c50fef1b1`；Codex 原始分支=`8ac7433f80656ba6acb3b5ca09424a9638d5fbb6`。
-- PR #1 / #2 / #3 均为 open draft 且未合并；另外新建安全修复 [PR #4](https://github.com/seaforest123/jinbo-review/pull/4)，`chatgpt/remove-local-claude-config-20261011` → `integration/codex-baseline-20261011`，仍待审查合并。
-- 256 个 Git 树文件（树未截断），`miniprogram/` 90 个文件共 **1,577,635 字节**；3 个视频共 **284,362 字节**；主项目 `tests/` 找到 37 个 `.test.js`。字节统计属于 GitHub 树静态核算，**不等于** `npm run audit:assets` 或 `node --test` 运行通过。
-- 读取 `.claude/settings.local.json`：87 个 `permissions.allow` 规则，有本机路径；本次常见密钥模式筛查未命中，不代表完整泄露排查。PR #4 从新分支删除此文件并更新 `.gitignore`；**旧 Git 历史仍保留它**。
-- CI：PR #2 当前 HEAD 未发现 PR 触发的 Actions runs，也未发现 commit status 检查；完整自动化测试、`npm run audit:assets`、`git diff --check`、微信开发者工具、真机和 CloudBase **均未在本次执行或验收**。
-- `main` 分支列表 `protected=false`；读取 branch protection 因连接器权限返回 403；读取 rulesets 因仓库功能限制返回 403。不能据此声称保护已经启用。
-- 依赖顺序：审查并合入安全修复 PR #4 → 在更新后的整合分支完成自动化与适用人工验收 → PR #2 获准后合并 main → 重新核对/合并 PR #3 和 #1，更新过期分支表述。以上均不自动视为已获产品或设计批准。
+## 每次新对话启动
 
-## 1B. 2026-10-11 后续执行记录（实时核验）
-- main 已创建 Active Ruleset Protect main（ID 24882306），要求 PR、禁止强推及删除、要求解决审查讨论；最低 approvals 为 0；尚未要求 CI 状态检查。
-- PR #4 已合并至整合分支，merge SHA 0c4a6443e4895dd95f82002b501f61ea786d9e8a；从当前树移除 .claude/settings.local.json 并加入 gitignore，但原始历史仍可访问。
-- PR #5 已合并（849ae03325d727e7a66fae641dc5b5521f47a25a），建立 GitHub Actions 流水线。运行 38148805973 日志确认主项目 259/259 项测试通过、资源审计通过（package=1577635 bytes，videos=284362 bytes），但因浅克隆导致 git diff --check HEAD^ HEAD 失败，整个 job 失败。
-- PR #6 已合并（244f8a030929e9d48d5c803f594b5e277405549e），CI 检出深度改为 2；下一轮运行结果待确认。
-- PR #2 仍待正式验收，微信开发者工具、真机及 CloudBase 均未验证。
+1. 读取最新 `main` 提交、全部 open PR、分支、Ruleset、CI；不可只看此交接文档。
+2. 完整阅读 `PRODUCT_DESIGN.md` 和 `AGENTS.md`，再读本文件及已合并的 `docs/GITHUB_WORKFLOW.md`；未合并文件需注明所在 PR。
+3. 确认目标模块、实现/审查方、允许修改文件、批准范围；多文件改动遵守 `AGENTS.md` 的先分析与等待确认要求。
+4. 从最新 `main` 新建单任务分支，通过 PR 提交代码和交接记录；不直接写入受保护 `main`。
+5. 报告准确命令、日志、测试结论、未验证项和遗留问题。未经实际执行不得写“通过”。
 
-
-- 后续最新 CI [run 38148908157](https://github.com/seaforest123/jinbo-review/actions/runs/38148908157) 仍为 failure：主测试与资源审计均通过，`git diff --check HEAD^ HEAD` 已真正执行，并发现旧文档与云函数等基准引入文件存在 trailing whitespace / EOF blank line；不是运行环境问题。**不要因测试已通过而宣称 PR #2 具备全套验收证据。**需决定将这批历史格式问题作为专项最小修复，或以明确的基准例外政策处理，不能暗中跳过。
-
-
-- 已按明确批准完成格式专项修复 [PR #7](https://github.com/seaforest123/jinbo-review/pull/7)：在 9 个历史文件中修正尾随空白与多余 EOF 空行，Markdown 硬换行保留原语义。PR #7 的 [Actions run 38149182336](https://github.com/seaforest123/jinbo-review/actions/runs/38149182336) 主项目测试、资源审计、差异检查均通过；已通过 merge commit 5d42a7c390a6af80e7844b84945cc916c64c7f26 合入 integration 分支。PR #2 基准 HEAD 已更新为该 SHA，**需核对其新一轮 CI 运行后才能记为通过**。
-
-
-- 2026-10-11 PR #2 更新后的整合 HEAD `5d42a7c390a6af80e7844b84945cc916c64c7f26` 已在 [GitHub Actions run 38149226374](https://github.com/seaforest123/jinbo-review/actions/runs/38149226374) 获得完整 success：主项目测试、资源审计与 `git diff --check` 均通过。该结果证明自动化检查合格，不代表微信开发者工具/真机/CloudBase 验收，PR #2 仍保持 draft、未合并。
-
-## 2. 当前阻塞与待办（按优先级）
-
-- [ ] P0：已静态检查 `.claude/settings.local.json` 并提出 PR #4 删除与忽略；待人工审查/合并，并评估历史中是否有需要轮换的凭据。
-- [ ] P0：在基准候选分支执行 `AGENTS.md` 规定的主项目测试、资源审计、`git diff --check`，记录运行环境、日期、命令和结果；失败不得隐瞒。
-- [ ] P1：人工审查 PR #2 的变化范围，并在微信开发者工具验证；真机和云函数无法测试则标记「未验证」。
-- [ ] P1：经批准并具备证据后合并 PR #2 到 `main`，同步本交接文档的快照与 SHA。
-- [ ] P1：再审查 PR #1 的适用性，解决规范冲突后合并；如有重叠，不能直接覆盖 `AGENTS.md`。
-- [ ] P2：在 GitHub Settings 检查 / 配置 `main` Ruleset（要求 PR、禁止强推和删除）；验证规则真正生效。
-- [ ] P2：处理本地 Git 的同步与工作区清洁度；云端操作不等于 Windows 本地已同步。
-
-## 3. 每次新对话的标准启动流程
-
-1. 连接同一仓库，读取实时默认分支、分支列表、open PR 和关键提交 SHA；先确认权限。
-2. 阅读 `PRODUCT_DESIGN.md`、`AGENTS.md`、本文件，以及已生效的 `docs/GITHUB_WORKFLOW.md`（若不存在或仅在草稿 PR 中，说明状态）；核对涉及模块的源码。
-3. 写明本次目标、实现方与审查方、允许修改的文件、基础分支和当前阻塞；涉及多文件或多页面按 `AGENTS.md` 先计划、待批准，再修改。不要把启动提示词当作产品设计批准。
-4. 从正确且可追溯的基准创建**单任务分支**。在 PR #2 未完成前不要误以为 `main` 包含完整项目。
-5. 完成实现、可执行测试、自检和 PR；不得把静态阅读写作“测试通过”。
-6. 任务结束时更新本文件的已验证状态、提交/PR 链接、未验证项和接手建议，**通过同一任务分支/PR 或另一独立 PR 提交**，不要绕过主干审查。
-
-## 4. 每次任务交接模板（复制并替换）
+## 结束任务交接模板
 
 ```text
 更新时间（含时区）：
-任务 / 本次用户明确批准的范围：
-负责人（实现 / 审查）：
-仓库 / 基础分支及基准 SHA：
-工作分支 / 提交 SHA / PR：
+任务与用户已明确批准范围：
+实现方 / 审查方：
+main 基准 SHA / 任务分支 / 提交 SHA / PR：
 允许修改文件 / 实际修改文件：
-实际完成事项（附提交或代码证据）：
-运行过的测试（环境、准确命令、结果、日志位置）：
-未运行的验证（明确写“未验证”及原因）：
-未完成项 / 风险 / 冲突：
-下一步动作 / 建议接手方：
+本次实际完成：
+运行过的测试（命令、环境、日志链接、结果）：
+未执行的验证：
+阻塞 / 风险 / 下一步接手建议：
 ```
 
-## 5. 防止过期和交接污染
-
-- **更新时间不能代替证据**：项目状态仅依据最新 Git refs、PR 状态、测试结果更新；各项必须区分「历史记录」「已验证」「未验证」「待审」。
-- 交接文件保持简短，只记影响下一步工作的状态，不复制完整聊天、工具输出、日志或账号凭据。
-- 当 PR 被合并、关闭或改目标分支时，同步改写表格和待办，移除不再正确的说法；历史记录用 Git commit 保存。
-- 同一时间只允许一方修改本文档，其他代理在各自任务分支发 PR，避免交接状态互相覆盖。
-- 不在文档存储 API Key、Token、Cookie、用户私人信息、设备专属配置或生产环境凭据。
+交接文件与业务修改在同一任务分支/PR 或独立文档 PR 中更新。合并或关闭 PR 后应及时刷新状态；不复制长篇聊天记录，不写入 API token、Cookie、本地专用权限、用户私人信息或环境凭据。
