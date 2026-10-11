@@ -85,4 +85,3 @@ Recompute SHA-256 for every migrated file and confirm each value matches the man
 - [ ] **Step 3: Verify continuation entry points**
 
 Confirm the destination contains `README_项目文件导航.md`, the handoff document, the continuation prompt, PRD V0.3, the four-role seven-week table, the Week 1 kickoff pack, and all ten interview-pack Word documents.
-

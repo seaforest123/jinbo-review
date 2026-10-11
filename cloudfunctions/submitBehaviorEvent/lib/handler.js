@@ -24,7 +24,7 @@ function createSubmitBehaviorEventHandler({
       environment,
       hashIdentity,
     });
-    
+
     // 从 event 中提取需要的字段，过滤掉微信注入的额外字段
     const eventKeys = [
       'eventId', 'anonymousId', 'sessionId', 'routeId', 'appVersion',
@@ -37,7 +37,7 @@ function createSubmitBehaviorEventHandler({
         cleanEvent[key] = event[key];
       }
     }
-    
+
     const envelope = validateEventEnvelope(cleanEvent);
     if (envelope.anonymousId !== trustedAnonymousId) {
       throw new Error('event identity does not match trusted caller');

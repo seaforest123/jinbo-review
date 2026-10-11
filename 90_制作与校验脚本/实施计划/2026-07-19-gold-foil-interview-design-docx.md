@@ -80,4 +80,3 @@
 - [ ] Re-run content, ZIP, heading, section, accessibility, and page-count checks on the latest output.
 - [ ] Confirm the DOCX is non-empty and the final render has no blank pages.
 - [ ] Deliver only the DOCX; do not link internal PDF, PNG, builder, verifier, or plan files.
-
